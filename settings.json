@@ -1,0 +1,21 @@
+{
+	"maxTests": 3,
+	"maxTestItems": 4,
+	"loadTestData": true,
+	"testData": "./tests/dataForSpheronNG/basicProblemDefinitionNG.json",
+	"persistAfterPhase" : [true, false, false, false, false, true, false],
+	"ifPersistUpdateState" : [false, false, false, false, false, true, false],
+	"phaseSettings" :{
+		"disableMutation" : true
+	},
+	"haltAfterTick": true,
+	"haltAfterTickNo": 100,
+	"haltAfterProcessingSpheron": false,
+	"haltAfterProcessingSpheronId": "outputSpheron1",
+	"loadUDP": false,
+	"logOptions": {
+		"logLevel": 4,
+		"logExtOutputEvents": true,
+		"logPath": "./out.txt"
+	}
+}

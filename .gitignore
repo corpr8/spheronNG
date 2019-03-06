@@ -1,0 +1,17 @@
+node_modules/
+package-lock.json
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Optional npm cache directory
+.npm
+
+#diagnostic
+out.txt 
+test.json
+test1.json

@@ -1,0 +1,16 @@
+<head>
+</head>
+<body>
+	Cortex.io monitor
+	<h1>Load a job</h1>
+	<form action="" method="post">
+  		jobData: <textarea id="jobData" name="jobData" cols="40" rows="5"></textarea>
+      <br>
+  		<button type="button" onClick="submitProblem();" style="width:100px;">submit problem</button>
+	</form>
+	<button type="button" onClick="dropDb();" style="width:100px;">drop Db</button>
+	<div id="diagnosticArea"></div>
+   <script src="js/jquery.min.js"></script>
+   <script src="js/socket.io.js"></script>
+   <script src="js/scripts.js"></script>
+</body>
