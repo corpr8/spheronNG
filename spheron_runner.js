@@ -45,7 +45,7 @@ var spheron_runner = {
 			that.udpUtils = new UdpUtils()
 		}
 
-		mongoUtils.init(function(){
+		mongoUtils.init(that.logger, function(){
 			if(settings.loadTestData == true){
 				var testData = require(settings.testData)
 				mongoUtils.setupDemoData(testData, function(){
@@ -89,6 +89,15 @@ var spheron_runner = {
 				} else {
 					that.systemTick += 1
 					that.inTick = false
+
+					if(settings.haltAfterTick == true){
+						if(settings.haltAfterTickNo <= that.systemTick){
+							that.logger.exit(function(){
+								clearTimeout(that.systemTickTimer)
+								process.exitcode = 0
+							})
+						}
+					}
 				}
 			})
 		}

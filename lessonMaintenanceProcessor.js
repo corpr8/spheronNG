@@ -1,5 +1,7 @@
 var moduleName = 'lessonMaintenanceProcessor'
-var settings = require('./settings.json')
+var path = require('path');
+var appDir = path.dirname(require.main.filename);
+var settings = require(appDir +'/settings.json')
 
 /*
 * Module to handle propogating messages from the propagation queue

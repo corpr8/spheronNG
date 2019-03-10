@@ -17,8 +17,11 @@
 *
 */
 var moduleName = 'multivariator'
+var path = require('path');
+var appDir = path.dirname(require.main.filename);
+var settings = require(appDir +'/settings.json')
+
 var Logger = require('./logger.js')
-var settings = require('./settings.json')
 
 var multivariator = {
 	logger: new Logger(settings.logOptions),

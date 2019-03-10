@@ -78,5 +78,29 @@
 		{"inputs": {"inputSpheron1": {"input1": {"val": 1}}, "inputSpheron2": {"input2": {"val": 0}}}, "outputs": {"ext": {"ANDout": {"val": 0}}}},
 		{"inputs": {"inputSpheron1": {"input1": {"val": 0}}, "inputSpheron2": {"input2": {"val": 1}}}, "outputs": {"ext": {"ANDout": {"val": 0}}}},
 		{"inputs": {"inputSpheron1": {"input1": {"val": 1}}, "inputSpheron2": {"input2": {"val": 1}}}, "outputs": {"ext": {"ANDout": {"val": 1}}}}
-	]
+	],
+	"tdd" : {
+		"tddTests": [
+			{
+				"module": "./inputMessageQueueProcessor",
+				"input": {
+					"hasInitMethod" : true,
+					"type": "spheron",
+					"spheronId" : "inputSpheron1"
+				},
+				"expectedResults" : [
+					{
+						"function" : "getSignalIdsFromInputQueue",
+						"parameters" : [0,[]],
+						"results":[123456789,234567890,345678901,456789012]
+					},
+					{
+						"function" : "findInputNamesIterator",
+						"parameters" : [0,[]],
+						"results":["input1"]
+					}
+				]
+			}
+		]
+	}
 }

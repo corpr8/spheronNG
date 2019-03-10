@@ -17,5 +17,9 @@
 		"logLevel": 4,
 		"logExtOutputEvents": true,
 		"logPath": "./out.txt"
+	},
+	"dev":{
+		"fileWatch": ["./","./tests/dataForSpheronNG/"],
+		"excludedTypes" :[".tmp","out.txt","package.json","package-lock.json","useful.txt", ".gitignore"]
 	}
 }

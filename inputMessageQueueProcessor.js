@@ -1,5 +1,7 @@
 var moduleName = 'inputMessageQueueProcessor'
-var settings = require('./settings.json')
+var path = require('path');
+var appDir = path.dirname(require.main.filename);
+var settings = require(appDir +'/settings.json')
 
 /*
 * Module to handle the input message queue
@@ -22,29 +24,7 @@ var inputMessageQueueProcessor = {
 		//yes > is that.spheron.variantMaps.length>0
 		//
 
-
-		that.runTests(function(){
-			that.logger.log(moduleName, 2,'all tests done')
-		})
-
-		if(that.spheron.variantMaps.length > 0){
-			//ok so we may need to push variants ...
-		} else {
-
-		}
-
 		callback()
-	},
-	runTests: function(callback){
-		var that = this
-		that.getSignalIdsFromInputQueue(0,[],function(foundIds){
-			that.logger.log(moduleName, 2,'test: found sigIds in inputQueue: ' + foundIds.join(','))
-
-			that.findInputNamesIterator(0, [], function(foundInputNames){
-				that.logger.log(moduleName, 2,'test: found inputNames: ' + foundInputNames.join(','))
-				callback()
-			})
-		})
 	},
 	getSignalIdsFromInputQueue: function(idx, sigIds, callback){
 		var that = this
@@ -64,6 +44,7 @@ var inputMessageQueueProcessor = {
 
 			that.getSignalIdsFromInputQueue(idx +1, sigIds, callback)
 		} else {
+			that.logger.log(moduleName, 2, 'returning ' + sigIds.join(','))
 			callback(sigIds)
 		}
 	},

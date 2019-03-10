@@ -1,5 +1,7 @@
 var moduleName = 'activationQueueProcessor'
-var settings = require('./settings.json')
+var path = require('path');
+var appDir = path.dirname(require.main.filename);
+var settings = require(appDir +'/settings.json')
 
 /*
 * Module to handle activations
@@ -16,7 +18,12 @@ var activationQueueProcessor = {
 
 		callback()
 
+	},
+	test: function(callback){
+		callback("passed")
+	},
+	test2: function(callback){
+		callback("fish")
 	}
 }
-
 module.exports = activationQueueProcessor;

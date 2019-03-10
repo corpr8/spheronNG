@@ -7,8 +7,8 @@ var mongo = require('mongodb');
 var fs = require('fs');
 var MongoClient = require('mongodb').MongoClient;
 var ObjectId = require('mongodb').ObjectID;
-var url = "mongodb://127.0.0.1:27017/"; //if running locally on network.
-//var url = "mongodb://192.168.61.1:27017/"; //if running locally on macbook with alias set up.
+//var url = "mongodb://127.0.0.1:27017/"; //if running locally on network.
+var url = "mongodb://192.168.61.1:27017/"; //if running locally on macbook with alias set up.
 var db = [];
 var dbo = [];
 var mongoNet = [];
@@ -19,9 +19,9 @@ var mongoNet = [];
 
 var mongoUtils = {
 	logger,
-	init: function(callback){
+	init: function(logger, callback){
 		var that = this
-		that.logger = new Logger(settings.logOptions)
+		that.logger = logger 
 		MongoClient.connect(url, { useNewUrlParser: true }, function(err, thisDb) {
 			db = thisDb
 			if (err) throw err;
