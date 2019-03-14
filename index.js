@@ -1,6 +1,8 @@
 var fork = require('child_process').fork;
 var settings = require('./settings.json')
 var fs = require('fs');
+var findProcess = require('find-process')
+var terminate = require('terminate');
 
 var thisApp ={
 	tddChild: null,
@@ -23,7 +25,7 @@ var thisApp ={
 		that.tddChild.on('exit', function (code, signal) {
 		  if(code == 1){
 		  	console.log('TDD Tests failed.');
-		  	process.exitCode = 1
+		  	//process.exitCode = 1
 		  	callback('failed')
 		  } else {
 		  	console.log('TDD Tests passed.');
@@ -45,28 +47,38 @@ var thisApp ={
 		that.mainProgChild.on('exit', function (code, signal) {
 		  if(code == 1){
 		  	console.log('Main program exited with code 1.');
-		  	process.exitCode = 1
 		  	callback()
 		  } else {
 		  	console.log('Main program exited with code 0.');
-		  	that.runMainProg(function(){
-		  		callback()
-		  	})
+		  	callback()
 		  }
 		});
 	},
-	killProcesses: function(callback){
+	killOtherProcesses: function(callback){
 		var that = this
-		that.killMain(function(){
-			that.killTdd(function(){
+		that.getRunningNodePids(function(pidList){
+			for(var v=0;v<pidList.length;v++){
+				//console.log('PID is: ' + pidList[v].pid + ' PPID is:' + pidList[v].ppid + ' our PID is: ' + process.pid)
+				if(pidList[v].pid != process.pid){
+					//console.log('killing ppid')
+					terminate(pidList[v].pid)	
+				}
+			}
+			callback()
+		})
+		/*
+		that.killTdd(function(){
+			that.killMain(function(){
 				callback()
 			})
 		})
+		*/
 	},
 	killMain: function(callback){
 		var that = this
 		try{
-			that.mainProgChild.kill("SIGINT")
+			that.mainProgChild.kill()
+			that.mainProgChild = null
 			callback()
 
 		} catch(err){
@@ -76,7 +88,8 @@ var thisApp ={
 	killTdd:function(callback){
 		var that = this
 		try{
-			that.tddChild.kill("SIGINT")
+			that.tddChild.kill()
+			that.tddChild = null
 			callback()
 
 		} catch(err){
@@ -86,14 +99,16 @@ var thisApp ={
 	safeRestart: function(callback){
 		var that = this
 		that.deleteLogfile(function(){
-			that.killProcesses(function(){
+			that.killOtherProcesses(function(){
 				that.runTdd(function(testResult){
+					//console.log('TDD test result: ' + testResult)
 					if(testResult == 'passed'){
 						that.runMainProg(function(){
 							callback('finished running main program...')
 					  	})
 					} else {
-						callback('failed tests so exiting...')	
+						console.log('killing any running processes (TDD or Main Program).')
+						that.killOtherProcesses(function(){})
 					}
 				})
 			})	
@@ -112,22 +127,38 @@ var thisApp ={
 		if(excluedFile){
 			//ignore this...
 		} else {
+			console.log('______________________________________________________')
 			console.log(fileName + ' changed. running tests and restarting app.')
 			thisApp.safeRestart(function(exitCode){
 				console.log(exitCode)
 			})
 		}
 	},
+	getRunningNodePids: function(callback){
+		findProcess('name', 'node', true).then(function (list) {
+		    //console.log(JSON.stringify(list))
+		    callback(list)
+		});
+	},
 	init: function(){
 		var that = this
 		//setupFileWatcher and call safeRestart on each change...
+
+		process.on('SIGINT', function() {
+			that.killOtherProcesses(function(){
+				process.exitCode = 0
+				process.exit()
+			})
+		});
+
+
 		for(var v=0;v< settings.dev.fileWatch.length;v++){
 			var thisWatcher = fs.watch(settings.dev.fileWatch[v], that.watchHandler)
 			that.watcherArray.push(thisWatcher)
 		}
 
 		that.safeRestart(function(exitCode){
-			console.log(exitCode)
+			console.log('calling back from safeRestart with: ' + exitCode)
 		})
 	}
 }

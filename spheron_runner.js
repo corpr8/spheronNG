@@ -29,8 +29,9 @@ var spheron_runner = {
 	inTick: false,
 	init: function(callback){
 		var that = this
-
 		that.logger = new Logger(settings.logOptions)
+		that.logger.log(moduleName, 4,'Called Spheron_runner init function')
+
 		that.mutator = require('./mutator.js')
 		that.inputMessageQueueProcessor = require('./inputMessageQueueProcessor.js')
 		that.activationQueueProcessor = require('./activationQueueProcessor.js')
@@ -59,15 +60,18 @@ var spheron_runner = {
 		})
 	},
 	startTicking: function(){
-		var t = this
-		this.systemTick = 1
-		this.systemTickTimer = setInterval(function(){
-			t.tick()
+		var that = this
+		that.logger.log(moduleName, 4,'registering tick.')
+		that.systemTick = 1
+		that.systemTickTimer = setInterval(function(){
+			that.tick()
 		},100)
 		return
 	},
 	stopTicking: function(){
-		clearInterval(this.systemTickTimer)
+		var that = this
+		that.logger.log(moduleName, 4,'clearing tick.')
+		clearInterval(that.systemTickTimer)
 		return
 	},
 	isSpheron: function(candidate){
@@ -92,10 +96,7 @@ var spheron_runner = {
 
 					if(settings.haltAfterTick == true){
 						if(settings.haltAfterTickNo <= that.systemTick){
-							that.logger.exit(function(){
-								clearTimeout(that.systemTickTimer)
-								process.exitcode = 0
-							})
+							that.doExit()
 						}
 					}
 				}
@@ -219,17 +220,13 @@ var spheron_runner = {
 						phaseIdx = 0
 						if(settings.haltAfterTick == true){
 							if(settings.haltAfterTickNo <= that.systemTick){
-								that.logger.exit(function(){
-									process.exit()	
-								})
+								that.doExit()
 							} else {
 								callback()
 							}
 						} else if(settings.haltAfterProcessingSpheron == true){
 							if(settings.haltAfterProcessingSpheronId == that.spheron.spheronId){
-								that.logger.exit(function(){
-									process.exit()	
-								})
+								that.doExit()
 							} else {
 								callback()
 							}
@@ -239,6 +236,14 @@ var spheron_runner = {
 					})
 		    	}
 		}
+	},
+	doExit: function(){
+		var that = this
+		that.logger.exit(function(){
+			that.stopTicking()
+			process.exitCode = 0
+			process.exit()
+		})
 	},
 	postPhaseHandler: function(phaseIdx, callback){
 		var that = this
@@ -281,8 +286,6 @@ spheron_runner.init(function(){
 	spheron_runner.logger.log(moduleName, 4,'init complete')
 	process.on('SIGINT', function() {
 		spheron_runner.logger.log(moduleName, 4,'handling SIGINT - shutting down, bye!')
-		spheron_runner.logger.exit(function(){
-			process.exit()	
-		})
+		that.doExit()
 	});
 })

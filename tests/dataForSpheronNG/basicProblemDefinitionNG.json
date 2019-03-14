@@ -98,9 +98,50 @@
 						"function" : "findInputNamesIterator",
 						"parameters" : [0,[]],
 						"results":["input1"]
+					},
+					{
+						"function" : "getInputsGroupedBySigId",
+						"parameters" : null,
+						"results":[
+							{"signalId": 123456789, "inputs" : [{"input" : "input1", "val" : 0}]},
+							{"signalId": 234567890, "inputs" : [{"input" : "input1", "val" : 1}]},
+							{"signalId": 345678901, "inputs" : [{"input" : "input1", "val" : 0}]},
+							{"signalId": 456789012, "inputs" : [{"input" : "input1", "val" : 1}]}
+						]
+					}
+				]
+			},
+			{
+				"module": "./inputMessageQueueProcessor",
+				"input": {
+					"hasInitMethod" : true,
+					"type": "spheron",
+					"spheronId" : "inputSpheron2"
+				},
+				"expectedResults" : [
+					{
+						"function" : "getSignalIdsFromInputQueue",
+						"parameters" : [0,[]],
+						"results":[123456789,234567890,345678901,456789012]
+					},
+					{
+						"function" : "findInputNamesIterator",
+						"parameters" : [0,[]],
+						"results":["input1"]
+					},
+					{
+						"function" : "getInputsGroupedBySigId",
+						"parameters" : null,
+						"results":[
+							{"signalId": 123456789, "inputs" : [{"input" : "input2", "val" : 0}]},
+							{"signalId": 234567890, "inputs" : [{"input" : "input2", "val" : 0}]},
+							{"signalId": 345678901, "inputs" : [{"input" : "input2", "val" : 1}]},
+							{"signalId": 456789012, "inputs" : [{"input" : "input2", "val" : 1}]}
+						]
 					}
 				]
 			}
-		]
+		],
+		"nextTestFile": "./tests/dataForSpheronNG/basicProblemDefinitionNG.json"
 	}
 }
