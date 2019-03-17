@@ -86,7 +86,7 @@ var thisApp ={
 		}
 	},
 	killTdd:function(callback){
-		var that = this
+		var that = this  
 		try{
 			that.tddChild.kill()
 			that.tddChild = null
@@ -141,6 +141,8 @@ var thisApp ={
 		});
 	},
 	init: function(){
+		console.log('______________________________________________________')
+		console.log('___________________Running Init_______________________')
 		var that = this
 		//setupFileWatcher and call safeRestart on each change...
 

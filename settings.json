@@ -14,7 +14,7 @@
 	"haltAfterProcessingSpheronId": "outputSpheron1",
 	"loadUDP": false,
 	"logOptions": {
-		"logLevel": 4,
+		"logLevel": 2,
 		"logExtOutputEvents": true,
 		"logPath": "./out.txt"
 	},

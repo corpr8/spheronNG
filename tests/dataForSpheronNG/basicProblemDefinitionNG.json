@@ -19,10 +19,10 @@
 				{"id" : "internal1a", "type": "output", "angle": -50, "toId": "outputSpheron1", "toPort": "internal1", "val":-1}
 			],
 			"inputMessageQueue": [
-				{"problemId" : "whatIsAnd", "path" : "input1", "testIdx": 0, "val": 0, "sigId" : "123456789" },
-				{"problemId" : "whatIsAnd", "path" : "input1", "testIdx": 1, "val": 1, "sigId" : "234567890" },
-				{"problemId" : "whatIsAnd", "path" : "input1", "testIdx": 2, "val": 0, "sigId" : "345678901" },
-				{"problemId" : "whatIsAnd", "path" : "input1", "testIdx": 3, "val": 1, "sigId" : "456789012" }
+				{"problemId" : "whatIsAnd", "toPort" : "input1", "path" : "input1", "testIdx": 0, "val": 0, "sigId" : "123456789" },
+				{"problemId" : "whatIsAnd", "toPort" : "input1", "path" : "input1", "testIdx": 1, "val": 1, "sigId" : "234567890" },
+				{"problemId" : "whatIsAnd", "toPort" : "input1", "path" : "input1", "testIdx": 2, "val": 0, "sigId" : "345678901" },
+				{"problemId" : "whatIsAnd", "toPort" : "input1", "path" : "input1", "testIdx": 3, "val": 1, "sigId" : "456789012" }
 			],
 			"activationQueue": [],
 			"propagationMessageQueue": [],
@@ -43,10 +43,10 @@
 				{"id" : "internal2a", "type": "output", "angle": 65, "val": -1, "toId": "outputSpheron1", "toPort": "internal2"}
 			],
 			"inputMessageQueue": [
-				{"problemId" : "whatIsAnd", "path" : "input2", "testIdx": 0, "val": 0, "sigId" : "123456789" },
-				{"problemId" : "whatIsAnd", "path" : "input2", "testIdx": 1, "val": 0, "sigId" : "234567890" },
-				{"problemId" : "whatIsAnd", "path" : "input2", "testIdx": 2, "val": 1, "sigId" : "345678901" },
-				{"problemId" : "whatIsAnd", "path" : "input2", "testIdx": 3, "val": 1, "sigId" : "456789012" }
+				{"problemId" : "whatIsAnd", "toPort" : "input2", "path" : "input2", "testIdx": 0, "val": 0, "sigId" : "123456789" },
+				{"problemId" : "whatIsAnd", "toPort" : "input2", "path" : "input2", "testIdx": 1, "val": 0, "sigId" : "234567890" },
+				{"problemId" : "whatIsAnd", "toPort" : "input2", "path" : "input2", "testIdx": 2, "val": 1, "sigId" : "345678901" },
+				{"problemId" : "whatIsAnd", "toPort" : "input2", "path" : "input2", "testIdx": 3, "val": 1, "sigId" : "456789012" }
 			],
 			"activationQueue": [],
 			"propagationMessageQueue": [],
@@ -92,21 +92,33 @@
 					{
 						"function" : "getSignalIdsFromInputQueue",
 						"parameters" : [0,[]],
+						"returnType" : "object",
+						"containsJSONArray" : false,
+						"atLeastTheseFields": false,
+						"ordered": true,
 						"results":[123456789,234567890,345678901,456789012]
 					},
 					{
 						"function" : "findInputNamesIterator",
 						"parameters" : [0,[]],
+						"returnType" : "object",
+						"containsJSONArray" : false,
+						"atLeastTheseFields": false,
+						"ordered": true,
 						"results":["input1"]
 					},
 					{
 						"function" : "getInputsGroupedBySigId",
 						"parameters" : null,
+						"returnType" : "object",
+						"containsJSONArray" : true,
+						"atLeastTheseFields": true,
+						"ordered": true,
 						"results":[
-							{"signalId": 123456789, "inputs" : [{"input" : "input1", "val" : 0}]},
-							{"signalId": 234567890, "inputs" : [{"input" : "input1", "val" : 1}]},
-							{"signalId": 345678901, "inputs" : [{"input" : "input1", "val" : 0}]},
-							{"signalId": 456789012, "inputs" : [{"input" : "input1", "val" : 1}]}
+							{"123456789":[{"input" : "input1", "val" : 0}]},
+							{"234567890":[{"input" : "input1", "val" : 1}]},
+							{"345678901":[{"input" : "input1", "val" : 0}]},
+							{"456789012":[{"input" : "input1", "val" : 1}]}
 						]
 					}
 				]
@@ -122,21 +134,33 @@
 					{
 						"function" : "getSignalIdsFromInputQueue",
 						"parameters" : [0,[]],
+						"returnType" : "object",
+						"containsJSONArray" : false,
+						"atLeastTheseFields": false,
+						"ordered": true,
 						"results":[123456789,234567890,345678901,456789012]
 					},
 					{
 						"function" : "findInputNamesIterator",
 						"parameters" : [0,[]],
-						"results":["input1"]
+						"returnType" : "object",
+						"containsJSONArray" : false,
+						"atLeastTheseFields": false,
+						"ordered": true,
+						"results":["input2"]
 					},
 					{
 						"function" : "getInputsGroupedBySigId",
 						"parameters" : null,
+						"returnType" : "object",
+						"containsJSONArray" : true,
+						"atLeastTheseFields": true,
+						"ordered": true,
 						"results":[
-							{"signalId": 123456789, "inputs" : [{"input" : "input2", "val" : 0}]},
-							{"signalId": 234567890, "inputs" : [{"input" : "input2", "val" : 0}]},
-							{"signalId": 345678901, "inputs" : [{"input" : "input2", "val" : 1}]},
-							{"signalId": 456789012, "inputs" : [{"input" : "input2", "val" : 1}]}
+							{"123456789":[{"input" : "input2", "val" : 0}]},
+							{"234567890":[{"input" : "input2", "val" : 0}]},
+							{"345678901":[{"input" : "input2", "val" : 1}]},
+							{"456789012":[{"input" : "input2", "val" : 1}]}
 						]
 					}
 				]
