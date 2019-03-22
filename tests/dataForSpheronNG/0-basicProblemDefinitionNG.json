@@ -82,7 +82,7 @@
 	"tdd" : {
 		"tddTests": [
 			{
-				"module": "./inputMessageQueueProcessor",
+				"module": "./1-inputMessageQueueProcessor",
 				"input": {
 					"hasInitMethod" : true,
 					"type": "spheron",
@@ -99,8 +99,8 @@
 						"results":[123456789,234567890,345678901,456789012]
 					},
 					{
-						"function" : "findInputNamesIterator",
-						"parameters" : [0,[]],
+						"function" : "findInputNames",
+						"parameters" : null,
 						"returnType" : "object",
 						"containsJSONArray" : false,
 						"atLeastTheseFields": false,
@@ -108,23 +108,23 @@
 						"results":["input1"]
 					},
 					{
-						"function" : "getInputsGroupedBySigId",
+						"function" : "getInputGroupedBySigId",
 						"parameters" : null,
 						"returnType" : "object",
 						"containsJSONArray" : true,
 						"atLeastTheseFields": true,
 						"ordered": true,
 						"results":[
-							{"123456789":[{"input" : "input1", "val" : 0}]},
-							{"234567890":[{"input" : "input1", "val" : 1}]},
-							{"345678901":[{"input" : "input1", "val" : 0}]},
-							{"456789012":[{"input" : "input1", "val" : 1}]}
+							{"123456789":[{"input" : "input1", "val" : 0, "path" : "input1"}]},
+							{"234567890":[{"input" : "input1", "val" : 1, "path" : "input1"}]},
+							{"345678901":[{"input" : "input1", "val" : 0, "path" : "input1"}]},
+							{"456789012":[{"input" : "input1", "val" : 1, "path" : "input1"}]}
 						]
 					}
 				]
 			},
 			{
-				"module": "./inputMessageQueueProcessor",
+				"module": "./1-inputMessageQueueProcessor",
 				"input": {
 					"hasInitMethod" : true,
 					"type": "spheron",
@@ -141,8 +141,8 @@
 						"results":[123456789,234567890,345678901,456789012]
 					},
 					{
-						"function" : "findInputNamesIterator",
-						"parameters" : [0,[]],
+						"function" : "findInputNames",
+						"parameters" : null,
 						"returnType" : "object",
 						"containsJSONArray" : false,
 						"atLeastTheseFields": false,
@@ -150,22 +150,22 @@
 						"results":["input2"]
 					},
 					{
-						"function" : "getInputsGroupedBySigId",
+						"function" : "getInputGroupedBySigId",
 						"parameters" : null,
 						"returnType" : "object",
 						"containsJSONArray" : true,
 						"atLeastTheseFields": true,
 						"ordered": true,
 						"results":[
-							{"123456789":[{"input" : "input2", "val" : 0}]},
-							{"234567890":[{"input" : "input2", "val" : 0}]},
-							{"345678901":[{"input" : "input2", "val" : 1}]},
-							{"456789012":[{"input" : "input2", "val" : 1}]}
+							{"123456789":[{"input" : "input2", "val" : 0, "path" : "input2"}]},
+							{"234567890":[{"input" : "input2", "val" : 0, "path" : "input2"}]},
+							{"345678901":[{"input" : "input2", "val" : 1, "path" : "input2"}]},
+							{"456789012":[{"input" : "input2", "val" : 1, "path" : "input2"}]}
 						]
 					}
 				]
 			}
 		],
-		"nextTestFile": "./tests/dataForSpheronNG/basicProblemDefinitionNG.json"
+		"nextTestFile": "./tests/dataForSpheronNG/1-inputQueueStates.json"
 	}
 }

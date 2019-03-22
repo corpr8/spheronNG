@@ -10,7 +10,7 @@ var tdd = {
 	currentTestModule: null,
 	thisSpheron: null,
 	logger: null,
-	config:{tdd: {tddTests: [],nextTestFile: "./tests/dataForSpheronNG/basicProblemDefinitionNG.json"}},
+	config:{tdd: {tddTests: [],nextTestFile: "./tests/dataForSpheronNG/0-basicProblemDefinitionNG.json"}},
 	previousTests: [],
 	isPreviousTestIterator: function(testName, idx, callback){
 		idx = (idx) ? idx : 0
@@ -26,12 +26,17 @@ var tdd = {
 		}
 	},
 	fileExists: function(fileName, callback){
+		var that = this
+		that.logger.log(moduleName, 2, 'in fileExists function for: ' + fileName)
 		fs.access(fileName, fs.F_OK, (err) => {
-		  if (err) {
-		    console.error(err)
-		    callback(false)
-		  }
-		  callback(true)
+
+			if (err) {
+				that.logger.log(moduleName, 2, 'does not exist')
+				callback(false)
+			} else {
+				that.logger.log(moduleName, 2, 'does exist')
+				callback(true)
+			}
 		})
 	},
 	isObject: function(testItem, callback){
@@ -75,10 +80,10 @@ var tdd = {
 			})
 		} else {
 			if(testItem[idx]){
-				that.logger.log(moduleName, 2, 'too many items in the array: ' + thisItem.join(','))
+				that.logger.log(moduleName, 2, 'too many items in the array: ' + testItem.join(',') + ' versus: ' + expectedResults.join(','))
 				process.exitCode = 1
 			} else {
-				that.logger.log(moduleName, 2, 'finished : testOrderedArrayOfJSONObjectsIterator')
+				that.logger.log(moduleName, 4, 'finished : testOrderedArrayOfJSONObjectsIterator')
 				callback()	
 			}
 		}
@@ -89,57 +94,64 @@ var tdd = {
 		that.logger.log(moduleName, 4, 'idx is: ' + idx + ' expected object: ' + JSON.stringify(expectedObject))
 		that.logger.log(moduleName, 4, 'idx is: ' + idx + ' actual object: ' + JSON.stringify(thisObject))
 		
-		if(Object.keys(expectedObject)[idx]){
-			//compare the keys
-			if(Object.keys(expectedObject)[idx] == Object.keys(thisObject)[idx]){
-				var thisKeyExpectedValue = expectedObject[Object.keys(expectedObject)[idx]]
-				var thisKeyActualValue = thisObject[Object.keys(thisObject)[idx]]
-				that.isArray(thisKeyExpectedValue, function(isArray){
-					if(isArray){
-						//however, as our test data is an embedded array, we need to iterate the array and basically do this whole thing again...
-						that.testOrderedArrayOfJSONObjects(thisKeyActualValue, thisKeyExpectedValue, function(){
-							that.compareKeysAndValuesIterator(thisObject, expectedObject, idx+1, callback)
-						})
-					} else {
-						if(thisKeyExpectedValue == thisKeyActualValue){
-							that.compareKeysAndValuesIterator(thisObject, expectedObject, idx+1, callback)
+		if(thisObject){
+			if(Object.keys(expectedObject)[idx]){
+				//compare the keys
+				if(Object.keys(expectedObject)[idx] == Object.keys(thisObject)[idx]){
+					var thisKeyExpectedValue = expectedObject[Object.keys(expectedObject)[idx]]
+					var thisKeyActualValue = thisObject[Object.keys(thisObject)[idx]]
+					that.isArray(thisKeyExpectedValue, function(isArray){
+						if(isArray){
+							//however, as our test data is an embedded array, we need to iterate the array and basically do this whole thing again...
+							that.testOrderedArrayOfJSONObjects(thisKeyActualValue, thisKeyExpectedValue, function(){
+								that.compareKeysAndValuesIterator(thisObject, expectedObject, idx+1, callback)
+							})
 						} else {
-							//that.logger.log(moduleName, 2, Object.keys(expectedObject)[idx])
-							that.logger.log(moduleName, 2, 'key values do not match: ' + expectedObject[Object.keys(expectedObject)[idx]] + ' : ' + thisObject[Object.keys(thisObject)[idx]])
-							that.logger.log(moduleName, 2, 'expected object: ' + JSON.stringify(expectedObject))
-							that.logger.log(moduleName, 2, 'actual object: ' + JSON.stringify(thisObject))
-							process.exitCode = 1
+							if(thisKeyExpectedValue == thisKeyActualValue){
+								that.compareKeysAndValuesIterator(thisObject, expectedObject, idx+1, callback)
+							} else {
+								that.logger.log(moduleName, 2, 'key values do not match: ' + expectedObject[Object.keys(expectedObject)[idx]] + ' : ' + thisObject[Object.keys(thisObject)[idx]])
+								that.logger.log(moduleName, 2, 'expected object: ' + JSON.stringify(expectedObject))
+								that.logger.log(moduleName, 2, 'actual object: ' + JSON.stringify(thisObject))
+								process.exitCode = 1
+							}
 						}
-					}
-				})
+					})
+				} else {
+					that.logger.log(moduleName, 2, 'key names do not match: ' + Object.keys(expectedObject)[idx] + ' : ' + Object.keys(thisObject)[idx])
+					process.exitCode = 1
+				}
 			} else {
-				that.logger.log(moduleName, 2, 'key names do not match: ' + Object.keys(expectedObject)[idx] + ' : ' + Object.keys(thisObject)[idx])
-				process.exitCode = 1
+				if(Object.keys(thisObject)[idx]){
+					that.logger.log(moduleName, 2, 'object had too many keys: ' + JSON.stringify(thisObject))
+					process.exitCode = 1
+				} else {
+					callback()	
+				}
 			}
 		} else {
-			if(Object.keys(thisObject)[idx]){
-				that.logger.log(moduleName, 2, 'object had too many keys: ' + JSON.stringify(thisObject))
-				process.exitCode = 1
-			} else {
-				callback()	
-			}
+			that.logger.log(moduleName, 2, 'idx is: ' + idx + ' expected object: ' + JSON.stringify(expectedObject))
+			that.logger.log(moduleName, 2, 'idx is: ' + idx + ' actual object: ' + JSON.stringify(thisObject))
+			that.logger.log(moduleName, 2, 'cannot compare object and key as object is null. failed.')
+			process.exitCode = 1
 		}
+		
 	},
 	handleTestResult: function(thisTest, result, resultIdx, testIdx, failureCount, callback){
 		var that = this
-		that.logger.log(moduleName, 2, ' handling test result')
+		that.logger.log(moduleName, 2, 'handling test result')
 		if(thisTest.returnType == "object"){
 			that.isObject(result, function(isObject){
 				if(isObject){
 					if(thisTest.containsJSONArray == false){
 						if(thisTest.ordered == true){
 							//match the array, in order
-							that.logger.log(moduleName, 2, ' expected: ' + thisTest.results + ' got: ' + result.join(','))
+							that.logger.log(moduleName, 2, 'expected: ' + thisTest.results + ' got: ' + result.join(','))
 							if(result.join(',') == thisTest.results){
-								that.logger.log(moduleName, 2, ' test passed')
+								that.logger.log(moduleName, 2, 'test passed')
 							} else {
-								that.logger.log(moduleName, 2, ' test failed')
-								failureCount += 1
+								that.logger.log(moduleName, 2, 'ordered array test failed.')
+								process.exitCode = 1 
 							}
 							tdd.testIterator(testIdx, resultIdx +1, failureCount, callback)
 						} else {
@@ -153,21 +165,22 @@ var tdd = {
 						} else {
 							that.logger.log(moduleName, 2, 'handle ordered json array (direct match)...')
 							that.testOrderedArrayOfJSONObjects(result, thisTest.results, function(){
+								that.logger.log(moduleName, 2, 'array handled...')
 								tdd.testIterator(testIdx, resultIdx +1, failureCount, callback)
 							})
 						}
 					}
 				} else {
-					that.logger.log(moduleName, 2, ' test failed - not an object')
+					that.logger.log(moduleName, 2, 'test failed - not an object')
 					process.exitCode = 1
 				}
 			})	
 		} else if(thisTest.returnType == "string"){
 			//we expect a string
-			that.logger.log(moduleName, 2, ' TODO: handle string')
+			that.logger.log(moduleName, 2, 'TODO: handle string - failed')
 			process.exitCode = 1
 		} else {
-			that.logger.log(moduleName, 2, ' unhandled test case: failed')
+			that.logger.log(moduleName, 2, 'TODO: unhandled test case - failed')
 			process.exitCode = 1
 		}
 	},
@@ -175,33 +188,47 @@ var tdd = {
 		var that = this
 
 		that.logger.log(moduleName, 2, 'testIdx: ' + testIdx)
-		asyncRequire(that.config.tdd.tddTests[testIdx].module).then(function(thisModule){
-			that.logger.log(moduleName, 2, 'loaded module: ' + that.config.tdd.tddTests[testIdx].module)
-			that.currentTestModule = thisModule
-			if(that.config.tdd.tddTests[testIdx].input.type == "spheron"){
-				that.spheron = null
-				foundSpheronIdx = -1
-				for(var v = 0;v<that.config.network.length;v++){
-					if(that.config.network[v].spheronId == that.config.tdd.tddTests[testIdx].input.spheronId){
-						foundSpheronIdx = v
+		that.logger.log(moduleName, 2, 'about to try and load: ' + that.config.tdd.tddTests[testIdx].module)
+		that.fileExists(that.config.tdd.tddTests[testIdx].module + '.js', function(fileExists){
+			if(fileExists){
+				that.logger.log(moduleName, 2, that.config.tdd.tddTests[testIdx].module + ' exists')
+				asyncRequire(that.config.tdd.tddTests[testIdx].module).then(function(thisModule){
+					that.logger.log(moduleName, 2, 'loaded module: ' + that.config.tdd.tddTests[testIdx].module)
+					that.currentTestModule = thisModule
+					if(that.config.tdd.tddTests[testIdx].input.type == "spheron"){
+						that.logger.log(moduleName, 4, 'Searching document for spheron definition for: ' + that.config.tdd.tddTests[testIdx].input.spheronId)
+						that.spheron = null
+						foundSpheronIdx = -1
+						for(var v = 0;v<that.config.network.length;v++){
+							if(that.config.network[v].spheronId == that.config.tdd.tddTests[testIdx].input.spheronId){
+								foundSpheronIdx = v
+							}
+						}
+						if(foundSpheronIdx != -1){
+							that.spheron = new Spheron(that.config.network[foundSpheronIdx], settings.logOptions) //note tdd config document is the spheron config also!!
+							if(that.config.tdd.tddTests[testIdx].input.hasInitMethod){
+								that.spheron.tdd = 'tdd'
+								that.currentTestModule.init(that.spheron, that.logger, function(){
+									that.logger.log(moduleName, 2, 'called back from init')
+									that.testIterator(testIdx, 0, failureCount, callback)
+								})
+							} else {
+								that.testIterator(testIdx, 0, failureCount, callback)
+							}
+						} else {
+							that.logger.log(moduleName, 2, 'Spheron definition not found in testfile for spheron: ' + that.config.tdd.tddTests[testIdx].input.spheronId + ' - failed')
+							process.exitCode = 1
+						}
+						
+					} else {
+						that.testIterator(testIdx, 0, failureCount, callback)
 					}
-				}
-				that.spheron = new Spheron(that.config.network[foundSpheronIdx], settings.logOptions) //note tdd is the spheron config also!!
-											
-				if(that.config.tdd.tddTests[testIdx].input.hasInitMethod){
-					that.currentTestModule.init(that.spheron, that.logger, function(){
-						that.logger.log(moduleName, 2, 'called back from init')
-						//that.testIterator(testIdx, 0, failureCount, callback)
-					})
-				} else {
-					//that.testIterator(testIdx, 0, failureCount, callback)
-				}
-
-				that.testIterator(testIdx, 0, failureCount, callback)
+				})
 			} else {
-				that.testIterator(testIdx, 0, failureCount, callback)
+				that.logger.log(moduleName, 2, 'Module does not exist: ' + that.config.tdd.tddTests[testIdx].module + ' - failed')
+				process.exitCode = 1
 			}
-		})
+		})	
 	},
 	testIterator: function(testIdx, resultIdx, failureCount, callback){
 		var that = this
@@ -230,23 +257,18 @@ var tdd = {
 					}
 				} else {
 					that.logger.log(moduleName, 2, 'Function: ' + thisTest.function + ' does not exist. Test failed.')
-					failureCount += 1
-					that.testIterator(testIdx, resultIdx +1, failureCount, callback)
+					//failureCount += 1
+					process.exitCode = 1
+					//that.testIterator(testIdx, resultIdx +1, failureCount, callback)
 				}
 			} else {
-				/*
-				* TODO: in this scenario, we should load the module and pass the init data again...  
-				*/
+				/* TODO: in this scenario, we should load the module and pass the init data again... */
 				testIdx += 1
 				if(that.config.tdd.tddTests[testIdx]){
 					that.loadModule(testIdx, failureCount, callback)
 				} else {
-					/*
-					* check load next file
-					*/
 					that.checkLoadNextFile(failureCount, callback)
 				}
-				//that.testIterator(testIdx +1, 0, failureCount, callback)
 			}
 		} else {
 			that.checkLoadNextFile(failureCount, callback)
@@ -255,32 +277,28 @@ var tdd = {
 	checkLoadNextFile: function(failureCount, callback){
 		var that = this
 		if(that.config.tdd.nextTestFile){
+			that.logger.log(moduleName, 2, 'Trying to load: ' + that.config.tdd.nextTestFile)
 			testIdx = 0
 			resultIdx = 0
-			if(that.config.tdd.nextTestFile){
-				that.fileExists(that.config.tdd.nextTestFile, function(exists){
-					if(exists){
-						that.isPreviousTestIterator(that.config.tdd.nextTestFile, 0, function(isPreviousTest){
+			that.fileExists(that.config.tdd.nextTestFile, function(fileExists){
+				if(fileExists){
+					that.logger.log(moduleName, 4, that.config.tdd.nextTestFile + ' exists.')
+					that.isPreviousTestIterator(that.config.tdd.nextTestFile, 0, function(isPreviousTest){
 						if(isPreviousTest){
-							that.logger.log(moduleName, 2, 'We have already run test: ' + that.config.tdd.nextTestFile + '. Exiting.')
-								//process.exitCode = 1
-								callback(failureCount+1)
-							} else {
+							that.logger.log(moduleName, 2, 'We have already run test: ' + that.config.tdd.nextTestFile + '. Failed.')
+							process.exitCode = 1
+						} else {
 							that.previousTests.push(that.config.tdd.nextTestFile)
+							that.logger.log(moduleName, 2, 'Loading testfile: ' + that.config.tdd.nextTestFile)
 							that.config = JSON.parse(fs.readFileSync(that.config.tdd.nextTestFile, 'utf8'))
-							
 							that.loadModule(testIdx, failureCount, callback)
-							}
-						})
-					} else {
-						that.logger.log(moduleName, 2, 'next test document does not exist.')
-						//process.exitCode = 1
-						callback(failureCount+1)
-					}
-				})
-			} else {
-				callback(failureCount)
-			}
+						}
+					})
+				} else {
+					that.logger.log(moduleName, 2, that.config.tdd.nextTestFile + ' does not exist. Failed.')
+					process.exitCode = 1
+				}
+			})
 		} else {
 			callback(failureCount)
 		}

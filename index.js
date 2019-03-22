@@ -66,13 +66,6 @@ var thisApp ={
 			}
 			callback()
 		})
-		/*
-		that.killTdd(function(){
-			that.killMain(function(){
-				callback()
-			})
-		})
-		*/
 	},
 	killMain: function(callback){
 		var that = this

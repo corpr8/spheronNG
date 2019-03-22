@@ -2,7 +2,7 @@
 	"maxTests": 3,
 	"maxTestItems": 4,
 	"loadTestData": true,
-	"testData": "./tests/dataForSpheronNG/basicProblemDefinitionNG.json",
+	"testData": "./tests/dataForSpheronNG/0-basicProblemDefinitionNG.json",
 	"persistAfterPhase" : [true, false, false, false, false, true, false],
 	"ifPersistUpdateState" : [false, false, false, false, false, true, false],
 	"phaseSettings" :{

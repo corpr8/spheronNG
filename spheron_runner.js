@@ -33,13 +33,12 @@ var spheron_runner = {
 		that.logger.log(moduleName, 4,'Called Spheron_runner init function')
 
 		that.mutator = require('./mutator.js')
-		that.inputMessageQueueProcessor = require('./inputMessageQueueProcessor.js')
-		that.activationQueueProcessor = require('./activationQueueProcessor.js')
-		that.propagationQueueProcessor = require('./propagationQueueProcessor.js')
-		that.backpropQueueProcessor = require('./backpropQueueProcessor.js')
-		that.multivariateTestProcessor = require('./multivariateTestProcessor.js')
-		that.lessonMaintenanceProcessor = require('./lessonMaintenanceProcessor.js')
-		
+		that.inputMessageQueueProcessor = require('./1-inputMessageQueueProcessor.js')
+		that.activationQueueProcessor = require('./2-activationQueueProcessor.js')
+		that.propagationQueueProcessor = require('./3-propagationQueueProcessor.js')
+		that.backpropQueueProcessor = require('./4-backpropQueueProcessor.js')
+		that.multivariateTestProcessor = require('./5-multivariateTestProcessor.js')
+		that.lessonMaintenanceProcessor = require('./6-lessonMaintenanceProcessor.js')
 
 		//disable UDP if as we are offline...
 		if(settings.loadUDP){
