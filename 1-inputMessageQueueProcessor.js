@@ -172,7 +172,7 @@ var inputMessageQueueProcessor = {
 						} else {
 							that._getNonHistoricInputGroupedBySigIdIterator(outputArray, inputIdx+1, callback)		
 						}
-					})
+					}) 
 				} else {
 					
 					var newMessage = {}
