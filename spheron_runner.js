@@ -83,6 +83,7 @@ var spheron_runner = {
 			that.logger.log(moduleName, 1,'systemTick: ' + that.systemTick)
 			mongoUtils.getNextPendingSpheron(that.systemTick, function(result){ 
 				if(that.isSpheron(result) == true){
+					that.logger.log(moduleName, 2,'Processing spheron: ' + result.spheronId)
 					that.spheron = new Spheron(result)
 					that.spheron.init(that.logger)
 					that.logger.log(moduleName, 4,'Loaded spheron: ' + that.spheron.spheronId + ' - starting runtime functions.')

@@ -11,6 +11,10 @@
 		{"spheronId": "historicInputCompletionInASaturatedQueue",
 			"type" : "spheron",
 			"state" : "pending",
+			"settings" : {
+				"maxInputQueueDepth" : 10
+			},
+			"ActivationHistory" : ["998","999"],
 			"nextTick" : 1,
 			"io": [
 				{"id" : "input1", "type": "extInput", "angle": 0, "fromId": "ext", "fromPort": "ext", "val":-1, "life" : 1},
@@ -32,27 +36,7 @@
 				{"problemId" : "whatIsAnd", "toPort" : "input1", "path" : "input1", "testIdx": 3, "val": 0, "sigId" : "1003" },
 				{"problemId" : "whatIsAnd", "toPort" : "input2", "path" : "input2", "testIdx": 3, "val": 0, "sigId" : "1003" },
 				{"problemId" : "whatIsAnd", "toPort" : "input1", "path" : "input1", "testIdx": 0, "val": 1, "sigId" : "1004" },
-				{"problemId" : "whatIsAnd", "toPort" : "input2", "path" : "input2", "testIdx": 0, "val": 1, "sigId" : "1004" },
-				{"problemId" : "whatIsAnd", "toPort" : "input1", "path" : "input1", "testIdx": 1, "val": 0, "sigId" : "1005" },
-				{"problemId" : "whatIsAnd", "toPort" : "input2", "path" : "input2", "testIdx": 1, "val": 0, "sigId" : "1005" },
-				{"problemId" : "whatIsAnd", "toPort" : "input1", "path" : "input1", "testIdx": 2, "val": 1, "sigId" : "1006" },
-				{"problemId" : "whatIsAnd", "toPort" : "input2", "path" : "input2", "testIdx": 2, "val": 1, "sigId" : "1006" },
-				{"problemId" : "whatIsAnd", "toPort" : "input1", "path" : "input1", "testIdx": 3, "val": 0, "sigId" : "1007" },
-				{"problemId" : "whatIsAnd", "toPort" : "input2", "path" : "input2", "testIdx": 3, "val": 0, "sigId" : "1007" },
-				{"problemId" : "whatIsAnd", "toPort" : "input1", "path" : "input1", "testIdx": 0, "val": 1, "sigId" : "1008" },
-				{"problemId" : "whatIsAnd", "toPort" : "input2", "path" : "input2", "testIdx": 0, "val": 1, "sigId" : "1008" },
-				{"problemId" : "whatIsAnd", "toPort" : "input1", "path" : "input1", "testIdx": 1, "val": 0, "sigId" : "1009" },
-				{"problemId" : "whatIsAnd", "toPort" : "input2", "path" : "input2", "testIdx": 1, "val": 0, "sigId" : "1009" },
-				{"problemId" : "whatIsAnd", "toPort" : "input1", "path" : "input1", "testIdx": 2, "val": 1, "sigId" : "1010" },
-				{"problemId" : "whatIsAnd", "toPort" : "input2", "path" : "input2", "testIdx": 2, "val": 1, "sigId" : "1010" },
-				{"problemId" : "whatIsAnd", "toPort" : "input1", "path" : "input1", "testIdx": 3, "val": 0, "sigId" : "1011" },
-				{"problemId" : "whatIsAnd", "toPort" : "input2", "path" : "input2", "testIdx": 3, "val": 0, "sigId" : "1011" },
-				{"problemId" : "whatIsAnd", "toPort" : "input1", "path" : "input1", "testIdx": 1, "val": 1, "sigId" : "1012" },
-				{"problemId" : "whatIsAnd", "toPort" : "input2", "path" : "input2", "testIdx": 1, "val": 1, "sigId" : "1012" },
-				{"problemId" : "whatIsAnd", "toPort" : "input1", "path" : "input1", "testIdx": 2, "val": 0, "sigId" : "1013" },
-				{"problemId" : "whatIsAnd", "toPort" : "input2", "path" : "input2", "testIdx": 2, "val": 0, "sigId" : "1013" },
-				{"problemId" : "whatIsAnd", "toPort" : "input1", "path" : "input1", "testIdx": 3, "val": 1, "sigId" : "1014" },
-				{"problemId" : "whatIsAnd", "toPort" : "input2", "path" : "input2", "testIdx": 3, "val": 1, "sigId" : "1014" }
+				{"problemId" : "whatIsAnd", "toPort" : "input2", "path" : "input2", "testIdx": 0, "val": 1, "sigId" : "1004" }
 			],
 			"activationQueue": [],
 			"propagationMessageQueue": [],
@@ -80,7 +64,7 @@
 				},
 				"expectedResults" : [
 					{
-						"function" : "getInputGroupedBySigId",
+						"function" : "getNonHistoricInputGroupedBySigId",
 						"parameters" : null,
 						"returnType" : "object",
 						"containsJSONArray" : true,
@@ -93,17 +77,7 @@
 							{"1001":[{"input" : "input1", "val" : 0, "path" : "input1"},{"input" : "input2", "val" : 0, "path" : "input2"}]},
 							{"1002":[{"input" : "input1", "val" : 1, "path" : "input1"},{"input" : "input2", "val" : 1, "path" : "input2"}]},
 							{"1003":[{"input" : "input1", "val" : 0, "path" : "input1"},{"input" : "input2", "val" : 0, "path" : "input2"}]},
-							{"1004":[{"input" : "input1", "val" : 1, "path" : "input1"},{"input" : "input2", "val" : 1, "path" : "input2"}]},
-							{"1005":[{"input" : "input1", "val" : 0, "path" : "input1"},{"input" : "input2", "val" : 0, "path" : "input2"}]},
-							{"1006":[{"input" : "input1", "val" : 1, "path" : "input1"},{"input" : "input2", "val" : 1, "path" : "input2"}]},
-							{"1007":[{"input" : "input1", "val" : 0, "path" : "input1"},{"input" : "input2", "val" : 0, "path" : "input2"}]},
-							{"1008":[{"input" : "input1", "val" : 1, "path" : "input1"},{"input" : "input2", "val" : 1, "path" : "input2"}]},
-							{"1009":[{"input" : "input1", "val" : 0, "path" : "input1"},{"input" : "input2", "val" : 0, "path" : "input2"}]},
-							{"1010":[{"input" : "input1", "val" : 1, "path" : "input1"},{"input" : "input2", "val" : 1, "path" : "input2"}]},
-							{"1011":[{"input" : "input1", "val" : 0, "path" : "input1"},{"input" : "input2", "val" : 0, "path" : "input2"}]},
-							{"1012":[{"input" : "input1", "val" : 1, "path" : "input1"},{"input" : "input2", "val" : 1, "path" : "input2"}]},
-							{"1013":[{"input" : "input1", "val" : 0, "path" : "input1"},{"input" : "input2", "val" : 0, "path" : "input2"}]},
-							{"1014":[{"input" : "input1", "val" : 1, "path" : "input1"},{"input" : "input2", "val" : 1, "path" : "input2"}]}
+							{"1004":[{"input" : "input1", "val" : 1, "path" : "input1"},{"input" : "input2", "val" : 1, "path" : "input2"}]}
 						]
 					},
 					{
@@ -134,27 +108,7 @@
 							{"problemId" : "whatIsAnd", "toPort" : "input1", "path" : "input1", "testIdx": 3, "val": 0, "sigId" : "1003" },
 							{"problemId" : "whatIsAnd", "toPort" : "input2", "path" : "input2", "testIdx": 3, "val": 0, "sigId" : "1003" },
 							{"problemId" : "whatIsAnd", "toPort" : "input1", "path" : "input1", "testIdx": 0, "val": 1, "sigId" : "1004" },
-							{"problemId" : "whatIsAnd", "toPort" : "input2", "path" : "input2", "testIdx": 0, "val": 1, "sigId" : "1004" },
-							{"problemId" : "whatIsAnd", "toPort" : "input1", "path" : "input1", "testIdx": 1, "val": 0, "sigId" : "1005" },
-							{"problemId" : "whatIsAnd", "toPort" : "input2", "path" : "input2", "testIdx": 1, "val": 0, "sigId" : "1005" },
-							{"problemId" : "whatIsAnd", "toPort" : "input1", "path" : "input1", "testIdx": 2, "val": 1, "sigId" : "1006" },
-							{"problemId" : "whatIsAnd", "toPort" : "input2", "path" : "input2", "testIdx": 2, "val": 1, "sigId" : "1006" },
-							{"problemId" : "whatIsAnd", "toPort" : "input1", "path" : "input1", "testIdx": 3, "val": 0, "sigId" : "1007" },
-							{"problemId" : "whatIsAnd", "toPort" : "input2", "path" : "input2", "testIdx": 3, "val": 0, "sigId" : "1007" },
-							{"problemId" : "whatIsAnd", "toPort" : "input1", "path" : "input1", "testIdx": 0, "val": 1, "sigId" : "1008" },
-							{"problemId" : "whatIsAnd", "toPort" : "input2", "path" : "input2", "testIdx": 0, "val": 1, "sigId" : "1008" },
-							{"problemId" : "whatIsAnd", "toPort" : "input1", "path" : "input1", "testIdx": 1, "val": 0, "sigId" : "1009" },
-							{"problemId" : "whatIsAnd", "toPort" : "input2", "path" : "input2", "testIdx": 1, "val": 0, "sigId" : "1009" },
-							{"problemId" : "whatIsAnd", "toPort" : "input1", "path" : "input1", "testIdx": 2, "val": 1, "sigId" : "1010" },
-							{"problemId" : "whatIsAnd", "toPort" : "input2", "path" : "input2", "testIdx": 2, "val": 1, "sigId" : "1010" },
-							{"problemId" : "whatIsAnd", "toPort" : "input1", "path" : "input1", "testIdx": 3, "val": 0, "sigId" : "1011" },
-							{"problemId" : "whatIsAnd", "toPort" : "input2", "path" : "input2", "testIdx": 3, "val": 0, "sigId" : "1011" },
-							{"problemId" : "whatIsAnd", "toPort" : "input1", "path" : "input1", "testIdx": 1, "val": 1, "sigId" : "1012" },
-							{"problemId" : "whatIsAnd", "toPort" : "input2", "path" : "input2", "testIdx": 1, "val": 1, "sigId" : "1012" },
-							{"problemId" : "whatIsAnd", "toPort" : "input1", "path" : "input1", "testIdx": 2, "val": 0, "sigId" : "1013" },
-							{"problemId" : "whatIsAnd", "toPort" : "input2", "path" : "input2", "testIdx": 2, "val": 0, "sigId" : "1013" },
-							{"problemId" : "whatIsAnd", "toPort" : "input1", "path" : "input1", "testIdx": 3, "val": 1, "sigId" : "1014" },
-							{"problemId" : "whatIsAnd", "toPort" : "input2", "path" : "input2", "testIdx": 3, "val": 1, "sigId" : "1014" }
+							{"problemId" : "whatIsAnd", "toPort" : "input2", "path" : "input2", "testIdx": 0, "val": 1, "sigId" : "1004" }
 						]
 					},
 					{
@@ -165,6 +119,64 @@
 						"atLeastTheseFields": true,
 						"ordered": true, 
 						"results":[]
+					},
+					{
+						"function" : "getHistoricallyCompletedSignalsAndRemoveFromSaturatedInputQueue",
+						"parameters" : null,
+						"returnType" : "object",
+						"containsJSONArray" : true,
+						"atLeastTheseFields": true,
+						"ordered": true, 
+						"results":[
+							{"1000":[{"input" : "input1", "val" : 1, "path" : "input1"},{"input" : "input2", "val" : 1, "path" : "input2"},{"input" : "input3", "val" : 0, "path" : "input3"}]},
+							{"1001":[{"input" : "input1", "val" : 0, "path" : "input1"},{"input" : "input2", "val" : 0, "path" : "input2"},{"input" : "input3", "val" : 0, "path" : "input3"}]}
+						]
+					},
+					{
+						"function" : "getInputMessageQueue",
+						"parameters" : null,
+						"returnType" : "object",
+						"containsJSONArray" : true,
+						"atLeastTheseFields": true,
+						"ordered": true,
+						"results":[
+							{"problemId" : "whatIsAnd", "toPort" : "input1", "path" : "input1", "testIdx": 1, "val": 0, "sigId" : "1001" },
+							{"problemId" : "whatIsAnd", "toPort" : "input2", "path" : "input2", "testIdx": 1, "val": 0, "sigId" : "1001" },
+							{"problemId" : "whatIsAnd", "toPort" : "input1", "path" : "input1", "testIdx": 2, "val": 1, "sigId" : "1002" },
+							{"problemId" : "whatIsAnd", "toPort" : "input2", "path" : "input2", "testIdx": 2, "val": 1, "sigId" : "1002" },
+							{"problemId" : "whatIsAnd", "toPort" : "input1", "path" : "input1", "testIdx": 3, "val": 0, "sigId" : "1003" },
+							{"problemId" : "whatIsAnd", "toPort" : "input2", "path" : "input2", "testIdx": 3, "val": 0, "sigId" : "1003" },
+							{"problemId" : "whatIsAnd", "toPort" : "input1", "path" : "input1", "testIdx": 0, "val": 1, "sigId" : "1004" },
+							{"problemId" : "whatIsAnd", "toPort" : "input2", "path" : "input2", "testIdx": 0, "val": 1, "sigId" : "1004" }
+						]
+					},
+					{
+						"function" : "getActivationQueue",
+						"parameters" : null,
+						"returnType" : "object",
+						"containsJSONArray" : true,
+						"atLeastTheseFields": true,
+						"ordered": true, 
+						"results":[
+							{"1000":[{"input" : "input1", "val" : 1, "path" : "input1"},{"input" : "input2", "val" : 1, "path" : "input2"},{"input" : "input3", "val" : 0, "path" : "input3"}]},
+							{"1001":[{"input" : "input1", "val" : 0, "path" : "input1"},{"input" : "input2", "val" : 0, "path" : "input2"},{"input" : "input3", "val" : 0, "path" : "input3"}]}
+						]
+					},
+					{
+						"function" : "getIO",
+						"parameters" : null,
+						"returnType" : "object",
+						"containsJSONArray" : true,
+						"atLeastTheseFields": true,
+						"ordered": true, 
+						"results":[
+							{"id" : "input1", "type": "extInput", "angle": 0, "fromId": "ext", "fromPort": "ext", "val": 0, "life" : 1},
+							{"id" : "input2", "type": "extInput", "angle": 0, "fromId": "ext", "fromPort": "ext", "val": 0, "life" : 1},
+							{"id" : "input3", "type": "extInput", "angle": 0, "fromId": "ext", "fromPort": "ext", "val": 0, "life" : 1},
+							{"id" : "bias1", "type": "bias", "angle": 20, "val":-1},
+							{"id" : "internal1", "type": "output", "angle": -60, "toId": "outputSpheron1", "toPort": "internal1", "val":-1},
+							{"id" : "internal1a", "type": "output", "angle": -50, "toId": "outputSpheron1", "toPort": "internal1", "val":-1}
+						]
 					}
 
 				]

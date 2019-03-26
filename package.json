@@ -13,6 +13,7 @@
   "dependencies": {
     "async-require": "^1.2.2",
     "express": "^4.16.3",
+    "extend": "^3.0.2",
     "find-process": "^1.2.1",
     "mongodb": "^3.1.4",
     "opn": "^5.3.0",

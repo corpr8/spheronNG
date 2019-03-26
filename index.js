@@ -1,4 +1,4 @@
-var fork = require('child_process').fork;
+var fork = require('child_process').fork; 
 var settings = require('./settings.json')
 var fs = require('fs');
 var findProcess = require('find-process')

@@ -15,8 +15,7 @@ var inputMessageQueueProcessor = {
 		that.logger = logger
 		that.spheron = thisSpheron
 		that.logger.log(moduleName, 2,'init')
-		
-		
+			
 		if(!that.spheron.tdd){
 			that.logger.log(moduleName, 2, 'Module running in Production mode')
 			that.processPhases(function(){
@@ -27,7 +26,7 @@ var inputMessageQueueProcessor = {
 		}
 		callback()
 	},
-	processPhases: function(){
+	processPhases: function(callback){
  		var that = this
  		that.processorPhaseIterator(0, function(){
  			callback()
@@ -38,6 +37,16 @@ var inputMessageQueueProcessor = {
 		switch(phaseIdx){
 			case 0:
 				//Handle full signal matches
+
+				/*
+				* TODO: We must handle multi-variated of each case.
+				* Initially, if we get a signal on a variated input, we should copy that to the others in the test.
+				* Eventually - if we have a multivariated output, we should have a way of handling it somehow.
+				* Problem being that we will have multiple singnals with the same value going into the same queue - which will wipe out the variations due to queue handling. 
+				* Eventually we must modify queue handling to cope - i.e. if a signal comes through which is multi-variant, it fires as an OR with other singals in the queue of its sigId.
+				*/
+
+
 				that.getFullSignalResultsAndRemoveFromInputQueue(function(){
 					that.processorPhaseIterator(phaseIdx +1, callback)
 				})
@@ -48,13 +57,49 @@ var inputMessageQueueProcessor = {
 					
 			break;
 				case 2:
-				//Handle saturated input queue - where an input might consistently not respond and therefore pass it in the 'static' state
-				//and decay that connections 'life' value.
-					
+				/* is the input queue saturated? */
+				that.inputMessageQueueIsSaturated(function(saturated){
+					if(!saturated){
+						that.processorPhaseIterator(99, callback)	
+					} else {
+						//Handle saturated input queue - where an input might consistently not respond and therefore pass it in the 'static' state
+						//and decay that connections 'life' value.
+						that.getHistoricallyCompletedSignalsAndRemoveFromSaturatedInputQueue(function(){
+							that.processorPhaseIterator(phaseIdx +1, callback)		
+						})
+					}
+				})
 			break;
+				case 3:
+				// where an input queue is saturated AND an input is consistently missing:
+				// pass it with a value of 'static' and decay the life value of the connection
+			
+			break;
+				case 4:
+				// decay dead connections.
+				// where a connection is very dead, convert it to a bias.
+			break;
+
 				default:
+				/*any post processing and callback*/
 				callback()
 			break;
+		}
+	},
+	inputMessageQueueIsSaturated: function(callback){
+		var that = this
+		if(that.spheron.settings){
+			if(that.spheron.settings.maxInputQueueDepth){
+				if(that.spheron.settings.maxInputQueueDepth < that.spheron.inputMessageQueue.length){
+					callback(true)
+				} else {
+					callback(false)
+				}
+			} else {
+				callback(false)
+			}
+		} else {
+			callback(false)
 		}
 	},
 	getSignalIdsFromInputQueue: function(idx, sigIds, callback){
@@ -99,29 +144,35 @@ var inputMessageQueueProcessor = {
 			callback(inputNames)
 		}
 	},
-	getInputGroupedBySigId: function(callback){
+	getNonHistoricInputGroupedBySigId: function(callback){
 		var that = this
-		that._getInputGroupedBySigIdIterator([], 0, function(result){
+		that._getNonHistoricInputGroupedBySigIdIterator([], 0, function(result){
 			that.logger.log(moduleName, 2, 'returning signals grouped by sigId: ' + JSON.stringify(result))
 			callback(result)
 		})
 	},
-	_getInputGroupedBySigIdIterator: function(outputArray, inputIdx, callback){
+	_getNonHistoricInputGroupedBySigIdIterator: function(outputArray, inputIdx, callback){
 		var that = this
 		if(that.spheron.inputMessageQueue[inputIdx]){
 			that._searchArrayForSigId(outputArray, 0, that.spheron.inputMessageQueue[inputIdx].sigId, function(result){
 				if(result != -1){
-					var newMessage = {
-						"input": that.spheron.inputMessageQueue[inputIdx].toPort,
-						"val": that.spheron.inputMessageQueue[inputIdx].val,
-						"path": that.spheron.inputMessageQueue[inputIdx].path
-					}
+					that._searchHistoricInputForSigId(0, that.spheron.inputMessageQueue[inputIdx].sigId, function(resultH){
+						if(resultH == -1){
+							var newMessage = {
+								"input": that.spheron.inputMessageQueue[inputIdx].toPort,
+								"val": that.spheron.inputMessageQueue[inputIdx].val,
+								"path": that.spheron.inputMessageQueue[inputIdx].path
+							}
 
-					that.logger.log(moduleName, 4, 'new message: ' + JSON.stringify(newMessage))
-					that.logger.log(moduleName, 4, 'output array: ' + JSON.stringify(outputArray))
+							that.logger.log(moduleName, 4, 'new message: ' + JSON.stringify(newMessage))
+							that.logger.log(moduleName, 4, 'output array: ' + JSON.stringify(outputArray))
 
-					outputArray[result][that.spheron.inputMessageQueue[inputIdx].sigId].push(newMessage)
-					that._getInputGroupedBySigIdIterator(outputArray, inputIdx+1, callback)
+							outputArray[result][that.spheron.inputMessageQueue[inputIdx].sigId].push(newMessage)
+							that._getNonHistoricInputGroupedBySigIdIterator(outputArray, inputIdx+1, callback)		
+						} else {
+							that._getNonHistoricInputGroupedBySigIdIterator(outputArray, inputIdx+1, callback)		
+						}
+					})
 				} else {
 					
 					var newMessage = {}
@@ -132,7 +183,7 @@ var inputMessageQueueProcessor = {
 						"path": that.spheron.inputMessageQueue[inputIdx].path
 					}) 
 					outputArray.push(newMessage)
-					that._getInputGroupedBySigIdIterator(outputArray, inputIdx+1, callback)
+					that._getNonHistoricInputGroupedBySigIdIterator(outputArray, inputIdx+1, callback)
 				}
 			})
 		} else {
@@ -165,6 +216,25 @@ var inputMessageQueueProcessor = {
 			callback(-1)
 		}
 	},
+	_searchHistoricInputForSigId: function(arrayIdx, sigId, callback){
+		var that = this
+		if(that.spheron.ActivationHistory){
+			if(that.spheron.ActivationHistory[arrayIdx]){
+				that.logger.log(moduleName, 4, 'array value: ' + that.spheron.ActivationHistory[arrayIdx] + ' sigId: ' + sigId)
+				if(that.spheron.ActivationHistory[arrayIdx] == sigId){
+					that.logger.log(moduleName, 4, 'Match found')
+					callback(arrayIdx)
+				} else {
+					that._searchHistoricInputForSigId(arrayIdx+1, sigId, callback)
+				}
+			} else {
+				that.logger.log(moduleName, 4, 'end of array. value not found')
+				callback(-1)
+			}
+		} else {
+			callback(-1)
+		}
+	},
 	getFullSignalResultsAndRemoveFromInputQueue: function(callback){
 		/*
 		* Look at the input que and remove any where the full input set exists for a signalId (starting with the lowest signalId)
@@ -180,7 +250,7 @@ var inputMessageQueueProcessor = {
 		
 		var that = this
 		that.findInputNames(function(foundInputs){
-			that.getInputGroupedBySigId(function(inputGroupedBySigId){
+			that.getNonHistoricInputGroupedBySigId(function(inputGroupedBySigId){
 				/*
 				* Activation Quue Candidates:
 				* 1: We have all input for a given signalId and that signalId is not historic
@@ -289,7 +359,6 @@ var inputMessageQueueProcessor = {
 		}
 	},
 	getInputMessageQueue: function(callback){
-		//BROKEN
 		var that = this
 		that.logger.log(moduleName, 2, 'getInputMessageQueue has been called')
 		that.logger.log(moduleName, 2, 'getInputMessageQueue returning ' + that.spheron.inputMessageQueue)
@@ -297,15 +366,38 @@ var inputMessageQueueProcessor = {
 	}
 	,
 	getActivationQueue: function(callback){
-		try{
-			//BROKEN  
-			var that = this
-			that.logger.log(moduleName, 2, 'getActivationQueue has been called')
-			that.logger.log(moduleName, 2, 'getActivationQueue returning ' + that.spheron.inputMessageQueue)
-			callback(that.spheron.activationQueue)	
-		} catch(Err){
-			console.log(Err)
+		var that = this
+		that.logger.log(moduleName, 2, 'getActivationQueue has been called')
+		that.logger.log(moduleName, 2, 'getActivationQueue returning ' + that.spheron.inputMessageQueue)
+		callback(that.spheron.activationQueue)	
+	},
+	_getConsistentlyIncompleteInput: function(callback){
+		var that = this
+		that.logger.log(moduleName, 2, '_getConsistentlyIncompleteInput has been called')
+		that.findInputNames(function(foundInputs){
+			that._getConsistentlyIncompleteInputIterator(0, foundInputs, function(missingInputs){
+				that.logger.log(moduleName, 2, '_getConsistentlyIncompleteInput returning ' + missingInputs.join(','))
+				callback(missingInputs)
+			})
+		})
+		
+	},
+	_getConsistentlyIncompleteInputIterator: function(inputQueueIdx, missingInputs, callback){
+		var that = this
+		if(that.spheron.inputMessageQueue[inputQueueIdx]){
+			if(missingInputs.indexOf(that.spheron.inputMessageQueue[inputQueueIdx].toPort) != -1){
+				missingInputs.splice(missingInputs.indexOf(that.spheron.inputMessageQueue[inputQueueIdx].toPort) ,1)
+			}
+			that._getConsistentlyIncompleteInputIterator(inputQueueIdx +1, missingInputs, callback)
+		} else {
+			callback(missingInputs)
 		}
+	},
+	getHistoricallyCompletedSignalsAndRemoveFromSaturatedInputQueue: function(callback){
+		var that = this
+		that.logger.log(moduleName, 2, 'getHistoricallyCompletedSignalsAndRemoveFromSaturatedInputQueue has been called')
+		process.exitCode = 1
+
 	}
 }
 

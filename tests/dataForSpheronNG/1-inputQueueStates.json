@@ -11,6 +11,9 @@
 		{"spheronId": "allInputSignalsMatchToActivationPairs",
 			"type" : "spheron",
 			"state" : "pending",
+			"settings" : {
+				"maxInputQueueDepth" : 10
+			},
 			"nextTick" : 1,
 			"io": [
 				{"id" : "input1", "type": "extInput", "angle": 0, "fromId": "ext", "fromPort": "ext", "val":-1, "life" : 1},
@@ -45,6 +48,9 @@
 		{"spheronId": "allButOneInputSignalsMatchToActivationPairs",
 			"type" : "spheron",
 			"state" : "pending",
+			"settings" : {
+				"maxInputQueueDepth" : 10
+			},
 			"nextTick" : 1,
 			"io": [
 				{"id" : "input1", "type": "extInput", "angle": 0, "fromId": "ext", "fromPort": "ext", "val":-1, "life" : 1},
@@ -78,6 +84,9 @@
 		{"spheronId": "noInputSignalsMatchToActivationPairsAndQueueIsSaturated",
 			"type" : "spheron",
 			"state" : "pending",
+			"settings" : {
+				"maxInputQueueDepth" : 10
+			},
 			"nextTick" : 1,
 			"io": [
 				{"id" : "input1", "type": "extInput", "angle": 0, "fromId": "ext", "fromPort": "ext", "val":-1, "life" : 1},
@@ -163,7 +172,7 @@
 						"results":["input1","input2","input3"]
 					},
 					{
-						"function" : "getInputGroupedBySigId",
+						"function" : "getNonHistoricInputGroupedBySigId",
 						"parameters" : null,
 						"returnType" : "object",
 						"containsJSONArray" : true,
@@ -242,7 +251,7 @@
 						"results":["input1","input2","input3"]
 					},
 					{
-						"function" : "getInputGroupedBySigId",
+						"function" : "getNonHistoricInputGroupedBySigId",
 						"parameters" : null,
 						"returnType" : "object",
 						"containsJSONArray" : true,
@@ -303,6 +312,17 @@
 					"spheronId" : "noInputSignalsMatchToActivationPairsAndQueueIsSaturated"
 				},
 				"expectedResults" : [
+
+
+					{
+						"function" : "_getConsistentlyIncompleteInput",
+						"parameters" : null,
+						"returnType" : "object",
+						"containsJSONArray" : false,
+						"atLeastTheseFields": false,
+						"ordered": true,
+						"results":["input3"]
+					},
 					{
 						"function" : "getSignalIdsFromInputQueue",
 						"parameters" : [0,[]],
@@ -322,7 +342,7 @@
 						"results":["input1","input2","input3"]
 					},
 					{
-						"function" : "getInputGroupedBySigId",
+						"function" : "getNonHistoricInputGroupedBySigId",
 						"parameters" : null,
 						"returnType" : "object",
 						"containsJSONArray" : true,
