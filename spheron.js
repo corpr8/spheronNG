@@ -24,6 +24,7 @@ var Spheron = function (config) {
 	that.testLength = (config.testLength) ? config.testLength : -1 //how long is the test plan?
 	that.testIdx = (config.testIdx) ? config.testIdx : -1 //if we are running a testl what is our current testIdx?
 	that.trainingMode = (config.trainingMode) ? config.trainingMode : true //do we actually want to back propagate and evolve? (true)
+	that.activationHistory = (config.activationHistory) ? config.activationHistory : [] 
 
 
 	that.inputMessageQueue = (config.inputMessageQueue) ? config.inputMessageQueue : [] //individual port messages - these require martialling into a coherent signal

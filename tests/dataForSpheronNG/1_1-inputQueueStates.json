@@ -14,7 +14,7 @@
 			"settings" : {
 				"maxInputQueueDepth" : 10
 			},
-			"ActivationHistory" : ["998","999"],
+			"activationHistory" : ["998","999"],
 			"nextTick" : 1,
 			"io": [
 				{"id" : "input1", "type": "extInput", "angle": 0, "fromId": "ext", "fromPort": "ext", "val":-1, "life" : 1},

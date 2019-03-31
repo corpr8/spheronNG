@@ -218,10 +218,10 @@ var inputMessageQueueProcessor = {
 	},
 	_searchHistoricInputForSigId: function(arrayIdx, sigId, callback){
 		var that = this
-		if(that.spheron.ActivationHistory){
-			if(that.spheron.ActivationHistory[arrayIdx]){
-				that.logger.log(moduleName, 4, 'array value: ' + that.spheron.ActivationHistory[arrayIdx] + ' sigId: ' + sigId)
-				if(that.spheron.ActivationHistory[arrayIdx] == sigId){
+		if(that.spheron.activationHistory){
+			if(that.spheron.activationHistory[arrayIdx]){
+				that.logger.log(moduleName, 4, 'array value: ' + that.spheron.activationHistory[arrayIdx] + ' sigId: ' + sigId)
+				if(that.spheron.activationHistory[arrayIdx] == sigId){
 					that.logger.log(moduleName, 4, 'Match found')
 					callback(arrayIdx)
 				} else {
@@ -396,8 +396,22 @@ var inputMessageQueueProcessor = {
 	getHistoricallyCompletedSignalsAndRemoveFromSaturatedInputQueue: function(callback){
 		var that = this
 		that.logger.log(moduleName, 2, 'getHistoricallyCompletedSignalsAndRemoveFromSaturatedInputQueue has been called')
+		that.getHistoricallyCompletedSignalsAndRemoveFromSaturatedInputQueueIterator(0, [], function(historicallyCompleteSignals){
+			/*
+			* now we have the historically complete signals...
+			*/ 
+		})
+	},
+	getHistoricallyCompletedSignalsAndRemoveFromSaturatedInputQueueIterator: function(signalIdx, historicallyCompleteSignals, callback){
+		var that = this
+		that.logger.log(moduleName, 2, 'getHistoricallyCompletedSignalsAndRemoveFromSaturatedInputQueueIterator has been called')
 		process.exitCode = 1
+		
+		if(that.spheron.inputMessageQueue[inputQueueIdx]){
 
+		} else {
+			callback()
+		}
 	}
 }
 
