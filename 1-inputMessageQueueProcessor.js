@@ -2,6 +2,7 @@ var moduleName = 'inputMessageQueueProcessor'
 var path = require('path');
 var appDir = path.dirname(require.main.filename);
 var settings = require(appDir +'/settings.json')
+var isJSON = require(appDir +'/isJSON.js')
 
 /*
 * Module to handle the input message queue
@@ -46,21 +47,17 @@ var inputMessageQueueProcessor = {
 				* Eventually we must modify queue handling to cope - i.e. if a signal comes through which is multi-variant, it fires as an OR with other singals in the queue of its sigId.
 				*/
 
-
+				/*handle straight out single signal matches in the input queue */
 				that.getFullSignalResultsAndRemoveFromInputQueue(function(){
 					that.processorPhaseIterator(phaseIdx +1, callback)
 				})
 			break;
 				case 1:
-				//Handle matches with historic results
-				that.processorPhaseIterator(phaseIdx +1, callback)
-					
-			break;
-				case 2:
 				/* is the input queue saturated? */
 				that.inputMessageQueueIsSaturated(function(saturated){
 					if(!saturated){
-						that.processorPhaseIterator(99, callback)	
+						/*No. - further processing of inputQueue is not necesary */
+						that.processorPhaseIterator(9999, callback)
 					} else {
 						//Handle saturated input queue - where an input might consistently not respond and therefore pass it in the 'static' state
 						//and decay that connections 'life' value.
@@ -69,6 +66,11 @@ var inputMessageQueueProcessor = {
 						})
 					}
 				})
+			break;
+				case 2:
+				
+				//Handle matches with historic results
+				that.processorPhaseIterator(phaseIdx +1, callback)
 			break;
 				case 3:
 				// where an input queue is saturated AND an input is consistently missing:
@@ -90,11 +92,13 @@ var inputMessageQueueProcessor = {
 		var that = this
 		if(that.spheron.settings){
 			if(that.spheron.settings.maxInputQueueDepth){
-				if(that.spheron.settings.maxInputQueueDepth < that.spheron.inputMessageQueue.length){
-					callback(true)
-				} else {
-					callback(false)
-				}
+				that.spheron.getInputMessageQueueLength(function(inputQueueLength){
+					if(that.spheron.settings.maxInputQueueDepth < inputQueueLength){
+						callback(true)
+					} else {
+						callback(false)
+					}
+				})
 			} else {
 				callback(false)
 			}
@@ -146,49 +150,57 @@ var inputMessageQueueProcessor = {
 	},
 	getNonHistoricInputGroupedBySigId: function(callback){
 		var that = this
+		that.logger.log(moduleName, 4, 'called getNonHistoricInputGroupedBySigId')
 		that._getNonHistoricInputGroupedBySigIdIterator([], 0, function(result){
-			that.logger.log(moduleName, 2, 'returning signals grouped by sigId: ' + JSON.stringify(result))
+			that.logger.log(moduleName, 2, 'returning non-historic signals grouped by sigId: ' + JSON.stringify(result))
 			callback(result)
 		})
 	},
 	_getNonHistoricInputGroupedBySigIdIterator: function(outputArray, inputIdx, callback){
 		var that = this
-		if(that.spheron.inputMessageQueue[inputIdx]){
-			that._searchArrayForSigId(outputArray, 0, that.spheron.inputMessageQueue[inputIdx].sigId, function(result){
-				if(result != -1){
-					that._searchHistoricInputForSigId(0, that.spheron.inputMessageQueue[inputIdx].sigId, function(resultH){
-						if(resultH == -1){
-							var newMessage = {
-								"input": that.spheron.inputMessageQueue[inputIdx].toPort,
-								"val": that.spheron.inputMessageQueue[inputIdx].val,
-								"path": that.spheron.inputMessageQueue[inputIdx].path
+		that.spheron.getInputMessageQueue(function(thisInputMessageQueue){
+			if(thisInputMessageQueue[inputIdx]){
+				that._searchArrayForSigId(outputArray, 0, thisInputMessageQueue[inputIdx].sigId, function(result){
+					if(result != -1){
+						that._searchHistoricInputForSigId(0, thisInputMessageQueue[inputIdx].sigId, function(resultH){
+							if(resultH == -1){
+								var newMessage = {
+									"input": that.spheron.inputMessageQueue[inputIdx].toPort,
+									"val": that.spheron.inputMessageQueue[inputIdx].val,
+									"path": that.spheron.inputMessageQueue[inputIdx].path
+								}
+
+								that.logger.log(moduleName, 4, 'new message: ' + JSON.stringify(newMessage))
+								that.logger.log(moduleName, 4, 'output array: ' + JSON.stringify(outputArray))
+
+								outputArray[result][that.spheron.inputMessageQueue[inputIdx].sigId].push(newMessage)
+								that._getNonHistoricInputGroupedBySigIdIterator(outputArray, inputIdx+1, callback)		
+							} else {
+								that._getNonHistoricInputGroupedBySigIdIterator(outputArray, inputIdx+1, callback)
 							}
-
-							that.logger.log(moduleName, 4, 'new message: ' + JSON.stringify(newMessage))
-							that.logger.log(moduleName, 4, 'output array: ' + JSON.stringify(outputArray))
-
-							outputArray[result][that.spheron.inputMessageQueue[inputIdx].sigId].push(newMessage)
-							that._getNonHistoricInputGroupedBySigIdIterator(outputArray, inputIdx+1, callback)		
-						} else {
-							that._getNonHistoricInputGroupedBySigIdIterator(outputArray, inputIdx+1, callback)		
-						}
-					}) 
-				} else {
-					
-					var newMessage = {}
-					newMessage[that.spheron.inputMessageQueue[inputIdx].sigId] = []
-					newMessage[that.spheron.inputMessageQueue[inputIdx].sigId].push({
-						"input": that.spheron.inputMessageQueue[inputIdx].toPort,
-						"val": that.spheron.inputMessageQueue[inputIdx].val,
-						"path": that.spheron.inputMessageQueue[inputIdx].path
-					}) 
-					outputArray.push(newMessage)
-					that._getNonHistoricInputGroupedBySigIdIterator(outputArray, inputIdx+1, callback)
-				}
-			})
-		} else {
-			callback(outputArray)
-		}
+						}) 
+					} else {
+						that._searchHistoricInputForSigId(0, thisInputMessageQueue[inputIdx].sigId, function(resultH){
+							if(resultH == -1){
+								var newMessage = {}
+								newMessage[that.spheron.inputMessageQueue[inputIdx].sigId] = []
+								newMessage[that.spheron.inputMessageQueue[inputIdx].sigId].push({
+									"input": that.spheron.inputMessageQueue[inputIdx].toPort,
+									"val": that.spheron.inputMessageQueue[inputIdx].val,
+									"path": that.spheron.inputMessageQueue[inputIdx].path
+								}) 
+								outputArray.push(newMessage)
+								that._getNonHistoricInputGroupedBySigIdIterator(outputArray, inputIdx+1, callback)
+							} else {
+								that._getNonHistoricInputGroupedBySigIdIterator(outputArray, inputIdx+1, callback)
+							}
+						})
+					}
+				})
+			} else {
+				callback(outputArray)
+			}
+		})
 	},
 	getSignalsWithConsistentGapsFromSaturatedInputQueue: function(callback){
 		/*
@@ -218,9 +230,12 @@ var inputMessageQueueProcessor = {
 	},
 	_searchHistoricInputForSigId: function(arrayIdx, sigId, callback){
 		var that = this
+		/*
+		* TODO: activtion history should come from a get method
+		*/
 		if(that.spheron.activationHistory){
 			if(that.spheron.activationHistory[arrayIdx]){
-				that.logger.log(moduleName, 4, 'array value: ' + that.spheron.activationHistory[arrayIdx] + ' sigId: ' + sigId)
+				that.logger.log(moduleName, 4, 'historic array value: ' + that.spheron.activationHistory[arrayIdx] + ' candidate sigId: ' + sigId)
 				if(that.spheron.activationHistory[arrayIdx] == sigId){
 					that.logger.log(moduleName, 4, 'Match found')
 					callback(arrayIdx)
@@ -280,36 +295,87 @@ var inputMessageQueueProcessor = {
 		 var that = this
 		signalIdx = (signalIdx) ? signalIdx : 0
 		if(signals[signalIdx]){
-			that.spheron.activationQueue.push(signals[signalIdx]) 
-			that._pushSignalsToActivationQueueIterator(signalIdx+1, signals,callback)
+			that.spheron.pushSignalToActivationQueue(signals[signalIdx], function(){
+				that._pushSignalsToActivationQueueIterator(signalIdx+1, signals,callback)
+			})
 		} else {
 			callback()
 		}
 	},
 	_removeSigIDsFromInputQueue: function(sigIds, callback){
 		var that = this
-		that._removeSigIDsFromInputQueueIterator(0, 0, sigIds, function(){
-			callback()
-		})
+		that.logger.log(moduleName, 2, 'removeSigIds is: ' + JSON.stringify(sigIds[0]))
+		that.logger.log(moduleName, 2, 'isJSON: ' + isJSON(JSON.stringify(sigIds[0])))
+		if(isJSON(JSON.stringify(sigIds[0])) == true){
+			that.logger.log(moduleName, 2, 'removing: sigids from inputqueue - using signal objects not an array of signalIds')
+			that._removeSigIDsFromInputQueueIterator(0, 0, sigIds, function(){
+				callback()
+			})	
+		} else {
+			that.logger.log(moduleName, 2, 'removing: sigids from inputqueue by signalId strings: ' + sigIds.join(','))
+			that._removeSigIDStringsFromInputQueueIterator(0, 0, sigIds, function(){
+				callback()
+			})
+		}
 	},
-	_removeSigIDsFromInputQueueIterator: function(sigIdx, inputQueueIdx, sigIds, callback){
-		var that = this
+	_removeSigIDStringsFromInputQueueIterator: function(sigIdx, inputQueueIdx, sigIds, callback){
+	  var that = this
+	  that.logger.log(moduleName, 4, '*** sigIds ' + sigIds)
+	  that.logger.log(moduleName, 4, '*** that.spheron.inputMessageQueue[inputQueueIdx].sigId ' + that.spheron.inputMessageQueue[inputQueueIdx].sigId + 'versus sigIds[sigIdx]: ' + sigIds[sigIdx])
 	  if(sigIds[sigIdx]){
-	  	if(that.spheron.inputMessageQueue[inputQueueIdx]){
-	  		if(that.spheron.inputMessageQueue[inputQueueIdx].sigId == Object.keys(sigIds[sigIdx])[0]){
-	  			//delete this line...
-	  			//do our work then... - note, we don't need to increment inputQueueIdx if we delete something... 
-	  			that.spheron.inputMessageQueue.splice(inputQueueIdx, 1)
-	  			that._removeSigIDsFromInputQueueIterator(sigIdx, inputQueueIdx, sigIds, callback)	
-	  		} else {
-	  			that._removeSigIDsFromInputQueueIterator(sigIdx, inputQueueIdx+1, sigIds, callback)	
-	  		}
-	  	} else {
-	  		that._removeSigIDsFromInputQueueIterator(sigIdx +1, 0, sigIds, callback)
-	  	}
+	  	that.spheron.getInputMessageQueue(function(thisInputMessageQueue){
+			if(thisInputMessageQueue[inputQueueIdx]){	
+		  		if(thisInputMessageQueue[inputQueueIdx].sigId == sigIds[sigIdx]){
+		  			//delete this line...
+		  			//do our work then... - note, we don't need to increment inputQueueIdx if we delete something... 
+		  			that.logger.log(moduleName, 4, '*** removing: ' + JSON.stringify(thisInputMessageQueue[inputQueueIdx]) + ' from the input queue')
+		  			that.spheron.removeItemFromInputQueueByIdx(inputQueueIdx, function(){
+			  			//that.spheron.inputMessageQueue.splice(inputQueueIdx, 1)
+			  			that._removeSigIDStringsFromInputQueueIterator(sigIdx, inputQueueIdx, sigIds, callback)		
+		  			})
+		  		} else {
+		  			that._removeSigIDStringsFromInputQueueIterator(sigIdx, inputQueueIdx+1, sigIds, callback)	
+		  		}
+		  	} else {
+		  		that._removeSigIDStringsFromInputQueueIterator(sigIdx +1, 0, sigIds, callback)
+		  	}
+	  	})
 	  } else {
 	  	//we have iterated all of the sigIds to take out.
 	  	callback()
+	  }
+	},
+	_removeSigIDsFromInputQueueIterator: function(sigIdx, inputQueueIdx, sigIds, callback){
+	  var that = this
+	  that.logger.log(moduleName, 4, '*** sigIds ' + sigIds)
+
+	  if(sigIds[sigIdx]){
+	  	that.logger.log(moduleName, 4, '*** we have a valid sigIds[sigIdx]')
+	  	that.spheron.getInputMessageQueue(function(thisInputMessageQueue){
+			if(thisInputMessageQueue[inputQueueIdx]){ 
+		  		that.logger.log(moduleName, 4, '*** that.spheron.inputMessageQueue[inputQueueIdx].sigId ' + thisInputMessageQueue[inputQueueIdx].sigId + 'versus Object.keys(sigIds[sigIdx])[0]: ' + Object.keys(sigIds[sigIdx])[0])
+		  		if(thisInputMessageQueue[inputQueueIdx].sigId == Object.keys(sigIds[sigIdx])[0]){
+		  			that.logger.log(moduleName, 4, '*** we are deleting: ' + thisInputMessageQueue[inputQueueIdx].sigId);
+		  			//delete this line...
+		  			//do our work then... - note, we don't need to increment inputQueueIdx if we delete something... 
+
+		  			that.spheron.removeItemFromInputQueueByIdx(inputQueueIdx, function(){
+			  			//(that.spheron.inputMessageQueue).splice(inputQueueIdx, 1); 
+			  			that._removeSigIDsFromInputQueueIterator(sigIdx, inputQueueIdx, sigIds, callback)		
+		  			})
+		  		} else {
+		  			that._removeSigIDsFromInputQueueIterator(sigIdx, inputQueueIdx+1, sigIds, callback)	
+		  		}
+		  	} else {
+		  		that._removeSigIDsFromInputQueueIterator(sigIdx +1, 0, sigIds, callback)
+		  	}
+	  	})
+	  } else {
+	  	//we have iterated all of the sigIds to take out.
+	  	//setTimeout(function(){
+	  	//	callback()
+	  	//},1)
+	  	callback() 
 	  }
 	},
 	_searchForFullyCompleteSignals: function(foundInputs, inputGroupedBySigId, callback){
@@ -361,15 +427,18 @@ var inputMessageQueueProcessor = {
 	getInputMessageQueue: function(callback){
 		var that = this
 		that.logger.log(moduleName, 2, 'getInputMessageQueue has been called')
-		that.logger.log(moduleName, 2, 'getInputMessageQueue returning ' + that.spheron.inputMessageQueue)
-		callback(that.spheron.inputMessageQueue)
-	}
-	,
+		that.spheron.getInputMessageQueue(function(thisMessageQueue){
+			that.logger.log(moduleName, 2, 'getInputMessageQueue returning ' + JSON.stringify(thisMessageQueue))
+			callback(thisMessageQueue)
+		})
+	},
 	getActivationQueue: function(callback){
 		var that = this
-		that.logger.log(moduleName, 2, 'getActivationQueue has been called')
-		that.logger.log(moduleName, 2, 'getActivationQueue returning ' + that.spheron.inputMessageQueue)
-		callback(that.spheron.activationQueue)	
+		that.logger.log(moduleName, 2, 'getActivationQueue has been called') 
+		that.spheron.getActivationQueue(function(thisMessageQueue){
+			that.logger.log(moduleName, 2, 'getActivationQueue returning ' + JSON.stringify(thisMessageQueue))
+			callback(thisMessageQueue)
+		})
 	},
 	_getConsistentlyIncompleteInput: function(callback){
 		var that = this
@@ -396,22 +465,169 @@ var inputMessageQueueProcessor = {
 	getHistoricallyCompletedSignalsAndRemoveFromSaturatedInputQueue: function(callback){
 		var that = this
 		that.logger.log(moduleName, 2, 'getHistoricallyCompletedSignalsAndRemoveFromSaturatedInputQueue has been called')
-		that.getHistoricallyCompletedSignalsAndRemoveFromSaturatedInputQueueIterator(0, [], function(historicallyCompleteSignals){
-			/*
-			* now we have the historically complete signals...
-			*/ 
+		that.findInputNames(function(inputNames){
+			that.getNonHistoricInputGroupedBySigId(function(nonHistoricSignalsGroupedBySigId){
+				that.logger.log(moduleName, 2, 'nonHistoricSignalsGroupedBySigId: ' + JSON.stringify(nonHistoricSignalsGroupedBySigId))
+				that.getHistoricallyCompletedSignalsAndRemoveFromSaturatedInputQueueIterator(0, nonHistoricSignalsGroupedBySigId, inputNames, function(historicallyCompleteSignals){
+					/*
+					* fnished iterating, we should callback as we are all done
+					*/ 
+					callback(null)
+				})	
+			})
 		})
 	},
-	getHistoricallyCompletedSignalsAndRemoveFromSaturatedInputQueueIterator: function(signalIdx, historicallyCompleteSignals, callback){
+	getHistoricallyCompletedSignalsAndRemoveFromSaturatedInputQueueIterator: function(signalIdx, nonHistoricSignalsGroupedBySigId, inputNames, callback){
 		var that = this
 		that.logger.log(moduleName, 2, 'getHistoricallyCompletedSignalsAndRemoveFromSaturatedInputQueueIterator has been called')
-		process.exitCode = 1
 		
-		if(that.spheron.inputMessageQueue[inputQueueIdx]){
+		if(nonHistoricSignalsGroupedBySigId[signalIdx]){
+			that.logger.log(moduleName, 4, 'non historic signal grouped by SignalId:' + JSON.stringify(nonHistoricSignalsGroupedBySigId[signalIdx]))
+			/*
+			* now find if we the missing inputs and work out if we can complete those from historic signals...
+			*/
+			that._establishInputsMissingFromSignalGrouping(nonHistoricSignalsGroupedBySigId[signalIdx], 0, inputNames, [], function(missingInputs){
+				that.logger.log(moduleName, 2, 'missing inputs:' + missingInputs.join(','))
+				that.findHistoricInputNames(function(historicInputs){
+					that.logger.log(moduleName, 2, 'historic inputs:' + historicInputs.join(','))
+					process.exitCode = 1
+					that.aSubsetOfB(missingInputs, historicInputs, function(result){
+						if(result){
+							that.logger.log(moduleName, 2, 'missing inputs ARE a subset of historic inputs - we CAN do historic activation!!!')
 
+							/*
+							* complete this signal by removing elements from historic queue and push to activation queue
+							*/
+							that._completeSignalWithHistoricComponentsAndRemoveFromInputQueue(nonHistoricSignalsGroupedBySigId[signalIdx], missingInputs, function(backfilledSignal){
+								that.logger.log(moduleName, 2, 'pushing to activation queue: ' + JSON.stringify(backfilledSignal))
+								that._pushSignalsToActivationQueue([backfilledSignal], function(){
+									//rather than calling back, start getHistoricallyCompletedSignalsAndRemoveFromSaturatedInputQueue again
+									that.getHistoricallyCompletedSignalsAndRemoveFromSaturatedInputQueue(callback)
+								})
+							})
+						} else {
+							that.logger.log(moduleName, 2, 'missing inputs are not a subset of historic inputs')
+							that.getHistoricallyCompletedSignalsAndRemoveFromSaturatedInputQueueIterator(signalIdx +1, nonHistoricSignalsGroupedBySigId, inputNames, callback)
+						}
+					})
+				})				
+			})
 		} else {
+			//process.exitCode = 1
 			callback()
 		}
+	},
+	_completeSignalWithHistoricComponentsAndRemoveFromInputQueue: function(thisSignal, thisMissingInputs, callback){
+		var that = this
+		that.logger.log(moduleName, 2, 'called: _completeSignalWithHistoricComponents')
+		that.logger.log(moduleName, 2, '*** thisSignal is: ' + Object.keys(thisSignal)[0])
+		//remove thisSignal Id from the input queue. 
+		that._removeSigIDsFromInputQueue([thisSignal], function(){
+			//complete this signal by adding parts from historic signals until we are complete
+			that.backFillSignal(thisSignal, thisMissingInputs, function(thisBackfilledSignal){
+				//remove each applicable signal from the historic queue
+				//callback with the completed signal
+				that.logger.log(moduleName, 2, 'Backfilled signal is: ' + JSON.stringify(thisBackfilledSignal))
+				//process.nextTick(function(){
+				 	callback(thisBackfilledSignal)	
+				//})
+				
+			})
+		})
+	},
+	backFillSignal: function(thisSignal, thisMissingInputs, callback){
+		var that = this
+		that._backFillIterator(0, thisSignal, thisMissingInputs, function(thisBackfilledSignal){
+			callback(thisBackfilledSignal)
+		})
+	},
+	_backFillIterator: function(inputIdx, thisSignal, thisMissingInputs, callback){
+		var that = this
+		if(thisMissingInputs.length > 0){
+			that.spheron.getInputMessageQueue(function(thisMessageQueue){
+				if(thisMessageQueue[inputIdx]){
+					if(thisMissingInputs[0] == thisMessageQueue[inputIdx].toPort){
+						var newSignalElement = {
+							"input" : thisMessageQueue[inputIdx].toPort,
+							"val" : thisMessageQueue[inputIdx].val,
+							"path" : thisMessageQueue[inputIdx].path
+						}
+						thisSignal[Object.keys(thisSignal)[0]].push(newSignalElement)
+						thisMissingInputs.splice(0,1)
+						that.spheron.removeItemFromInputQueueByIdx(inputIdx, function(){
+							that._backFillIterator(0, thisSignal, thisMissingInputs, callback)		
+						})
+					} else{
+						that._backFillIterator(inputIdx+1, thisSignal, thisMissingInputs, callback)
+					}
+				} else {
+					that._backFillIterator(0, thisSignal, thisMissingInputs, callback)
+				}	
+			})
+		} else {
+			callback(thisSignal)
+		}
+	},
+	aSubsetOfB:function(arrayA, arrayB, callback){
+		var that = this
+		that._aSubsetOfBIterator(arrayA, arrayB, 0, function(result){
+			callback(result)
+		})
+	},
+	_aSubsetOfBIterator:function(arrayA, arrayB, aIdx, callback){
+		var that = this
+		if(arrayA[aIdx]){
+			if(arrayB.indexOf(arrayA[aIdx]) == -1){
+				callback(false)
+			} else {
+				that._aSubsetOfBIterator(arrayA, arrayB, aIdx+1, callback)
+			}
+		} else {
+			callback(true)
+		}
+	},
+	_establishInputsMissingFromSignalGrouping: function(nonHistoricSignalsGroupedBySigId, nonHistoricSignalsGroupedBySigIdIdx, inputNames, resultantArray, callback){
+		var that = this
+		resultantArray = (resultantArray.length != 0) ? resultantArray : [...inputNames] //shallow clone array in es6
+		if(nonHistoricSignalsGroupedBySigId[Object.keys(nonHistoricSignalsGroupedBySigId)[0]][nonHistoricSignalsGroupedBySigIdIdx]){
+			var thisObject = nonHistoricSignalsGroupedBySigId[Object.keys(nonHistoricSignalsGroupedBySigId)[0]][nonHistoricSignalsGroupedBySigIdIdx]
+			that.logger.log(moduleName, 4, 'this object is:' +JSON.stringify(thisObject))
+			that.logger.log(moduleName, 4, 'this object index:' +resultantArray.indexOf(thisObject.input))
+			if(resultantArray.indexOf(thisObject.input) != -1){
+				resultantArray.splice(resultantArray.indexOf(thisObject.input),1)
+			}
+			that._establishInputsMissingFromSignalGrouping(nonHistoricSignalsGroupedBySigId, nonHistoricSignalsGroupedBySigIdIdx+1, inputNames, resultantArray, callback)
+		} else {
+			callback(resultantArray)
+		}
+	},
+	findHistoricInputNames: function(callback){
+		var that = this
+		that._findHistoricInputNameIterator(0, [], function(foundInputs){
+			callback(foundInputs)
+		})
+	},
+	_findHistoricInputNameIterator: function(inputQueueIdx, resultantArray, callback){
+		var that = this
+		if(that.spheron.inputMessageQueue[inputQueueIdx]){
+			that._searchHistoricInputForSigId(0, that.spheron.inputMessageQueue[inputQueueIdx].sigId, function(resultH){
+				if(resultH != -1){
+					if(resultantArray.indexOf(that.spheron.inputMessageQueue[inputQueueIdx].toPort) == -1){
+						resultantArray.push(that.spheron.inputMessageQueue[inputQueueIdx].toPort)
+					}
+					that._findHistoricInputNameIterator(inputQueueIdx+1, resultantArray, callback)
+				} else {
+					that._findHistoricInputNameIterator(inputQueueIdx+1, resultantArray, callback)
+				}
+			})
+		} else {
+			callback(resultantArray)
+		}
+	},
+	completeSignalsWithSuspectedDeadInputs: function(callback){
+		var that = this
+		that.logger.log(moduleName, 2, 'called: completeSignalsWithSuspectedDeadInputs')
+		process.exitCode = 1
 	}
 }
 

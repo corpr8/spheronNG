@@ -27,14 +27,13 @@ var tdd = {
 	},
 	fileExists: function(fileName, callback){
 		var that = this
-		that.logger.log(moduleName, 2, 'in fileExists function for: ' + fileName)
+		that.logger.log(moduleName, 4, 'in fileExists function for: ' + fileName)
 		fs.access(fileName, fs.F_OK, (err) => {
-
 			if (err) {
-				that.logger.log(moduleName, 2, 'does not exist')
+				//that.logger.log(moduleName, 2, 'does not exist')
 				callback(false)
 			} else {
-				that.logger.log(moduleName, 2, 'does exist')
+				//that.logger.log(moduleName, 2, 'does exist')
 				callback(true)
 			}
 		})
@@ -179,6 +178,14 @@ var tdd = {
 			//we expect a string
 			that.logger.log(moduleName, 2, 'TODO: handle string - failed')
 			process.exitCode = 1
+		} else if(thisTest.returnType == null){
+			if(result == null){
+				that.logger.log(moduleName, 2, 'returned null - test passed')
+				tdd.testIterator(testIdx, resultIdx +1, failureCount, callback)
+			} else {
+				that.logger.log(moduleName, 2, 'expected a null result. test failed.')
+				process.exitCode = 1 
+			}
 		} else {
 			that.logger.log(moduleName, 2, 'TODO: unhandled test case - failed')
 			process.exitCode = 1
@@ -290,8 +297,14 @@ var tdd = {
 						} else {
 							that.previousTests.push(that.config.tdd.nextTestFile)
 							that.logger.log(moduleName, 2, 'Loading testfile: ' + that.config.tdd.nextTestFile)
-							that.config = JSON.parse(fs.readFileSync(that.config.tdd.nextTestFile, 'utf8'))
-							that.loadModule(testIdx, failureCount, callback)
+							try{
+								that.config = JSON.parse(fs.readFileSync(that.config.tdd.nextTestFile, 'utf8'))
+								that.loadModule(testIdx, failureCount, callback)	
+							} catch(err) {
+								that.logger.log(moduleName, 2, 'Invalid JSON in file: ' + that.config.tdd.nextTestFile + '. Failed.')
+								process.exitCode =1
+							}
+							
 						}
 					})
 				} else {

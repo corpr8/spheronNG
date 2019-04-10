@@ -252,4 +252,38 @@ Spheron.prototype._runOutputFn = function(thisConn){
 
 Spheron.prototype._p2c = function(r, theta){return [(Math.floor((r * Math.cos(theta)) * 100000))/100000, (Math.floor((r * Math.sin(theta)) * 100000))/100000]}
 
+Spheron.prototype.getInputMessageQueue = function(callback){
+	var that = this;
+	callback(that.inputMessageQueue)
+}
+
+Spheron.prototype.getInputMessageQueueLength = function(callback){
+	var that = this;
+	callback(that.inputMessageQueue.length)	
+}
+
+
+Spheron.prototype.getActivationQueue = function(callback){
+	var that = this;
+	console.log(moduleName, 4, that.spheronId + '****activationQueue: ' + JSON.stringify(that.activationQueue))
+	callback(that.activationQueue)	
+}
+
+Spheron.prototype.pushSignalToActivationQueue = function(thisSignal, callback){
+	var that = this;
+	//that.logger.log(moduleName, 4, that.spheronId + '****pushing to activationQueue: ' + JSON.stringify(thisSignal))
+	that.activationQueue.push(thisSignal) 
+	callback()
+}
+
+Spheron.prototype.removeItemFromInputQueueByIdx = function(thisIdx, callback){
+	var that = this;
+	
+	//that.logger.log(moduleName, 4, that.spheronId + '****inputQueue: ' + JSON.stringify(that.inputMessageQueue))
+	that.inputMessageQueue.splice(thisIdx,1)
+	//that.logger.log(moduleName, 4, that.spheronId + '****inputQueue: ' + JSON.stringify(that.inputMessageQueue))
+	callback()
+
+}
+
 module.exports = Spheron;

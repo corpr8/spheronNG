@@ -137,7 +137,7 @@
 			"variantErrorMaps" : []
 		}
 	],
-	"tests" : [
+	"lesson" : [
 		{"inputs": {"inputSpheron1": {"input1": {"val": 0}}, "inputSpheron2": {"input2": {"val": 0}}}, "outputs": {"ext": {"ANDout": {"val": 0}}}},
 		{"inputs": {"inputSpheron1": {"input1": {"val": 1}}, "inputSpheron2": {"input2": {"val": 0}}}, "outputs": {"ext": {"ANDout": {"val": 0}}}},
 		{"inputs": {"inputSpheron1": {"input1": {"val": 0}}, "inputSpheron2": {"input2": {"val": 1}}}, "outputs": {"ext": {"ANDout": {"val": 0}}}},
@@ -203,7 +203,7 @@
 						"function" : "getInputMessageQueue",
 						"parameters" : null,
 						"returnType" : "object",
-						"containsJSONArray" : true,
+						"containsJSONArray" : false,
 						"atLeastTheseFields": true,
 						"ordered": true,
 						"results":[]
