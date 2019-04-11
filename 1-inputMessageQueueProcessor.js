@@ -6,7 +6,7 @@ var isJSON = require(appDir +'/isJSON.js')
 
 /*
 * Module to handle the input message queue
-*/ 
+*/  
 
 var inputMessageQueueProcessor = {
 	spheron: null,
@@ -202,17 +202,14 @@ var inputMessageQueueProcessor = {
 			}
 		})
 	},
-	getSignalsWithConsistentGapsFromSaturatedInputQueue: function(callback){
-		/*
-		*	Where an input queue is saturated and there is an input which consistently fails to fire (i.e. its absent)
-		*	=> we should fire the sigId but mark the input as 'static'. Further down the line this should cause decay > bias
-		*/
+/*	getSignalsWithConsistentGapsFromSaturatedInputQueue: function(callback){
+		//	Where an input queue is saturated and there is an input which consistently fails to fire (i.e. its absent)
+		//	=> we should fire the sigId but mark the input as 'static'. Further down the line this should cause decay > bias
 		var that = this
 		that.logger.log(moduleName, 2, 'getSignalsWithConsistentGapsFromSaturatedInputQueue called')
-		/* TODO: this whole logic chain... */
 		process.exit()
 
-	},
+	},*/
 	_searchArrayForSigId: function(thisArray, arrayIdx, sigId, callback){
 		var that = this
 		if(thisArray[arrayIdx]){
@@ -453,14 +450,16 @@ var inputMessageQueueProcessor = {
 	},
 	_getConsistentlyIncompleteInputIterator: function(inputQueueIdx, missingInputs, callback){
 		var that = this
-		if(that.spheron.inputMessageQueue[inputQueueIdx]){
-			if(missingInputs.indexOf(that.spheron.inputMessageQueue[inputQueueIdx].toPort) != -1){
-				missingInputs.splice(missingInputs.indexOf(that.spheron.inputMessageQueue[inputQueueIdx].toPort) ,1)
+		that.spheron.getInputMessageQueue(function(thisMessageQueue){
+			if(thisMessageQueue[inputQueueIdx]){
+				if(missingInputs.indexOf(thisMessageQueue[inputQueueIdx].toPort) != -1){
+					missingInputs.splice(missingInputs.indexOf(thisMessageQueue[inputQueueIdx].toPort) ,1)
+				}
+				that._getConsistentlyIncompleteInputIterator(inputQueueIdx +1, missingInputs, callback)
+			} else {
+				callback(missingInputs)
 			}
-			that._getConsistentlyIncompleteInputIterator(inputQueueIdx +1, missingInputs, callback)
-		} else {
-			callback(missingInputs)
-		}
+		})
 	},
 	getHistoricallyCompletedSignalsAndRemoveFromSaturatedInputQueue: function(callback){
 		var that = this
@@ -627,7 +626,14 @@ var inputMessageQueueProcessor = {
 	completeSignalsWithSuspectedDeadInputs: function(callback){
 		var that = this
 		that.logger.log(moduleName, 2, 'called: completeSignalsWithSuspectedDeadInputs')
-		process.exitCode = 1
+		that.spheron.getInputMessageQueueLength(function(thisQueueLength){
+			that._getConsistentlyIncompleteInput(function(consistentlyIncompleteInputs){
+				that.logger.log(moduleName, 2, 'consistently incomplete inputs:' + consistentlyIncompleteInputs.join(','))
+				that.logger.log(moduleName, 2, 'queue length:' + thisQueueLength)
+				that.logger.log(moduleName, 2, 'queue length threshold:' + that.spheron.settings.maxInputQueueDepth)
+				process.exitCode = 1
+			})	
+		})
 	}
 }
 

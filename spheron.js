@@ -19,6 +19,7 @@ var Spheron = function (config) {
 	that.io = (config.io) ? config.io : {}
 	that.signalVector = {}
 	that.state = 'idle'
+	that.settings =  (config.settings) ? config.settings : null 
 	that.spheronId =  (config.spheronId) ? config.spheronId : "missing" 
 	that.problemId = (config.problemId) ? config.problemId : -1 //a global id for the problem that this spheron is trying to solve.
 	that.testLength = (config.testLength) ? config.testLength : -1 //how long is the test plan?
