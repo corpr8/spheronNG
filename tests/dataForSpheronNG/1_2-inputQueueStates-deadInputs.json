@@ -35,8 +35,8 @@
 				{"problemId" : "whatIsAnd", "toPort" : "input2", "path" : "input2", "testIdx": 3, "val": 0, "sigId" : "1003" },
 				{"problemId" : "whatIsAnd", "toPort" : "input1", "path" : "input1", "testIdx": 0, "val": 1, "sigId" : "1004" },
 				{"problemId" : "whatIsAnd", "toPort" : "input2", "path" : "input2", "testIdx": 0, "val": 1, "sigId" : "1004" },
-				{"problemId" : "whatIsAnd", "toPort" : "input1", "path" : "input1", "testIdx": 0, "val": 0, "sigId" : "1005" },
-				{"problemId" : "whatIsAnd", "toPort" : "input2", "path" : "input2", "testIdx": 0, "val": 0, "sigId" : "1005" }
+				{"problemId" : "whatIsAnd", "toPort" : "input1", "path" : "input1", "testIdx": 1, "val": 0, "sigId" : "1005" },
+				{"problemId" : "whatIsAnd", "toPort" : "input2", "path" : "input2", "testIdx": 1, "val": 0, "sigId" : "1005" }
 			],
 			"activationQueue": [],
 			"propagationMessageQueue": [],
@@ -66,7 +66,7 @@
 					{
 						"function" : "completeSignalsWithSuspectedDeadInputs",
 						"parameters" : null,
-						"returnType" : "object",
+						"returnType" : null,
 						"containsJSONArray" : false,
 						"atLeastTheseFields": true,
 						"ordered": true,

@@ -53,18 +53,11 @@ var inputMessageQueueProcessor = {
 				})
 			break;
 				case 1:
-				/* is the input queue saturated? */
-				that.inputMessageQueueIsSaturated(function(saturated){
-					if(!saturated){
-						/*No. - further processing of inputQueue is not necesary */
-						that.processorPhaseIterator(9999, callback)
-					} else {
-						//Handle saturated input queue - where an input might consistently not respond and therefore pass it in the 'static' state
-						//and decay that connections 'life' value.
-						that.getHistoricallyCompletedSignalsAndRemoveFromSaturatedInputQueue(function(){
-							that.processorPhaseIterator(phaseIdx +1, callback)		
-						})
-					}
+
+				//Handle saturated input queue - where an input might consistently not respond and therefore pass it in the 'static' state
+				//and decay that connections 'life' value.
+				that.getHistoricallyCompletedSignalsAndRemoveFromSaturatedInputQueue(function(){
+					that.processorPhaseIterator(phaseIdx +1, callback)		
 				})
 			break;
 				case 2:
@@ -317,12 +310,17 @@ var inputMessageQueueProcessor = {
 	},
 	_removeSigIDStringsFromInputQueueIterator: function(sigIdx, inputQueueIdx, sigIds, callback){
 	  var that = this
-	  that.logger.log(moduleName, 4, '*** sigIds ' + sigIds)
-	  that.logger.log(moduleName, 4, '*** that.spheron.inputMessageQueue[inputQueueIdx].sigId ' + that.spheron.inputMessageQueue[inputQueueIdx].sigId + 'versus sigIds[sigIdx]: ' + sigIds[sigIdx])
+	  that.logger.log(moduleName, 4, '*** sigIds ' + sigIds.join(','))
+	  
 	  if(sigIds[sigIdx]){
 	  	that.spheron.getInputMessageQueue(function(thisInputMessageQueue){
+
 			if(thisInputMessageQueue[inputQueueIdx]){	
+				that.logger.log(moduleName, 4, '*** got here ')
+				that.logger.log(moduleName, 4, '*** that.spheron.inputMessageQueue[inputQueueIdx].sigId ' + thisInputMessageQueue[inputQueueIdx].sigId + ' versus sigIds[sigIdx]: ' + sigIds[sigIdx])
+				that.logger.log(moduleName, 4, '*** equality: ' + (thisInputMessageQueue[inputQueueIdx].sigId == sigIds[sigIdx]))
 		  		if(thisInputMessageQueue[inputQueueIdx].sigId == sigIds[sigIdx]){
+
 		  			//delete this line...
 		  			//do our work then... - note, we don't need to increment inputQueueIdx if we delete something... 
 		  			that.logger.log(moduleName, 4, '*** removing: ' + JSON.stringify(thisInputMessageQueue[inputQueueIdx]) + ' from the input queue')
@@ -344,21 +342,28 @@ var inputMessageQueueProcessor = {
 	},
 	_removeSigIDsFromInputQueueIterator: function(sigIdx, inputQueueIdx, sigIds, callback){
 	  var that = this
-	  that.logger.log(moduleName, 4, '*** sigIds ' + sigIds)
+	  that.logger.log(moduleName, 4, '*** sigIds ' + JSON.stringify(sigIds))
 
 	  if(sigIds[sigIdx]){
 	  	that.logger.log(moduleName, 4, '*** we have a valid sigIds[sigIdx]')
 	  	that.spheron.getInputMessageQueue(function(thisInputMessageQueue){
 			if(thisInputMessageQueue[inputQueueIdx]){ 
-		  		that.logger.log(moduleName, 4, '*** that.spheron.inputMessageQueue[inputQueueIdx].sigId ' + thisInputMessageQueue[inputQueueIdx].sigId + 'versus Object.keys(sigIds[sigIdx])[0]: ' + Object.keys(sigIds[sigIdx])[0])
+		  		that.logger.log(moduleName, 4, '*** that.spheron.inputMessageQueue[inputQueueIdx].sigId ' + thisInputMessageQueue[inputQueueIdx].sigId + ' versus Object.keys(sigIds[sigIdx])[0]: ' + Object.keys(sigIds[sigIdx])[0])
+		  		that.logger.log(moduleName, 4, '*** equality: ' + (thisInputMessageQueue[inputQueueIdx].sigId ==  Object.keys(sigIds[sigIdx])[0]))
 		  		if(thisInputMessageQueue[inputQueueIdx].sigId == Object.keys(sigIds[sigIdx])[0]){
-		  			that.logger.log(moduleName, 4, '*** we are deleting: ' + thisInputMessageQueue[inputQueueIdx].sigId);
+		  			that.logger.log(moduleName, 2, '*** we are deleting: ' + thisInputMessageQueue[inputQueueIdx].sigId);
 		  			//delete this line...
 		  			//do our work then... - note, we don't need to increment inputQueueIdx if we delete something... 
 
 		  			that.spheron.removeItemFromInputQueueByIdx(inputQueueIdx, function(){
-			  			//(that.spheron.inputMessageQueue).splice(inputQueueIdx, 1); 
-			  			that._removeSigIDsFromInputQueueIterator(sigIdx, inputQueueIdx, sigIds, callback)		
+			  			//(that.spheron.inputMessageQueue).splice(inputQueueIdx, 1);
+
+			  			//input queue is now:
+			  			//that.spheron.getInputMessageQueue(function(thisInputMessageQueue){
+			  				//that.logger.log(moduleName, 4, '*** input message queue is now: ' + JSON.stringify(thisInputMessageQueue))
+			  				that._removeSigIDsFromInputQueueIterator(sigIdx, inputQueueIdx, sigIds, callback)
+			  			//})
+
 		  			})
 		  		} else {
 		  			that._removeSigIDsFromInputQueueIterator(sigIdx, inputQueueIdx+1, sigIds, callback)	
@@ -464,16 +469,23 @@ var inputMessageQueueProcessor = {
 	getHistoricallyCompletedSignalsAndRemoveFromSaturatedInputQueue: function(callback){
 		var that = this
 		that.logger.log(moduleName, 2, 'getHistoricallyCompletedSignalsAndRemoveFromSaturatedInputQueue has been called')
-		that.findInputNames(function(inputNames){
-			that.getNonHistoricInputGroupedBySigId(function(nonHistoricSignalsGroupedBySigId){
-				that.logger.log(moduleName, 2, 'nonHistoricSignalsGroupedBySigId: ' + JSON.stringify(nonHistoricSignalsGroupedBySigId))
-				that.getHistoricallyCompletedSignalsAndRemoveFromSaturatedInputQueueIterator(0, nonHistoricSignalsGroupedBySigId, inputNames, function(historicallyCompleteSignals){
-					/*
-					* fnished iterating, we should callback as we are all done
-					*/ 
-					callback(null)
+		that.inputMessageQueueIsSaturated(function(saturated){
+			if(saturated){
+				that.findInputNames(function(inputNames){
+					that.getNonHistoricInputGroupedBySigId(function(nonHistoricSignalsGroupedBySigId){
+						that.logger.log(moduleName, 2, 'nonHistoricSignalsGroupedBySigId: ' + JSON.stringify(nonHistoricSignalsGroupedBySigId))
+						that.getHistoricallyCompletedSignalsAndRemoveFromSaturatedInputQueueIterator(0, nonHistoricSignalsGroupedBySigId, inputNames, function(historicallyCompleteSignals){
+							/*
+							* fnished iterating, we should callback as we are all done
+							*/ 
+							callback(null)
+						})	
+					})
 				})	
-			})
+			} else {
+				that.logger.log(moduleName, 2, 'not saturated, calling back')
+				callback()
+			}
 		})
 	},
 	getHistoricallyCompletedSignalsAndRemoveFromSaturatedInputQueueIterator: function(signalIdx, nonHistoricSignalsGroupedBySigId, inputNames, callback){
@@ -626,14 +638,65 @@ var inputMessageQueueProcessor = {
 	completeSignalsWithSuspectedDeadInputs: function(callback){
 		var that = this
 		that.logger.log(moduleName, 2, 'called: completeSignalsWithSuspectedDeadInputs')
-		that.spheron.getInputMessageQueueLength(function(thisQueueLength){
-			that._getConsistentlyIncompleteInput(function(consistentlyIncompleteInputs){
-				that.logger.log(moduleName, 2, 'consistently incomplete inputs:' + consistentlyIncompleteInputs.join(','))
-				that.logger.log(moduleName, 2, 'queue length:' + thisQueueLength)
-				that.logger.log(moduleName, 2, 'queue length threshold:' + that.spheron.settings.maxInputQueueDepth)
-				process.exitCode = 1
-			})	
+		that.inputMessageQueueIsSaturated(function(saturated){
+			if(saturated){
+				that.spheron.getInputMessageQueueLength(function(thisQueueLength){
+					that._getConsistentlyIncompleteInput(function(consistentlyIncompleteInputs){
+						that.get
+						that.logger.log(moduleName, 2, 'consistently incomplete inputs:' + consistentlyIncompleteInputs.join(','))
+						that.logger.log(moduleName, 2, 'queue length:' + thisQueueLength)
+						that.logger.log(moduleName, 2, 'queue length threshold:' + that.spheron.settings.maxInputQueueDepth)
+
+						//now find the input signalIds for each of the messages in the queue 
+						that.getNonHistoricInputGroupedBySigId(function(nonHistoricSignalsGroupedBySigId){
+							that.logger.log(moduleName, 4, 'non historic signal queue is:' + JSON.stringify(nonHistoricSignalsGroupedBySigId)) 
+							
+							//inject a completed 'static' signal for each nonHistoric
+							that._injectStaticComponentIterator(0, nonHistoricSignalsGroupedBySigId, consistentlyIncompleteInputs,0 , function(){
+
+
+								//Very test - be carful and test this...
+								that.getFullSignalResultsAndRemoveFromInputQueue(function(){
+									callback()
+								})
+
+
+							})
+						})
+					})	
+				})
+			} else {
+				that.logger.log(moduleName, 2, 'not saturated, calling back')
+				callback()
+			}
 		})
+	},
+	_injectStaticComponentIterator: function(signalIdx, theseSignals, missingInputs, missingInputsIdx, callback){
+		var that = this
+		if(theseSignals[signalIdx]){
+			var thisSignalId = Object.keys(theseSignals[signalIdx])[0]
+			that.logger.log(moduleName, 2, 'this signalId:' + thisSignalId)
+			
+			//{"problemId" : "whatIsAnd", "toPort" : "input1", "path" : "input1", "testIdx": 0, "val": 1, "sigId" : "1000" },
+			if(missingInputs[missingInputsIdx]){
+				var newMessage = {
+					problemId: null,
+					toPort: missingInputs[missingInputsIdx],
+					path : missingInputs[missingInputsIdx],
+					testIdx: null,
+					val: 'static',
+					sigId: thisSignalId
+				}
+
+				that.spheron.pushSignalToInputMessageQueue(newMessage, function(){
+					that._injectStaticComponentIterator(signalIdx, theseSignals, missingInputs, missingInputsIdx+1, callback)
+				})
+			} else {
+				that._injectStaticComponentIterator(signalIdx+1, theseSignals, missingInputs, 0, callback)
+			}
+		} else {
+			callback()
+		}
 	}
 }
 

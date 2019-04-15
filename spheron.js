@@ -270,6 +270,14 @@ Spheron.prototype.getActivationQueue = function(callback){
 	callback(that.activationQueue)	
 }
 
+Spheron.prototype.pushSignalToInputMessageQueue = function(thisSignal, callback){
+	var that = this;
+	//that.logger.log(moduleName, 4, that.spheronId + '****pushing to activationQueue: ' + JSON.stringify(thisSignal))
+	that.inputMessageQueue.push(thisSignal) 
+	callback()
+}
+
+
 Spheron.prototype.pushSignalToActivationQueue = function(thisSignal, callback){
 	var that = this;
 	//that.logger.log(moduleName, 4, that.spheronId + '****pushing to activationQueue: ' + JSON.stringify(thisSignal))

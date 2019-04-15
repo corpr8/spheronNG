@@ -12,7 +12,7 @@
 			"type" : "spheron",
 			"state" : "pending",
 			"settings" : {
-				"maxInputQueueDepth" : 10
+				"maxInputQueueDepth" : 8
 			},
 			"activationHistory" : ["998","999"],
 			"nextTick" : 1,
