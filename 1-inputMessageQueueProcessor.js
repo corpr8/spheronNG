@@ -24,8 +24,8 @@ var inputMessageQueueProcessor = {
 			}) 
 		} else {
 			that.logger.log(moduleName, 2, 'Module running in TDD mode')
+			callback() 
 		}
-		callback()
 	},
 	processPhases: function(callback){
  		var that = this
@@ -48,35 +48,30 @@ var inputMessageQueueProcessor = {
 				*/
 
 				/*handle straight out single signal matches in the input queue */
+				that.logger.log(moduleName, 2, 'Running Phase 0')
 				that.getFullSignalResultsAndRemoveFromInputQueue(function(){
 					that.processorPhaseIterator(phaseIdx +1, callback)
 				})
 			break;
 				case 1:
 
-				//Handle saturated input queue - where an input might consistently not respond and therefore pass it in the 'static' state
-				//and decay that connections 'life' value.
+				//Handle saturated input queue - replacing missing inputs with old inputs if possible
+				that.logger.log(moduleName, 2, 'Running Phase 1')
 				that.getHistoricallyCompletedSignalsAndRemoveFromSaturatedInputQueue(function(){
 					that.processorPhaseIterator(phaseIdx +1, callback)		
 				})
 			break;
 				case 2:
-				
 				//Handle matches with historic results
-				that.processorPhaseIterator(phaseIdx +1, callback)
+				// where an input queue is saturated AND an input is consistently missing - backfill as 'static':
+				that.logger.log(moduleName, 2, 'Running Phase 2')
+				that.completeSignalsWithSuspectedDeadInputs(function(){
+					that.processorPhaseIterator(phaseIdx +1, callback)
+				})
 			break;
-				case 3:
-				// where an input queue is saturated AND an input is consistently missing:
-				// pass it with a value of 'static' and decay the life value of the connection
-			
-			break;
-				case 4:
-				// decay dead connections.
-				// where a connection is very dead, convert it to a bias.
-			break;
-
 				default:
 				/*any post processing and callback*/
+				that.logger.log(moduleName, 2, 'Calling back from inputMessageQueueProcessor to main runner')
 				callback()
 			break;
 		}
@@ -145,7 +140,7 @@ var inputMessageQueueProcessor = {
 		var that = this
 		that.logger.log(moduleName, 4, 'called getNonHistoricInputGroupedBySigId')
 		that._getNonHistoricInputGroupedBySigIdIterator([], 0, function(result){
-			that.logger.log(moduleName, 2, 'returning non-historic signals grouped by sigId: ' + JSON.stringify(result))
+			that.logger.log(moduleName, 4, 'returning non-historic signals grouped by sigId: ' + JSON.stringify(result))
 			callback(result)
 		})
 	},
@@ -160,7 +155,9 @@ var inputMessageQueueProcessor = {
 								var newMessage = {
 									"input": that.spheron.inputMessageQueue[inputIdx].toPort,
 									"val": that.spheron.inputMessageQueue[inputIdx].val,
-									"path": that.spheron.inputMessageQueue[inputIdx].path
+									"path": that.spheron.inputMessageQueue[inputIdx].path,
+									"lessonId": that.spheron.inputMessageQueue[inputIdx].lessonId,
+									"lessonIdx": that.spheron.inputMessageQueue[inputIdx].lessonIdx
 								}
 
 								that.logger.log(moduleName, 4, 'new message: ' + JSON.stringify(newMessage))
@@ -180,7 +177,9 @@ var inputMessageQueueProcessor = {
 								newMessage[that.spheron.inputMessageQueue[inputIdx].sigId].push({
 									"input": that.spheron.inputMessageQueue[inputIdx].toPort,
 									"val": that.spheron.inputMessageQueue[inputIdx].val,
-									"path": that.spheron.inputMessageQueue[inputIdx].path
+									"path": that.spheron.inputMessageQueue[inputIdx].path,
+									"lessonId": that.spheron.inputMessageQueue[inputIdx].lessonId,
+									"lessonIdx": that.spheron.inputMessageQueue[inputIdx].lessonIdx
 								}) 
 								outputArray.push(newMessage)
 								that._getNonHistoricInputGroupedBySigIdIterator(outputArray, inputIdx+1, callback)
@@ -263,10 +262,10 @@ var inputMessageQueueProcessor = {
 				* 3: The input queue is saturated and one or more inputs is consistently missing (insert static holder)
 				*/
 				that._searchForFullyCompleteSignals(foundInputs,inputGroupedBySigId,function(completedSignals){
-					that.logger.log(moduleName, 2, 'found the following complete signals: ' + JSON.stringify(completedSignals))
+					that.logger.log(moduleName, 4, 'found the following complete signals: ' + JSON.stringify(completedSignals))
 						that._removeSigIDsFromInputQueue(completedSignals, function(){
 							/*TODo:*/ 
-							that.logger.log(moduleName, 2, 'stuff removed from input Queue')
+							that.logger.log(moduleName, 4, 'stuff removed from input Queue')
 							that._pushSignalsToActivationQueue(completedSignals, function(){
 								callback(completedSignals)	
 						})
@@ -351,7 +350,7 @@ var inputMessageQueueProcessor = {
 		  		that.logger.log(moduleName, 4, '*** that.spheron.inputMessageQueue[inputQueueIdx].sigId ' + thisInputMessageQueue[inputQueueIdx].sigId + ' versus Object.keys(sigIds[sigIdx])[0]: ' + Object.keys(sigIds[sigIdx])[0])
 		  		that.logger.log(moduleName, 4, '*** equality: ' + (thisInputMessageQueue[inputQueueIdx].sigId ==  Object.keys(sigIds[sigIdx])[0]))
 		  		if(thisInputMessageQueue[inputQueueIdx].sigId == Object.keys(sigIds[sigIdx])[0]){
-		  			that.logger.log(moduleName, 2, '*** we are deleting: ' + thisInputMessageQueue[inputQueueIdx].sigId);
+		  			that.logger.log(moduleName, 4, '*** we are deleting: ' + thisInputMessageQueue[inputQueueIdx].sigId);
 		  			//delete this line...
 		  			//do our work then... - note, we don't need to increment inputQueueIdx if we delete something... 
 
@@ -430,7 +429,7 @@ var inputMessageQueueProcessor = {
 		var that = this
 		that.logger.log(moduleName, 2, 'getInputMessageQueue has been called')
 		that.spheron.getInputMessageQueue(function(thisMessageQueue){
-			that.logger.log(moduleName, 2, 'getInputMessageQueue returning ' + JSON.stringify(thisMessageQueue))
+			that.logger.log(moduleName, 4, 'getInputMessageQueue returning ' + JSON.stringify(thisMessageQueue))
 			callback(thisMessageQueue)
 		})
 	},
@@ -438,7 +437,7 @@ var inputMessageQueueProcessor = {
 		var that = this
 		that.logger.log(moduleName, 2, 'getActivationQueue has been called') 
 		that.spheron.getActivationQueue(function(thisMessageQueue){
-			that.logger.log(moduleName, 2, 'getActivationQueue returning ' + JSON.stringify(thisMessageQueue))
+			that.logger.log(moduleName, 4, 'getActivationQueue returning ' + JSON.stringify(thisMessageQueue))
 			callback(thisMessageQueue)
 		})
 	},
@@ -468,12 +467,12 @@ var inputMessageQueueProcessor = {
 	},
 	getHistoricallyCompletedSignalsAndRemoveFromSaturatedInputQueue: function(callback){
 		var that = this
-		that.logger.log(moduleName, 2, 'getHistoricallyCompletedSignalsAndRemoveFromSaturatedInputQueue has been called')
+		that.logger.log(moduleName, 4, 'getHistoricallyCompletedSignalsAndRemoveFromSaturatedInputQueue has been called')
 		that.inputMessageQueueIsSaturated(function(saturated){
 			if(saturated){
 				that.findInputNames(function(inputNames){
 					that.getNonHistoricInputGroupedBySigId(function(nonHistoricSignalsGroupedBySigId){
-						that.logger.log(moduleName, 2, 'nonHistoricSignalsGroupedBySigId: ' + JSON.stringify(nonHistoricSignalsGroupedBySigId))
+						that.logger.log(moduleName, 4, 'nonHistoricSignalsGroupedBySigId: ' + JSON.stringify(nonHistoricSignalsGroupedBySigId))
 						that.getHistoricallyCompletedSignalsAndRemoveFromSaturatedInputQueueIterator(0, nonHistoricSignalsGroupedBySigId, inputNames, function(historicallyCompleteSignals){
 							/*
 							* fnished iterating, we should callback as we are all done
@@ -498,26 +497,26 @@ var inputMessageQueueProcessor = {
 			* now find if we the missing inputs and work out if we can complete those from historic signals...
 			*/
 			that._establishInputsMissingFromSignalGrouping(nonHistoricSignalsGroupedBySigId[signalIdx], 0, inputNames, [], function(missingInputs){
-				that.logger.log(moduleName, 2, 'missing inputs:' + missingInputs.join(','))
+				that.logger.log(moduleName, 4, 'missing inputs:' + missingInputs.join(','))
 				that.findHistoricInputNames(function(historicInputs){
-					that.logger.log(moduleName, 2, 'historic inputs:' + historicInputs.join(','))
+					that.logger.log(moduleName, 4, 'historic inputs:' + historicInputs.join(','))
 					process.exitCode = 1
 					that.aSubsetOfB(missingInputs, historicInputs, function(result){
 						if(result){
-							that.logger.log(moduleName, 2, 'missing inputs ARE a subset of historic inputs - we CAN do historic activation!!!')
+							that.logger.log(moduleName, 4, 'missing inputs ARE a subset of historic inputs - we CAN do historic activation!!!')
 
 							/*
 							* complete this signal by removing elements from historic queue and push to activation queue
 							*/
 							that._completeSignalWithHistoricComponentsAndRemoveFromInputQueue(nonHistoricSignalsGroupedBySigId[signalIdx], missingInputs, function(backfilledSignal){
-								that.logger.log(moduleName, 2, 'pushing to activation queue: ' + JSON.stringify(backfilledSignal))
+								that.logger.log(moduleName, 4, 'pushing to activation queue: ' + JSON.stringify(backfilledSignal))
 								that._pushSignalsToActivationQueue([backfilledSignal], function(){
 									//rather than calling back, start getHistoricallyCompletedSignalsAndRemoveFromSaturatedInputQueue again
 									that.getHistoricallyCompletedSignalsAndRemoveFromSaturatedInputQueue(callback)
 								})
 							})
 						} else {
-							that.logger.log(moduleName, 2, 'missing inputs are not a subset of historic inputs')
+							that.logger.log(moduleName, 4, 'missing inputs are not a subset of historic inputs')
 							that.getHistoricallyCompletedSignalsAndRemoveFromSaturatedInputQueueIterator(signalIdx +1, nonHistoricSignalsGroupedBySigId, inputNames, callback)
 						}
 					})
@@ -561,7 +560,9 @@ var inputMessageQueueProcessor = {
 						var newSignalElement = {
 							"input" : thisMessageQueue[inputIdx].toPort,
 							"val" : thisMessageQueue[inputIdx].val,
-							"path" : thisMessageQueue[inputIdx].path
+							"path" : thisMessageQueue[inputIdx].path,
+							"lessonId": thisMessageQueue[inputIdx].lessonId,
+							"lessonIdx": thisMessageQueue[inputIdx].lessonIdx
 						}
 						thisSignal[Object.keys(thisSignal)[0]].push(newSignalElement)
 						thisMissingInputs.splice(0,1)
@@ -675,15 +676,15 @@ var inputMessageQueueProcessor = {
 		var that = this
 		if(theseSignals[signalIdx]){
 			var thisSignalId = Object.keys(theseSignals[signalIdx])[0]
-			that.logger.log(moduleName, 2, 'this signalId:' + thisSignalId)
+			that.logger.log(moduleName, 4, 'this signalId:' + thisSignalId)
 			
-			//{"problemId" : "whatIsAnd", "toPort" : "input1", "path" : "input1", "testIdx": 0, "val": 1, "sigId" : "1000" },
+			//{"lessonId" : "whatIsAnd", "toPort" : "input1", "path" : "input1", "testIdx": 0, "val": 1, "sigId" : "1000" },
 			if(missingInputs[missingInputsIdx]){
 				var newMessage = {
-					problemId: null,
+					lessonId: null,
 					toPort: missingInputs[missingInputsIdx],
 					path : missingInputs[missingInputsIdx],
-					testIdx: null,
+					lessonIdx: null,
 					val: 'static',
 					sigId: thisSignalId
 				}
@@ -697,6 +698,12 @@ var inputMessageQueueProcessor = {
 		} else {
 			callback()
 		}
+	},
+	getIO: function(callback){
+		var that = this
+		that.spheron.getIO(function(thisIO){
+			callback(thisIO)
+		})
 	}
 }
 

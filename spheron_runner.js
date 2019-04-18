@@ -107,14 +107,14 @@ var spheron_runner = {
 		var that = this
 		switch(phaseIdx) {
 			case 0:
-				that.logger.log(moduleName, 4,'Begin Processing a Spheron. Tick is: ' + that.systemTick + " spheron id is: " + this.spheron.spheronId)
+				that.logger.log(moduleName, 2,'Begin Processing a Spheron. Tick is: ' + that.systemTick + " spheron id is: " + this.spheron.spheronId)
 		        /*
 				* Should we mutate?
 				*
 				* We can make this decision based on the cumulative errors in the exclusion Error map.
 				* If the exclusion map is empty, this might also mean we want to mutate (as there are no experiments)
 		        */
-		        that.logger.log(moduleName, 4,'Phase0: should we mutate?')
+		        that.logger.log(moduleName, 2,'Phase0: should we mutate?')
 
 		        that.mutator.init(that.spheron, that.logger, function(updatedSpheron){
 		        	that.logger.log(moduleName, 4,'finished Phase 0')
@@ -125,7 +125,7 @@ var spheron_runner = {
 		        })
 
 				break;
-			case 1:
+			case 1: 
 		        /*
 				* Handle Input Message Queue Processing:
 				*
@@ -133,10 +133,10 @@ var spheron_runner = {
 				* i.e. - groups with the same signalId
 				* also check if there are exclusion maps and load them onto the activation queue - i.e. 12345, 12345a
 		        */
-		        that.logger.log(moduleName, 4,'Phase1: in the input message queue processor')
+		        that.logger.log(moduleName, 2,'Phase1: in the input message queue processor')
 		        that.inputMessageQueueProcessor.init(that.spheron, that.logger, function(){
 		        	//update the in memory model
-		        	that.logger.log(moduleName, 4,'finished Phase 1')
+		        	that.logger.log(moduleName, 2,'finished Phase 1')
 		        	//that.logger.log(moduleName, 4,'dump: ' + JSON.stringify(that.spheron))
 			        that.postPhaseHandler(phaseIdx, callback)
 		        })
@@ -150,7 +150,7 @@ var spheron_runner = {
 				* it would also include a single variant - i.e. signal1234{1,2,3,4,5} or signal1234{1,2,3,4,5a}
 				* so activate for each one and copy the result to the propagation queue
 		        */
-		        that.logger.log(moduleName, 4,'Phase2: in the input activation queue processor')
+		        that.logger.log(moduleName, 2,'Phase2: in the input activation queue processor')
 		        that.activationQueueProcessor.init(that.spheron, that.logger, function(){
 		        	//update the in memory model
 		        	that.logger.log(moduleName, 4,'finished Phase 2')
@@ -162,7 +162,7 @@ var spheron_runner = {
 				/*
 				* Handle propagation to downstream spherons...
 				*/
-				that.logger.log(moduleName, 4,'Phase3: propagate results to downstream spherons')
+				that.logger.log(moduleName, 2,'Phase3: propagate results to downstream spherons')
 				that.propagationQueueProcessor.init(that.spheron, that.logger, function(){
 					that.logger.log(moduleName, 4,'finished Phase 3')
 					//that.logger.log(moduleName, 4,'dump: ' + JSON.stringify(that.spheron))
@@ -174,7 +174,7 @@ var spheron_runner = {
 		        * Handle backprop messages
 		        * if the lesson is in mode=autoTrain:
 		        */
-		        that.logger.log(moduleName, 4,'Phase4: propagating backprop messages')
+		        that.logger.log(moduleName, 2,'Phase4: propagating backprop messages')
 				that.backpropQueueProcessor.init(that.spheron, that.logger, function(){
 					that.logger.log(moduleName, 4,'finished Phase 4')
 					that.postPhaseHandler(phaseIdx, callback)
@@ -190,7 +190,7 @@ var spheron_runner = {
 		        * clear each BackPropMessage as they have now served their purpose
 		        * Increment phaseIdx and iterate
 		        */
-		        that.logger.log(moduleName, 4,'Phase5: handle multi-variant data storage and test resolution')
+		        that.logger.log(moduleName, 2,'Phase5: handle multi-variant data storage and test resolution')
 				that.multivariateTestProcessor.init(that.spheron, that.logger, function(){
 					that.logger.log(moduleName, 4,'finished Phase 5')
 					that.postPhaseHandler(phaseIdx, callback)
@@ -200,14 +200,14 @@ var spheron_runner = {
 				/*
 			     * Persist spheron to mongo.
 			    */
-				that.logger.log(moduleName, 4,'Phase6: persisting ' + that.spheron.spheronId + ' back to mongo...')
+				that.logger.log(moduleName, 2,'Phase6: persisting ' + that.spheron.spheronId + ' back to mongo...')
 		    	that.persistSpheron({updateState: false}, function(){
 		    		that.logger.log(moduleName, 4,'finished Phase 6')
 					that.postPhaseHandler(phaseIdx, callback)
 		    	})
 		        break;
 		    default:
-		    	that.logger.log(moduleName, 4,'in default phase handler (i.e. The fallback.) - phase is: ' + phaseIdx)
+		    	that.logger.log(moduleName, 2,'in default phase handler (i.e. The fallback.) - phase is: ' + phaseIdx)
 		    	if(phaseIdx <= 6){
 		    		that.postPhaseHandler(phaseIdx, callback)
 		    	} else {

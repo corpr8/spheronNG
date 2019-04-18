@@ -15,7 +15,7 @@ const degToRad = Math.PI / 180
 var Spheron = function (config) {
 	var that = this
 	//connections, exclusions, mode, problemId, testLength, testIdx
-	that.logger = null
+	that.logger = null 
 	that.io = (config.io) ? config.io : {}
 	that.signalVector = {}
 	that.state = 'idle'
@@ -269,6 +269,13 @@ Spheron.prototype.getActivationQueue = function(callback){
 	console.log(moduleName, 4, that.spheronId + '****activationQueue: ' + JSON.stringify(that.activationQueue))
 	callback(that.activationQueue)	
 }
+
+Spheron.prototype.getIO = function(callback){
+	var that = this;
+	console.log(moduleName, 4, that.spheronId + '****getIO called')
+	callback(that.io)
+}
+
 
 Spheron.prototype.pushSignalToInputMessageQueue = function(thisSignal, callback){
 	var that = this;

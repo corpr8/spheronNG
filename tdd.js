@@ -135,7 +135,7 @@ var tdd = {
 			process.exitCode = 1
 		}
 		
-	},
+	}, 
 	handleTestResult: function(thisTest, result, resultIdx, testIdx, failureCount, callback){
 		var that = this
 		that.logger.log(moduleName, 2, 'handling test result')
@@ -145,7 +145,7 @@ var tdd = {
 					if(thisTest.containsJSONArray == false){
 						if(thisTest.ordered == true){
 							//match the array, in order
-							that.logger.log(moduleName, 2, 'expected: ' + thisTest.results + ' got: ' + result.join(','))
+							that.logger.log(moduleName, 4, 'expected: ' + thisTest.results + ' got: ' + result.join(','))
 							if(result.join(',') == thisTest.results){
 								that.logger.log(moduleName, 2, 'test passed')
 							} else {
