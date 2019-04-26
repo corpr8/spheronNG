@@ -40,11 +40,11 @@
 			],
 			"activationQueue": [],
 			"propagationMessageQueue": [],
-			"variantMaps" : [
-				["internal1", "internal1a"]
-			],
-			"bpErrorMessageQueue" : [],
-			"variantErrorMaps" : []
+			"variants" : {
+				"inputs" : [],
+				"biases" : [],
+				"outputs" : []
+			}
 		}
 	],
 	"lesson" : [

@@ -134,10 +134,10 @@ var spheron_runner = {
 				* also check if there are exclusion maps and load them onto the activation queue - i.e. 12345, 12345a
 		        */
 		        that.logger.log(moduleName, 2,'Phase1: in the input message queue processor')
-		        that.inputMessageQueueProcessor.init(that.spheron, that.logger, function(){
+		        that.inputMessageQueueProcessor.init(that.spheron, that.logger, function(updatedSpheron){
 		        	//update the in memory model
+		        	that.spheron = updatedSpheron
 		        	that.logger.log(moduleName, 2,'finished Phase 1')
-		        	//that.logger.log(moduleName, 4,'dump: ' + JSON.stringify(that.spheron))
 			        that.postPhaseHandler(phaseIdx, callback)
 		        })
 		        break;

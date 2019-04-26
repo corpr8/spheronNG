@@ -40,11 +40,11 @@
 			],
 			"activationQueue": [],
 			"propagationMessageQueue": [],
-			"variantMaps" : [
-				["internal1", "internal1a"]
-			],
-			"bpErrorMessageQueue" : [],
-			"variantErrorMaps" : []
+			"variants" : {
+				"inputs" : [],
+				"biases" : [],
+				"outputs" : []
+			}
 		}
 	],
 	"lesson" : [
@@ -81,12 +81,12 @@
 						"atLeastTheseFields": true,
 						"ordered": true, 
 						"results":[
-							{"1000":[{"input" : "input1", "val" : 1, "path" : "input1", "lessonId":"whatIsAnd","lessonIdx":0},{"input" : "input2", "val" : 1, "path" : "input2", "lessonId":"whatIsAnd","lessonIdx":0}, {"input" : "input3", "val" : "static", "path" : "input3", "lessonId":null,"lessonIdx":null}]},
-							{"1001":[{"input" : "input1", "val" : 0, "path" : "input1", "lessonId":"whatIsAnd","lessonIdx":1},{"input" : "input2", "val" : 0, "path" : "input2", "lessonId":"whatIsAnd","lessonIdx":1}, {"input" : "input3", "val" : "static", "path" : "input3", "lessonId":null,"lessonIdx":null}]},
-							{"1002":[{"input" : "input1", "val" : 1, "path" : "input1", "lessonId":"whatIsAnd","lessonIdx":2},{"input" : "input2", "val" : 1, "path" : "input2", "lessonId":"whatIsAnd","lessonIdx":2}, {"input" : "input3", "val" : "static", "path" : "input3", "lessonId":null,"lessonIdx":null}]},
-							{"1003":[{"input" : "input1", "val" : 0, "path" : "input1", "lessonId":"whatIsAnd","lessonIdx":3},{"input" : "input2", "val" : 0, "path" : "input2", "lessonId":"whatIsAnd","lessonIdx":3}, {"input" : "input3", "val" : "static", "path" : "input3", "lessonId":null,"lessonIdx":null}]},
-							{"1004":[{"input" : "input1", "val" : 1, "path" : "input1", "lessonId":"whatIsAnd","lessonIdx":0},{"input" : "input2", "val" : 1, "path" : "input2", "lessonId":"whatIsAnd","lessonIdx":0}, {"input" : "input3", "val" : "static", "path" : "input3", "lessonId":null,"lessonIdx":null}]},
-							{"1005":[{"input" : "input1", "val" : 0, "path" : "input1", "lessonId":"whatIsAnd","lessonIdx":1},{"input" : "input2", "val" : 0, "path" : "input2", "lessonId":"whatIsAnd","lessonIdx":1}, {"input" : "input3", "val" : "static", "path" : "input3", "lessonId":null,"lessonIdx":null}]}
+							{"1000":[{"input" : "input1", "val" : 1, "path" : "input1", "lessonId":"whatIsAnd","lessonIdx":0},{"input" : "input2", "val" : 1, "path" : "input2", "lessonId":"whatIsAnd","lessonIdx":0}, {"input" : "input3", "val" : "static", "path" : "input3"}]},
+							{"1001":[{"input" : "input1", "val" : 0, "path" : "input1", "lessonId":"whatIsAnd","lessonIdx":1},{"input" : "input2", "val" : 0, "path" : "input2", "lessonId":"whatIsAnd","lessonIdx":1}, {"input" : "input3", "val" : "static", "path" : "input3"}]},
+							{"1002":[{"input" : "input1", "val" : 1, "path" : "input1", "lessonId":"whatIsAnd","lessonIdx":2},{"input" : "input2", "val" : 1, "path" : "input2", "lessonId":"whatIsAnd","lessonIdx":2}, {"input" : "input3", "val" : "static", "path" : "input3"}]},
+							{"1003":[{"input" : "input1", "val" : 0, "path" : "input1", "lessonId":"whatIsAnd","lessonIdx":3},{"input" : "input2", "val" : 0, "path" : "input2", "lessonId":"whatIsAnd","lessonIdx":3}, {"input" : "input3", "val" : "static", "path" : "input3"}]},
+							{"1004":[{"input" : "input1", "val" : 1, "path" : "input1", "lessonId":"whatIsAnd","lessonIdx":0},{"input" : "input2", "val" : 1, "path" : "input2", "lessonId":"whatIsAnd","lessonIdx":0}, {"input" : "input3", "val" : "static", "path" : "input3"}]},
+							{"1005":[{"input" : "input1", "val" : 0, "path" : "input1", "lessonId":"whatIsAnd","lessonIdx":1},{"input" : "input2", "val" : 0, "path" : "input2", "lessonId":"whatIsAnd","lessonIdx":1}, {"input" : "input3", "val" : "static", "path" : "input3"}]}
 						] 
 					},
 					{
@@ -116,6 +116,7 @@
 					}
 				]
 			}
-		]
+		],
+		"nextTestFile": "./tests/dataForSpheronNG/2_1-multivariating_activationQueueEntries.json"
 	}
 }

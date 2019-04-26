@@ -121,11 +121,13 @@ var tdd = {
 					process.exitCode = 1
 				}
 			} else {
-				if(Object.keys(thisObject)[idx]){
+				if(Object.keys(thisObject).length != Object.keys(thisObject).length){
+					that.logger.log(moduleName, 2, 'idx is: ' + idx + ' expected object: ' + JSON.stringify(expectedObject) + ' object keys length: ' + Object.keys(thisObject).length)
+					that.logger.log(moduleName, 2, 'idx is: ' + idx + ' actual object: ' + JSON.stringify(thisObject)  + ' object keys length: ' + Object.keys(thisObject).length)
 					that.logger.log(moduleName, 2, 'object had too many keys: ' + JSON.stringify(thisObject))
 					process.exitCode = 1
 				} else {
-					callback()	
+					callback()
 				}
 			}
 		} else {
@@ -134,7 +136,6 @@ var tdd = {
 			that.logger.log(moduleName, 2, 'cannot compare object and key as object is null. failed.')
 			process.exitCode = 1
 		}
-		
 	}, 
 	handleTestResult: function(thisTest, result, resultIdx, testIdx, failureCount, callback){
 		var that = this
@@ -148,11 +149,11 @@ var tdd = {
 							that.logger.log(moduleName, 4, 'expected: ' + thisTest.results + ' got: ' + result.join(','))
 							if(result.join(',') == thisTest.results){
 								that.logger.log(moduleName, 2, 'test passed')
+								tdd.testIterator(testIdx, resultIdx +1, failureCount, callback)
 							} else {
 								that.logger.log(moduleName, 2, 'ordered array test failed.')
 								process.exitCode = 1 
 							}
-							tdd.testIterator(testIdx, resultIdx +1, failureCount, callback)
 						} else {
 							that.logger.log(moduleName, 2, 'TODO: handle unordered array...')
 							process.exitCode = 1
@@ -214,6 +215,7 @@ var tdd = {
 						if(foundSpheronIdx != -1){
 							that.spheron = new Spheron(that.config.network[foundSpheronIdx], settings.logOptions) //note tdd config document is the spheron config also!!
 							if(that.config.tdd.tddTests[testIdx].input.hasInitMethod){
+								that.logger.log(moduleName, 2, 'calling init on a spheron')
 								that.spheron.tdd = 'tdd'
 								that.currentTestModule.init(that.spheron, that.logger, function(){
 									that.logger.log(moduleName, 2, 'called back from init')
@@ -227,6 +229,12 @@ var tdd = {
 							process.exitCode = 1
 						}
 						
+					} else if(that.config.tdd.tddTests[testIdx].input.type == "dumbModule"){
+						that.logger.log(moduleName, 2, 'calling init on a dumb module')
+						that.currentTestModule.init(that.logger, function(){
+							that.logger.log(moduleName, 2, 'called back from init')
+							that.testIterator(testIdx, 0, failureCount, callback)
+						})
 					} else {
 						that.testIterator(testIdx, 0, failureCount, callback)
 					}
@@ -251,22 +259,30 @@ var tdd = {
 					if(thisTest.parameters){
 						//build and apply an array of parameters to the function
 						var theseParameters = thisTest.parameters
+						that.logger.log(moduleName, 2, 'parameters: ' + theseParameters)
+						that.logger.log(moduleName, 2, 'parameter length: ' + theseParameters.length)
+
 						var thisCallback = function(result){
 							that.handleTestResult(thisTest, result, resultIdx, testIdx, failureCount, callback)
 						}
+
+						/*
+						* Note: The ... below means that we wrap parameters in an extra [] as they are unpacked by the ... in the test here!!!
+						*/
+
 						theseParameters.push(thisCallback)
 						that.currentTestModule[thisTest.function](...theseParameters)
+
 					} else {
 						// no parameters so just have a callback
+						that.logger.log(moduleName, 2, 'no parameters!!!')
 						that.currentTestModule[thisTest.function](function(result){
 							that.handleTestResult(thisTest, result, resultIdx, testIdx, failureCount, callback)	
 						})
 					}
 				} else {
 					that.logger.log(moduleName, 2, 'Function: ' + thisTest.function + ' does not exist. Test failed.')
-					//failureCount += 1
 					process.exitCode = 1
-					//that.testIterator(testIdx, resultIdx +1, failureCount, callback)
 				}
 			} else {
 				/* TODO: in this scenario, we should load the module and pass the init data again... */
@@ -304,7 +320,6 @@ var tdd = {
 								that.logger.log(moduleName, 2, 'Invalid JSON in file: ' + that.config.tdd.nextTestFile + '. Failed.')
 								process.exitCode =1
 							}
-							
 						}
 					})
 				} else {

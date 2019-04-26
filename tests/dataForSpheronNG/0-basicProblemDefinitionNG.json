@@ -29,11 +29,11 @@
 			],
 			"activationQueue": [],
 			"propagationMessageQueue": [],
-			"variantMaps" : [
-				["internal1", "internal1a"]
-			],
-			"bpErrorMessageQueue" : [],
-			"variantErrorMaps" : []
+			"variants" : {
+				"inputs" : [],
+				"biases" : [],
+				"outputs" : []
+			}
 		},
 		{"spheronId": "inputSpheron2",
 			"type" : "spheron",
@@ -56,11 +56,11 @@
 			],
 			"activationQueue": [],
 			"propagationMessageQueue": [],
-			"variantMaps" : [
-				["internal2", "internal2a"]
-			],
-			"bpErrorMessageQueue" : [],
-			"variantErrorMaps" : []
+			"variants" : {
+				"inputs" : [],
+				"biases" : [],
+				"outputs" : []
+			}
 		},
 		{"spheronId": "outputSpheron1",
 			"type" : "spheron",
@@ -75,9 +75,11 @@
 			"inputMessageQueue": [],
 			"activationQueue": [],
 			"propagationMessageQueue": [],
-			"variantMaps" : [],
-			"bpErrorMessageQueue" : [],
-			"variantErrorMaps" : []
+			"variants" : {
+				"inputs" : [],
+				"biases" : [],
+				"outputs" : []
+			}
 		}
 	],
 	"lesson" : [

@@ -15,10 +15,42 @@ var activationQueueProcessor = {
 		that.logger = logger
 		that.spheron = thisSpheron
 		that.logger.log(moduleName, 2,'init')
-
-		callback()
-
+			
+		if(!that.spheron.tdd){
+			that.logger.log(moduleName, 2, 'Module running in Production mode')
+			that.processPhases(function(){
+				callback(that.spheron)
+			}) 
+		} else {
+			that.logger.log(moduleName, 2, 'Module running in TDD mode')
+			callback() 
+		}
 	},
+	processPhases: function(callback){
+ 		var that = this
+ 		that.processorPhaseIterator(0, function(){
+ 			callback()
+ 		})
+	},
+	processorPhaseIterator: function(phaseIdx, callback){
+		var that = this
+		switch(phaseIdx){
+			case 0:
+				//Handle full signal matches
+				/*handle straight out single signal matches in the input queue */
+				that.logger.log(moduleName, 2, 'Running Phase 0')
+
+					that.processorPhaseIterator(phaseIdx +1, callback)
+
+			break;
+				default:
+				/*any post processing and callback*/
+				that.logger.log(moduleName, 2, 'Calling back from inputMessageQueueProcessor to main runner')
+				callback()
+			break;
+		}
+	},
+
 	test: function(callback){
 		callback("passed")
 	},

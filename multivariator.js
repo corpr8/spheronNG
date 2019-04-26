@@ -21,27 +21,43 @@ var path = require('path');
 var appDir = path.dirname(require.main.filename);
 var settings = require(appDir +'/settings.json')
 
-var Logger = require('./logger.js')
-
-var multivariator = {
-	logger: new Logger(settings.logOptions),
+var multivariator = {  
+	logger: null,
 	finalOutput: [],
+	init: function(logger, callback){
+		var that = this
+		that.logger = logger;
+		that.logger.log(moduleName, 2,'init') 
+		
+		/*
+		var v = [[1,2,3],[2,3,4],[3,4,5]]
+		that.multivariate(v, function(testResult){
+			that.logger.log(moduleName, 2,'test variate: ' + JSON.stringify(testResult))
+			process.exitCode = 1
+			
+		})*/
+		callback()
+	},
 	MapIterator:function(thisMaps, thisMapIdxArray, callback){
 		var that = this
+		that.logger.log(moduleName, 2,'running map iterator')
 		if(!thisMapIdxArray){
 			thisMapIdxArray = []
 			for(var v=0;v<thisMaps.length;v++){
 				thisMapIdxArray.push(0)
 			}
 		}
-
+		//that.logger.log(moduleName, 2,'thisMapIdxArray: ' + thisMapIdxArray)
 		that.MapPointerIterator(thisMaps, thisMapIdxArray, 1, function(){
 			callback()
 		})
+
 	},
 	MapPointerIterator: function(thisMaps, thisMapIdxArray, MapIdxArrayPointer, callback){
 		var that = this
+
 		if(thisMapIdxArray[0] < thisMaps[0].length){
+			that.logger.log(moduleName, 2,'building excluded array') 
 			multivariator.buildExcludedArrays(thisMaps, thisMapIdxArray, function(ourResultantArray){
 				that.finalOutput.push(ourResultantArray)
 				thisMapIdxArray[0] += 1
@@ -51,6 +67,7 @@ var multivariator = {
 			
 		} else {
 			if(MapIdxArrayPointer < thisMaps.length){
+
 				thisMapIdxArray[MapIdxArrayPointer] += 1
 				if(thisMapIdxArray[MapIdxArrayPointer] > thisMaps[MapIdxArrayPointer].length-1){
 					thisMapIdxArray[MapIdxArrayPointer] = 0
@@ -64,10 +81,11 @@ var multivariator = {
 			} else {
 				callback()
 			}
-		}
+		}		
 	},
 	buildExcludedArrays: function(thisMaps, sourceArrays, callback){
 		var that = this
+		that.logger.log(moduleName, 2,'building excluded arrays')
 		that._buildExcludedArraysIterator(thisMaps, sourceArrays, 0, [], function(resultantArrays){
 			callback(resultantArrays)
 		})
@@ -111,8 +129,14 @@ var multivariator = {
 	},
 	multivariate: function(sourceVariantArrays, callback){
 		var that = this
+		that.logger.log(moduleName, 2,'running multivariate')
+		that.logger.log(moduleName, 2,'source Variant Arrays: ' + sourceVariantArrays)
+		that.logger.log(moduleName, 2,'source Variant Arrays[0]: ' + sourceVariantArrays[0])
+		that.logger.log(moduleName, 2,'source Variant Arrays length: ' + sourceVariantArrays.length)
+
 		that.finalOutput = []
 		multivariator.MapIterator(sourceVariantArrays, null, function(){
+			that.logger.log(moduleName, 2,'multivariate output: ' + that.finalOutput)
 			callback(that.finalOutput)
 		})		
 	},

@@ -14,7 +14,7 @@
 			"settings" : {
 				"maxInputQueueDepth" : 10
 			},
-			"nextTick" : 1,
+			"nextTick" : 1, 
 			"io": [
 				{"id" : "input1", "type": "extInput", "angle": 0, "fromId": "ext", "fromPort": "ext", "val":-1, "life" : 1},
 				{"id" : "input2", "type": "extInput", "angle": 0, "fromId": "ext", "fromPort": "ext", "val":-1, "life" : 1},
@@ -39,11 +39,11 @@
 			],
 			"activationQueue": [],
 			"propagationMessageQueue": [],
-			"variantMaps" : [
-				["internal1", "internal1a"]
-			],
-			"bpErrorMessageQueue" : [],
-			"variantErrorMaps" : []
+			"variants" : {
+				"inputs" : [],
+				"biases" : [],
+				"outputs" : []
+			}
 		},
 		{"spheronId": "allButOneInputSignalsMatchToActivationPairs",
 			"type" : "spheron",
@@ -75,11 +75,11 @@
 			],
 			"activationQueue": [],
 			"propagationMessageQueue": [],
-			"variantMaps" : [
-				["internal1", "internal1a"]
-			],
-			"bpErrorMessageQueue" : [],
-			"variantErrorMaps" : []
+			"variants" : {
+				"inputs" : [],
+				"biases" : [],
+				"outputs" : []
+			}
 		},
 		{"spheronId": "noInputSignalsMatchToActivationPairsAndQueueIsSaturated",
 			"type" : "spheron",
@@ -130,11 +130,11 @@
 			],
 			"activationQueue": [],
 			"propagationMessageQueue": [],
-			"variantMaps" : [
-				["internal1", "internal1a"]
-			],
-			"bpErrorMessageQueue" : [],
-			"variantErrorMaps" : []
+			"variants" : {
+				"inputs" : [],
+				"biases" : [],
+				"outputs" : []
+			}
 		}
 	],
 	"lesson" : [

@@ -681,10 +681,8 @@ var inputMessageQueueProcessor = {
 			//{"lessonId" : "whatIsAnd", "toPort" : "input1", "path" : "input1", "testIdx": 0, "val": 1, "sigId" : "1000" },
 			if(missingInputs[missingInputsIdx]){
 				var newMessage = {
-					lessonId: null,
 					toPort: missingInputs[missingInputsIdx],
 					path : missingInputs[missingInputsIdx],
-					lessonIdx: null,
 					val: 'static',
 					sigId: thisSignalId
 				}
