@@ -31,15 +31,24 @@ var Spheron = function (config) {
 	that.inputMessageQueue = (config.inputMessageQueue) ? config.inputMessageQueue : [] //individual port messages - these require martialling into a coherent signal
 	that.activationQueue = (config.activationQueue) ? config.activationQueue : [] //the martialled, coherant signal - i.e. sigId 1234 on ports 1 and 2
 	that.outputMessageQueue = (config.outputMessageQueue) ? config.outputMessageQueue : [] //the post activation signals
+	that.variants = (config.variants) ? config.variants : [] //the post activation signals
 
 
+
+/*
 	that.variantMaps = (config.variantMaps) ? config.variantMaps : [] //details of ab tests i.e [["bias1", "bias1a", "bias1b"]]
 	that.variantErrorMaps = (config.variantErrorMaps) ? config.variantErrorMaps : [] 
+	that.exclusionErrorMaps = (config.exclusionErrorMaps) ? config.exclusionErrorMaps : [] //Here we will maintain our understanding of the performance of different variants
+	that.exclusions = (config.exclusions) ? config.exclusions : []
+*/
+
+
+
 	that.propagationMessageQueue = (config.propagationMessageQueue) ? config.propagationMessageQueue : {} //messages waiting to be passed downstream
 	that.bpErrorMessageQueue = (config.bpErrorMessageQueue) ? config.bpErrorMessageQueue : [] //backpropped messages waiting to be processed and passed upstream 
-	that.exclusionErrorMaps = (config.exclusionErrorMaps) ? config.exclusionErrorMaps : [] //Here we will maintain our understanding of the performance of different variants
+
 	that.options = (config.options) ? config.options : {}
-	that.exclusions = (config.exclusions) ? config.exclusions : []
+	
 	that.nextTick = (config.nextTick) ? config.nextTick : 0 
 }
 

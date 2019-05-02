@@ -1,0 +1,135 @@
+{
+	"note" : "A partial network definition for testing input queue processing.",
+	"lessonId" : "whatIsAnd",
+	"type" : "lesson",
+	"options":{
+		"timeout": 10,
+		"mode":"autoTrain",
+		"errorThreshold":0.001
+	},
+	"network" : [
+		{"spheronId": "multivariatedPrimaries",
+			"type" : "spheron",
+			"state" : "pending",
+			"settings" : {
+				"maxInputQueueDepth" : 10
+			},
+			"activationHistory" : ["998","999"],
+			"nextTick" : 1,
+			"io": [
+				{"id" : "input1", "type": "extInput", "angle": 0, "fromId": "ext", "fromPort": "ext", "val":-1, "life" : 1},
+				{"id" : "input1a", "type": "extInput", "angle": 0, "fromId": "ext", "fromPort": "ext", "val":-1, "life" : 1},
+				{"id" : "input2", "type": "extInput", "angle": 0, "fromId": "ext", "fromPort": "ext", "val":-1, "life" : 1},
+				{"id" : "input3", "type": "extInput", "angle": 0, "fromId": "ext", "fromPort": "ext", "val":-1, "life" : 1},
+				{"id" : "bias1", "type": "bias", "angle": 20, "val":-1},
+				{"id" : "internal1", "type": "output", "angle": -60, "toId": "outputSpheron1", "toPort": "internal1", "val":-1},
+				{"id" : "internal1a", "type": "output", "angle": -50, "toId": "outputSpheron1", "toPort": "internal1", "val":-1}
+			],
+			"inputMessageQueue": [
+				{"lessonId" : "whatIsAnd", "toPort" : "input1", "path" : "input1", "lessonIdx": 0, "val": 1, "sigId" : "1000" },
+				{"lessonId" : "whatIsAnd", "toPort" : "input2", "path" : "input2", "lessonIdx": 0, "val": 1, "sigId" : "1000" },
+				{"lessonId" : "whatIsAnd", "toPort" : "input3", "path" : "input3", "lessonIdx": 0, "val": 1, "sigId" : "1000" },
+				{"lessonId" : "whatIsAnd", "toPort" : "input1", "path" : "input1", "lessonIdx": 1, "val": 0, "sigId" : "1001" },
+				{"lessonId" : "whatIsAnd", "toPort" : "input2", "path" : "input2", "lessonIdx": 1, "val": 0, "sigId" : "1001" },
+				{"lessonId" : "whatIsAnd", "toPort" : "input3", "path" : "input3", "lessonIdx": 1, "val": 0, "sigId" : "1001" },
+				{"lessonId" : "whatIsAnd", "toPort" : "input1", "path" : "input1", "lessonIdx": 2, "val": 1, "sigId" : "1002" },
+				{"lessonId" : "whatIsAnd", "toPort" : "input2", "path" : "input2", "lessonIdx": 2, "val": 1, "sigId" : "1002" },
+				{"lessonId" : "whatIsAnd", "toPort" : "input3", "path" : "input3", "lessonIdx": 2, "val": 1, "sigId" : "1002" }
+			],
+			"activationQueue": [],
+			"propagationMessageQueue": [],
+			"variants" : {
+				"inputs" : [
+					{
+						"original" : "input1",
+						"variants" : ["input1a", "none"],
+						"startTick" : -1,
+						"errorMap" : [
+							[],
+							[],
+							[]
+						]
+					}
+				],
+				"biases" : [],
+				"outputs" : []
+			}
+		} 
+	],
+	"lesson" : [
+		{"inputs": {"inputSpheron1": {"input1": {"val": 0}}, "inputSpheron2": {"input2": {"val": 0}}}, "outputs": {"ext": {"ANDout": {"val": 0}}}},
+		{"inputs": {"inputSpheron1": {"input1": {"val": 1}}, "inputSpheron2": {"input2": {"val": 0}}}, "outputs": {"ext": {"ANDout": {"val": 0}}}},
+		{"inputs": {"inputSpheron1": {"input1": {"val": 0}}, "inputSpheron2": {"input2": {"val": 1}}}, "outputs": {"ext": {"ANDout": {"val": 0}}}},
+		{"inputs": {"inputSpheron1": {"input1": {"val": 1}}, "inputSpheron2": {"input2": {"val": 1}}}, "outputs": {"ext": {"ANDout": {"val": 1}}}}
+	],
+	"tdd" : {
+		"tddTests": [
+			{
+				"module": "./1-inputMessageQueueProcessor",
+				"note" : "Only the primary parts of multivariants are necessary to complete a signal...",
+				"input": {
+					"hasInitMethod" : true,
+					"type": "spheron",
+					"spheronId" : "multivariatedPrimaries"
+				},
+				"expectedResults" : [
+					{
+						"function" : "isVariatedInput",
+						"parameters" : ["input1a"],
+						"returnType" : "boolean",
+						"containsJSONArray" : false,
+						"atLeastTheseFields": false,
+						"ordered": false,
+						"results": true
+					},
+					{
+						"function" : "isVariatedInput",
+						"parameters" : ["input1"],
+						"returnType" : "boolean",
+						"containsJSONArray" : false,
+						"atLeastTheseFields": false,
+						"ordered": false,
+						"results": false
+					},
+					{
+						"function" : "getFullSignalResultsAndRemoveFromInputQueue",
+						"note":"i.e. the primary option of a multivariant is the only bit that is necessary... we might not need a new function, only mod the existing message builder....",
+						"parameters" : null,
+						"returnType" : "object",
+						"containsJSONArray" : false,
+						"atLeastTheseFields": true,
+						"ordered": true,
+						"results": [
+							{"1000":[{"input" : "input1", "val" : 1, "path" : "input1", "lessonId":"whatIsAnd","lessonIdx":0},{"input" : "input2", "val" : 1, "path" : "input2", "lessonId":"whatIsAnd","lessonIdx":0}, {"input" : "input3", "val" : 1, "path" : "input3", "lessonId":"whatIsAnd","lessonIdx":0}]},
+							{"1001":[{"input" : "input1", "val" : 0, "path" : "input1", "lessonId":"whatIsAnd","lessonIdx":1},{"input" : "input2", "val" : 0, "path" : "input2", "lessonId":"whatIsAnd","lessonIdx":1}, {"input" : "input3", "val" : 0, "path" : "input3", "lessonId":"whatIsAnd","lessonIdx":1}]},
+							{"1002":[{"input" : "input1", "val" : 1, "path" : "input1", "lessonId":"whatIsAnd","lessonIdx":2},{"input" : "input2", "val" : 1, "path" : "input2", "lessonId":"whatIsAnd","lessonIdx":2}, {"input" : "input3", "val" : 1, "path" : "input3", "lessonId":"whatIsAnd","lessonIdx":2}]}
+						] 
+					},
+					{
+						"function" : "getInputMessageQueue",
+						"parameters" : null,
+						"returnType" : "object",
+						"containsJSONArray" : true,
+						"atLeastTheseFields": true,
+						"ordered": true,
+						"results":[]
+					},
+					{
+						"function" : "getActivationQueue",
+						"parameters" : null,
+						"returnType" : "object",
+						"containsJSONArray" : true,
+						"atLeastTheseFields": true,
+						"ordered": true, 
+						"results":[
+							{"1000":[{"input" : "input1", "val" : 1, "path" : "input1", "lessonId":"whatIsAnd","lessonIdx":0},{"input" : "input2", "val" : 1, "path" : "input2", "lessonId":"whatIsAnd","lessonIdx":0}, {"input" : "input3", "val" : 1, "path" : "input3", "lessonId":"whatIsAnd","lessonIdx":0}]},
+							{"1001":[{"input" : "input1", "val" : 0, "path" : "input1", "lessonId":"whatIsAnd","lessonIdx":1},{"input" : "input2", "val" : 0, "path" : "input2", "lessonId":"whatIsAnd","lessonIdx":1}, {"input" : "input3", "val" : 0, "path" : "input3", "lessonId":"whatIsAnd","lessonIdx":1}]},
+							{"1002":[{"input" : "input1", "val" : 1, "path" : "input1", "lessonId":"whatIsAnd","lessonIdx":2},{"input" : "input2", "val" : 1, "path" : "input2", "lessonId":"whatIsAnd","lessonIdx":2}, {"input" : "input3", "val" : 1, "path" : "input3", "lessonId":"whatIsAnd","lessonIdx":2}]}
+						] 
+					}
+				]
+			}
+		],
+		"nextTestFile": "./tests/dataForSpheronNG/1_3-inputQueueStates-deadInputs.json"
+	}
+}

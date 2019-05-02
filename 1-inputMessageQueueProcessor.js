@@ -116,11 +116,68 @@ var inputMessageQueueProcessor = {
 			callback(sigIds)
 		}
 	},
+	isVariatedInput: function (thisInputName, callback){
+		var that = this 
+		that.logger.log(moduleName, 4, 'called isVariatedInput')
+		that.isVariatedInputIterator(thisInputName, 0, 0, function(result){
+			that.logger.log(moduleName, 4, 'called back from isVariatedInput')
+			callback(result)
+		})
+	},
+	isVariatedInputIterator: function (thisInputName, variantIdx, variantItemIdx, callback){
+		var that = this
+		that.logger.log(moduleName, 4, 'called isVariatedInputIterator')
+		if(that.spheron.variants){
+			that.logger.log(moduleName, 4, 'isVariated we have variants')
+			if(that.spheron.variants.inputs){
+				that.logger.log(moduleName, 4, 'isVariated we have variants.inputs')
+				if(that.spheron.variants.inputs[variantIdx]){
+					if(that.spheron.variants.inputs[variantIdx].variants[variantItemIdx]){
+						that.logger.log(moduleName, 4, 'isVariatedInputIterator: ' + that.spheron.variants.inputs[variantIdx].variants[variantItemIdx] + ' against: ' + thisInputName)
+						if(that.spheron.variants.inputs[variantIdx].variants[variantItemIdx] == thisInputName){
+							callback(true)
+						} else {
+							that.isVariatedInputIterator(thisInputName, variantIdx, variantItemIdx+1, callback)
+						}
+					} else {
+						that.isVariatedInputIterator(thisInputName, variantIdx+1, 0, callback)
+					}
+				} else {
+					callback(false)
+				}
+			} else {
+				callback(false)
+			}
+		} else {
+			callback(false)
+		}
+	},
 	findInputNames: function(callback){
 		var that = this
-		that._findInputNamesIterator(0, [], function(foundNames){
+		//i.e. lets find the ones which are not a variation of another input
+		that._findNonVariatedInputNamesIterator(0, [], function(foundNames){
 			callback(foundNames)
 		})
+	},
+	_findNonVariatedInputNamesIterator: function(idx, inputNames, callback){
+		var that = this
+		idx = (idx) ? idx : 0
+		inputNames = (inputNames) ? inputNames : []
+
+		if(that.spheron.io[idx]){
+			if(that.spheron.io[idx].type == "extInput" || that.spheron.io[idx].type == "input"){
+				that.isVariatedInput(that.spheron.io[idx].id, function(isVariant){
+					if(isVariant == false){
+						inputNames.push(that.spheron.io[idx].id)		
+					}
+					that._findNonVariatedInputNamesIterator(idx+1, inputNames, callback)
+				})
+			} else {
+				that._findNonVariatedInputNamesIterator(idx+1, inputNames, callback)
+			}
+		} else {
+			callback(inputNames)
+		}
 	},
 	_findInputNamesIterator: function(idx, inputNames, callback){
 		var that = this

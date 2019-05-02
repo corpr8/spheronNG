@@ -40,14 +40,14 @@ var multivariator = {
 	},
 	MapIterator:function(thisMaps, thisMapIdxArray, callback){
 		var that = this
-		that.logger.log(moduleName, 2,'running map iterator')
+		that.logger.log(moduleName, 4,'running map iterator')
 		if(!thisMapIdxArray){
 			thisMapIdxArray = []
 			for(var v=0;v<thisMaps.length;v++){
 				thisMapIdxArray.push(0)
 			}
 		}
-		//that.logger.log(moduleName, 2,'thisMapIdxArray: ' + thisMapIdxArray)
+		that.logger.log(moduleName, 4,'thisMaps: ' + thisMaps.join(','))
 		that.MapPointerIterator(thisMaps, thisMapIdxArray, 1, function(){
 			callback()
 		})
@@ -57,7 +57,7 @@ var multivariator = {
 		var that = this
 
 		if(thisMapIdxArray[0] < thisMaps[0].length){
-			that.logger.log(moduleName, 2,'building excluded array') 
+			//that.logger.log(moduleName, 2,'building excluded array') 
 			multivariator.buildExcludedArrays(thisMaps, thisMapIdxArray, function(ourResultantArray){
 				that.finalOutput.push(ourResultantArray)
 				thisMapIdxArray[0] += 1
@@ -85,7 +85,7 @@ var multivariator = {
 	},
 	buildExcludedArrays: function(thisMaps, sourceArrays, callback){
 		var that = this
-		that.logger.log(moduleName, 2,'building excluded arrays')
+		//that.logger.log(moduleName, 2,'building excluded arrays')
 		that._buildExcludedArraysIterator(thisMaps, sourceArrays, 0, [], function(resultantArrays){
 			callback(resultantArrays)
 		})
@@ -94,9 +94,10 @@ var multivariator = {
 		var that = this
 		resultantArray = (resultantArray) ? resultantArray : []
 		if(sourceArrays[sourceArraysIdx] != null){
-			that.logger.log(moduleName, 6,sourceArrays[sourceArraysIdx])
+			that.logger.log(moduleName, 4,"sourceArrays[sourceArraysIdx]: " +sourceArrays[sourceArraysIdx])
 
 			that.excludeFromArray(thisMaps[sourceArraysIdx], sourceArrays[sourceArraysIdx], function(superArrayResult){
+				that.logger.log(moduleName, 4,"superArrayResult: " + superArrayResult)
 				resultantArray.push(superArrayResult)
 				that._buildExcludedArraysIterator(thisMaps, sourceArrays, sourceArraysIdx +1, resultantArray, callback)
 			})
@@ -116,7 +117,9 @@ var multivariator = {
 		resultantArray = (resultantArray) ? resultantArray : []
 
 		if(sourceArray[sourceArrayIdx]){
-			if(sourceArrayIdx != excludedIdx){
+			if(sourceArray.length == 1){
+				resultantArray.push(sourceArray[sourceArrayIdx])
+			} else if(sourceArrayIdx != excludedIdx){
 				resultantArray.push(sourceArray[sourceArrayIdx])
 			}
 			process.nextTick(function(){
@@ -129,17 +132,17 @@ var multivariator = {
 	},
 	multivariate: function(sourceVariantArrays, callback){
 		var that = this
-		that.logger.log(moduleName, 2,'running multivariate')
-		that.logger.log(moduleName, 2,'source Variant Arrays: ' + sourceVariantArrays)
-		that.logger.log(moduleName, 2,'source Variant Arrays[0]: ' + sourceVariantArrays[0])
-		that.logger.log(moduleName, 2,'source Variant Arrays length: ' + sourceVariantArrays.length)
+		that.logger.log(moduleName, 6,'running multivariate')
+		that.logger.log(moduleName, 6,'source Variant Arrays: ' + sourceVariantArrays)
+		that.logger.log(moduleName, 6,'source Variant Arrays[0]: ' + sourceVariantArrays[0])
+		that.logger.log(moduleName, 6,'source Variant Arrays length: ' + sourceVariantArrays.length)
 
 		that.finalOutput = []
 		multivariator.MapIterator(sourceVariantArrays, null, function(){
 			that.logger.log(moduleName, 2,'multivariate output: ' + that.finalOutput)
 			callback(that.finalOutput)
 		})		
-	},
+	}/*,
 	isVariated: function(path, variantMaps, callback){
 		var that = this
 		if(path.substring(-1) != ';'){
@@ -167,7 +170,7 @@ var multivariator = {
 		} else {
 			callback(false)
 		}
-	}
+	}*/
 }
 
 module.exports = multivariator

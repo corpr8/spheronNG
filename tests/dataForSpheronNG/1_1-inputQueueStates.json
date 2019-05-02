@@ -159,6 +159,6 @@
 				]
 			}
 		],
-		"nextTestFile": "./tests/dataForSpheronNG/1_2-inputQueueStates-deadInputs.json"
+		"nextTestFile": "./tests/dataForSpheronNG/1_2-inputQueueStates-multivatiantPrimaries.json"
 	}
 }

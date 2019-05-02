@@ -187,6 +187,13 @@ var tdd = {
 				that.logger.log(moduleName, 2, 'expected a null result. test failed.')
 				process.exitCode = 1 
 			}
+		} else if(thisTest.returnType == 'boolean'){
+			if(result == thisTest.results){
+				tdd.testIterator(testIdx, resultIdx +1, failureCount, callback)
+			} else {
+				that.logger.log(moduleName, 2, 'unexpected test result: ' + result + ' versus: ' + thisTest.results + '. test failed.')
+				process.exitCode = 1 
+			}
 		} else {
 			that.logger.log(moduleName, 2, 'TODO: unhandled test case - failed')
 			process.exitCode = 1
@@ -259,8 +266,8 @@ var tdd = {
 					if(thisTest.parameters){
 						//build and apply an array of parameters to the function
 						var theseParameters = thisTest.parameters
-						that.logger.log(moduleName, 2, 'parameters: ' + theseParameters)
-						that.logger.log(moduleName, 2, 'parameter length: ' + theseParameters.length)
+						that.logger.log(moduleName, 4, 'parameters: ' + theseParameters)
+						that.logger.log(moduleName, 4, 'parameter length: ' + theseParameters.length)
 
 						var thisCallback = function(result){
 							that.handleTestResult(thisTest, result, resultIdx, testIdx, failureCount, callback)
