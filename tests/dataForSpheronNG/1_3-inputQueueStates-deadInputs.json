@@ -117,6 +117,6 @@
 				]
 			}
 		],
-		"nextTestFile": "./tests/dataForSpheronNG/2_1-multivariating_activationQueueEntries.json"
+		"nextTestFile": "./tests/dataForSpheronNG/2_1-multivariator_tests.json"
 	}
 }

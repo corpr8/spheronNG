@@ -72,63 +72,33 @@
 					{
 						"function" : "multivariate",
 						"note" : "when passing parameters, we always wrap them in an extra [] as this keeps them inside a single field in this document!!!!!!!",
-						"parameters" : [[["a"]]],
+						"parameters" : [["input1"],["input1a"],["none"]],
 						"returnType" : "object",
 						"containsJSONArray" : false,
 						"atLeastTheseFields": true,
 						"ordered": true,
-						"results": [["a"]]
-					}
-				]
-			},
-			{
-				"module": "./multivariator",
-				"input": {
-					"hasInitMethod" : true,
-					"type": "dumbModule",
-					"spheronId" : null
-				},
-				"expectedResults" : [
-					{
-						"function" : "multivariate",
-						"note" : "passing variables in a single array returns an exclusion map? ",
-						"parameters" : [[["a","b","c"]]],
-						"returnType" : "object",
-						"containsJSONArray" : false,
-						"atLeastTheseFields": true,
-						"ordered": true,
-						"results": [["b","c"],["a","c"],["a","b"]]
-					}
-				]
-			},
-			{
-				"module": "./multivariator",
-				"input": {
-					"hasInitMethod" : true,
-					"type": "dumbModule",
-					"spheronId" : null
-				},
-				"expectedResults" : [
+						"results": [["input1a","none"],["input1","nonw"],["input1","input1a"]]
+					},
 					{
 						"function" : "multivariate",
 						"note" : "when passing parameters, we always wrap them in an extra [] as this keeps them inside a single field in this document!!!!!!!",
-						"parameters" : [[["a","b"],["c","d"]]],
+						"parameters" : [["a","b"],["c","d"]],
 						"returnType" : "object",
 						"containsJSONArray" : false,
 						"atLeastTheseFields": true,
 						"ordered": true,
 						"results": [["b","d"],["a","d"],["b","c"],["a","c"]]
-					}
-				]
-			},
-			{
-				"module": "./multivariator",
-				"input": {
-					"hasInitMethod" : true,
-					"type": "dumbModule",
-					"spheronId" : null
-				},
-				"expectedResults" : [
+					},
+					{
+						"function" : "multivariate",
+						"note" : "when passing parameters, we always wrap them in an extra [] as this keeps them inside a single field in this document!!!!!!!",
+						"parameters" : ["a"],
+						"returnType" : "object",
+						"containsJSONArray" : false,
+						"atLeastTheseFields": true,
+						"ordered": true,
+						"results": ["a"]
+					},
 					{
 						"function" : "multivariate",
 						"note" : "when passing parameters, we always wrap them in an extra [] as this keeps them inside a single field in this document!!!!!!!",
@@ -138,17 +108,7 @@
 						"atLeastTheseFields": true,
 						"ordered": true,
 						"results": [["b","c","e"],["a","c","e"]]
-					}
-				]
-			},
-			{
-				"module": "./multivariator",
-				"input": {
-					"hasInitMethod" : true,
-					"type": "dumbModule",
-					"spheronId" : null
-				},
-				"expectedResults" : [
+					},
 					{
 						"function" : "multivariate",
 						"note" : "when passing parameters, we always wrap them in an extra [] as this keeps them inside a single field in this document!!!!!!!",
@@ -158,17 +118,7 @@
 						"atLeastTheseFields": true,
 						"ordered": true,
 						"results": [[2,4,6],[1,4,6],[2,3,6],[1,3,6],[2,4,5],[1,4,5],[2,3,5],[1,3,5]]
-					}
-				]
-			},
-			{
-				"module": "./multivariator",
-				"input": {
-					"hasInitMethod" : true,
-					"type": "dumbModule",
-					"spheronId" : null
-				},
-				"expectedResults" : [
+					},
 					{
 						"function" : "multivariate",
 						"note" : "when passing parameters, we always wrap them in an extra [] as this keeps them inside a single field in this document!!!!!!!",
@@ -177,30 +127,54 @@
 						"containsJSONArray" : false,
 						"atLeastTheseFields": true,
 						"ordered": true,
-						"results": [["b","d","f"],["a","d","f"],["b","c","f"],["a","c","f"],["b","d","e"],["a","d","e"],["b","c","e"],["a","c","e"]]
-					}
-				]
-			},
-			{
-				"module": "./multivariator",
-				"input": {
-					"hasInitMethod" : true,
-					"type": "dumbModule",
-					"spheronId" : null
-				},
-				"expectedResults" : [
+						"results": [
+							["b","d","f"],
+							["a","d","f"],
+							["b","c","f"],
+							["a","c","f"],
+							["b","d","e"],
+							["a","d","e"],
+							["b","c","e"],
+							["a","c","e"]
+						]
+					},
 					{
 						"function" : "multivariate",
-						"note" : "when passing parameters, we always wrap them in an extra [] as this keeps them inside a single field in this document!!!!!!!",
-						"parameters" : [[["input1"],["input1a"],["none"]]],
+						"note" : "This test shows just exclusions",
+						"parameters" : [[["input1","input1a","none"],["input2","input2a","none"]]],
 						"returnType" : "object",
 						"containsJSONArray" : false,
 						"atLeastTheseFields": true,
 						"ordered": true,
-						"results": [["input1","input1a","none"]]
+						"results": [
+							["input1a","none"], ["input2a","none"],
+							["input1","none"], ["input2a","none"],
+							["input1","input1a"], ["input2a","none"],
+							["input1a","none"], ["input2","none"],
+							["input1","none"], ["input2","none"],
+							["input1","input1a"], ["input2","none"],
+							["input1a","none"], ["input2","input2a"],
+							["input1","none"], ["input2","input2a"],
+							["input1","input1a"], ["input2","input2a"]
+						]
+					},
+					{
+						"function" : "multivariate",
+						"note" : "passing variables in a single array returns an exclusion map? ",
+						"parameters" : [[["a","b","c"]]],
+						"returnType" : "object",
+						"containsJSONArray" : false,
+						"atLeastTheseFields": true,
+						"ordered": true,
+						"results": [
+							["b","c"],
+							["a","c"],
+							["a","b"]
+						]
 					}
 				]
 			}
-		]
+		],
+		"nextTestFile": "./tests/dataForSpheronNG/2_2-multivariating_activation_queue.json"
 	}
 }

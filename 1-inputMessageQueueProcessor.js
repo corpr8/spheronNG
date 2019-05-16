@@ -724,7 +724,7 @@ var inputMessageQueueProcessor = {
 					})	
 				})
 			} else {
-				that.logger.log(moduleName, 2, 'not saturated, calling back')
+				that.logger.log(moduleName, 4, 'not saturated, calling back')
 				callback()
 			}
 		})

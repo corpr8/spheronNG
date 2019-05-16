@@ -75,6 +75,7 @@
 				"expectedResults" : [
 					{
 						"function" : "isVariatedInput",
+						"unpackInput" : true,
 						"parameters" : ["input1a"],
 						"returnType" : "boolean",
 						"containsJSONArray" : false,
@@ -85,6 +86,7 @@
 					{
 						"function" : "isVariatedInput",
 						"parameters" : ["input1"],
+						"unpackInput" : true,
 						"returnType" : "boolean",
 						"containsJSONArray" : false,
 						"atLeastTheseFields": false,

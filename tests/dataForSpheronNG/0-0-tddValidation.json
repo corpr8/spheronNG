@@ -1,0 +1,146 @@
+{
+	"note" : "TDD Validation",
+	"lessonId" : "whatIsAnd",
+	"type" : "lesson",
+	"options":{
+		"timeout": 10,
+		"mode":"autoTrain",
+		"errorThreshold":0.001
+	},
+	"network" : [
+		{"spheronId": "inputSpheron1", 
+			"type" : "spheron",
+			"state" : "pending",
+			"settings" : {
+				"maxInputQueueDepth" : 10
+			},
+			"nextTick" : 1,
+			"io": [
+				{"id" : "input1", "type": "extInput", "angle": 0, "fromId": "ext", "fromPort": "ext", "val":-1},
+				{"id" : "bias1", "type": "bias", "angle": 20, "val":-1},
+				{"id" : "internal1", "type": "output", "angle": -60, "toId": "outputSpheron1", "toPort": "internal1", "val":-1},
+				{"id" : "internal1a", "type": "output", "angle": -50, "toId": "outputSpheron1", "toPort": "internal1", "val":-1}
+			],
+			"inputMessageQueue": [
+				{"lessonId" : "whatIsAnd", "toPort" : "input1", "path" : "input1", "lessonIdx": 0, "val": 0, "sigId" : "123456789" },
+				{"lessonId" : "whatIsAnd", "toPort" : "input1", "path" : "input1", "lessonIdx": 1, "val": 1, "sigId" : "234567890" },
+				{"lessonId" : "whatIsAnd", "toPort" : "input1", "path" : "input1", "lessonIdx": 2, "val": 0, "sigId" : "345678901" },
+				{"lessonId" : "whatIsAnd", "toPort" : "input1", "path" : "input1", "lessonIdx": 3, "val": 1, "sigId" : "456789012" }
+			],
+			"activationQueue": [],
+			"propagationMessageQueue": [],
+			"variants" : {
+				"inputs" : [],
+				"biases" : [],
+				"outputs" : []
+			}
+		}
+	],
+	"lesson" : [],
+	"tdd" : {
+		"tddTests": [
+			{
+				"module": "./0-tddValidator",
+				"input": {
+					"hasInitMethod" : true,
+					"type": "dumbModule",
+					"spheronId" : null
+				},
+				"expectedResults" : [
+					{
+						"function" : "cbNull",
+						"parameters" : null,
+						"returnType" : null,
+						"containsJSONArray" : false,
+						"atLeastTheseFields": false,
+						"ordered": true,
+						"results":null
+					},
+					{
+						"function" : "cbString",
+						"parameters" : null,
+						"returnType" : "string",
+						"containsJSONArray" : false,
+						"atLeastTheseFields": false,
+						"ordered": true,
+						"results":"a string"
+					},
+					{
+						"function" : "cbNumber",
+						"parameters" : null,
+						"returnType" : "number",
+						"containsJSONArray" : false,
+						"atLeastTheseFields": false,
+						"ordered": true,
+						"results":1
+					},
+					{
+						"function" : "cbArrayOfStrings",
+						"parameters" : null,
+						"returnType" : "object",
+						"containsJSONArray" : false,
+						"atLeastTheseFields": false,
+						"ordered": true,
+						"results": ["first","second","third"]
+					},
+					{
+						"function" : "cbArrayOfNumbers",
+						"parameters" : null,
+						"returnType" : "object",
+						"containsJSONArray" : false,
+						"atLeastTheseFields": false,
+						"ordered": true,
+						"results": [1,2,3]
+					},
+					{
+						"function" : "cbArrayOfStringArrays",
+						"parameters" : null,
+						"returnType" : "object",
+						"containsJSONArray" : false,
+						"atLeastTheseFields": false,
+						"ordered": true,
+						"results": [["first","second"],["third","fourth"],["fifth","sixth"]]
+					},
+					{
+						"function" : "mirror",
+						"parameters" : "test",
+						"returnType" : "string",
+						"containsJSONArray" : false,
+						"atLeastTheseFields": false,
+						"ordered": true,
+						"results": "test"
+					},
+					{
+						"function" : "mirror",
+						"parameters" : ["test1"],
+						"returnType" : "object",
+						"containsJSONArray" : false,
+						"atLeastTheseFields": false,
+						"ordered": true,
+						"results": ["test1"]
+					},
+					{
+						"function" : "mirror",
+						"parameters" : ["test1", "test2"],
+						"returnType" : "object",
+						"containsJSONArray" : false,
+						"atLeastTheseFields": false,
+						"ordered": true,
+						"results": ["test1", "test2"]
+					},
+					{
+						"function" : "unpackedMirror",
+						"parameters" : ["test1", "test2"],
+						"unpackInput" : true,
+						"returnType" : "object",
+						"containsJSONArray" : false,
+						"atLeastTheseFields": false,
+						"ordered": true,
+						"results": ["test1", "test2"]
+					}
+				]
+			}
+		],
+		"nextTestFile": "./tests/dataForSpheronNG/0-basicProblemDefinitionNG.json"
+	}
+}

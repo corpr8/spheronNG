@@ -10,7 +10,7 @@ var tdd = {
 	currentTestModule: null,
 	thisSpheron: null,
 	logger: null,
-	config:{tdd: {tddTests: [],nextTestFile: "./tests/dataForSpheronNG/0-basicProblemDefinitionNG.json"}},
+	config:{tdd: {tddTests: [],nextTestFile: "./tests/dataForSpheronNG/0-0-tddValidation.json"}},
 	previousTests: [],
 	isPreviousTestIterator: function(testName, idx, callback){
 		idx = (idx) ? idx : 0
@@ -146,12 +146,19 @@ var tdd = {
 					if(thisTest.containsJSONArray == false){
 						if(thisTest.ordered == true){
 							//match the array, in order
-							that.logger.log(moduleName, 4, 'expected: ' + thisTest.results + ' got: ' + result.join(','))
-							if(result.join(',') == thisTest.results){
+							//if(result.join(',') == thisTest.results){
+
+							if(that.isArrayEqual(result, thisTest.results) == true){
 								that.logger.log(moduleName, 2, 'test passed')
 								tdd.testIterator(testIdx, resultIdx +1, failureCount, callback)
 							} else {
 								that.logger.log(moduleName, 2, 'ordered array test failed.')
+								that.logger.log(moduleName, 2, 'expected[0]: ' + thisTest.results[0] + ' got: ' + result[0])
+								that.logger.log(moduleName, 2, 'expedted length: ' + (thisTest.results).length + ' got: ' + result.length)
+								that.logger.log(moduleName, 2, 'expected typeof: ' + typeof(thisTest.results) + ' got: ' + typeof result)
+								that.logger.log(moduleName, 2, 'expected typeof[0]: ' + typeof(thisTest.results[0]) + ' got: ' + typeof result[0])
+								that.logger.log(moduleName, 2, 'thisTest: ' + JSON.stringify(thisTest))
+								that.logger.log(moduleName, 2, 'equality: ' + (thisTest.results == result))
 								process.exitCode = 1 
 							}
 						} else {
@@ -176,9 +183,23 @@ var tdd = {
 				}
 			})	
 		} else if(thisTest.returnType == "string"){
-			//we expect a string
-			that.logger.log(moduleName, 2, 'TODO: handle string - failed')
-			process.exitCode = 1
+			if(typeof result == "string"){
+				that.logger.log(moduleName, 2, 'returned string - test passed')
+				tdd.testIterator(testIdx, resultIdx +1, failureCount, callback)
+			} else {
+				//we expect a string
+				that.logger.log(moduleName, 2, 'expected a string')
+				process.exitCode = 1
+			}
+		} else if(thisTest.returnType == "number"){
+			if(typeof result == "number"){
+				that.logger.log(moduleName, 2, 'returned number - test passed')
+				tdd.testIterator(testIdx, resultIdx +1, failureCount, callback)
+			} else {
+				//we expect a string
+				that.logger.log(moduleName, 2, 'expected an number')
+				process.exitCode = 1
+			}
 		} else if(thisTest.returnType == null){
 			if(result == null){
 				that.logger.log(moduleName, 2, 'returned null - test passed')
@@ -197,6 +218,90 @@ var tdd = {
 		} else {
 			that.logger.log(moduleName, 2, 'TODO: unhandled test case - failed')
 			process.exitCode = 1
+		}
+	},
+	isArrayEqual: function(value, other) {
+		var that = this
+		//from https://gomakethings.com/check-if-two-arrays-or-objects-are-equal-with-javascript/
+		// Get the value type
+		var type = Object.prototype.toString.call(value);
+		var secondType = Object.prototype.toString.call(other)
+
+		// If the two objects are not the same type, return false
+		if (type !== secondType){
+			that.logger.log(moduleName, 2, 'objects are not same type - compare fails.')
+			that.logger.log(moduleName, 2, type + ' expected: ' + secondType)
+			return false;	
+		} else {
+			// If items are not an object or array, return false
+			if (['[object Array]', '[object Object]'].indexOf(type) < 0){
+				that.logger.log(moduleName, 2, 'items are not an object or array - compare fails.')
+				return false;
+			} else {
+
+
+				// Compare the length of the length of the two items
+				var valueLen = type === '[object Array]' ? value.length : Object.keys(value).length;
+				var otherLen = type === '[object Array]' ? other.length : Object.keys(other).length;
+				if (valueLen !== otherLen){
+					that.logger.log(moduleName, 2, 'lengths are not equal - compare fails.')
+					that.logger.log(moduleName, 2, 'valueLen (result):' + valueLen + ' otherLen (expected):' + otherLen)
+					that.logger.log(moduleName, 2, 'value (result): ' + value)
+					that.logger.log(moduleName, 2, 'other (expected): ' + other)
+					that.logger.log(moduleName, 2, 'value[0] (result): ' + value[0])
+					that.logger.log(moduleName, 2, 'other[0] (expected): ' + other[0])
+					return false;
+				} else {
+					//TODO: Break this out further at a later date...
+
+					// Compare two items
+					var compare = function (item1, item2) {
+
+						// Get the object type
+						var itemType = Object.prototype.toString.call(item1);
+
+						// If an object or array, compare recursively
+						if (['[object Array]', '[object Object]'].indexOf(itemType) >= 0) {
+							if (!that.isArrayEqual(item1, item2)) return false;
+						}
+
+						// Otherwise, do a simple comparison
+						else {
+
+							// If the two items are not the same type, return false
+							if (itemType !== Object.prototype.toString.call(item2)) return false;
+
+							// Else if it's a function, convert to a string and compare
+							// Otherwise, just compare
+							if (itemType === '[object Function]') {
+								if (item1.toString() !== item2.toString()) return false;
+							} else {
+								if (item1 !== item2) return false;
+							}
+
+						}
+					};
+
+					// Compare properties
+					if (type === '[object Array]') {
+						for (var i = 0; i < valueLen; i++) {
+							if (compare(value[i], other[i]) === false) return false;
+						}
+					} else {
+						for (var key in value) {
+							if (value.hasOwnProperty(key)) {
+								if (compare(value[key], other[key]) === false) return false;
+							}
+						}
+					}
+
+					// If nothing failed, return true
+					return true;
+
+
+
+				}
+			}
 		}
 	},
 	loadModule: function(testIdx, failureCount, callback){
@@ -276,9 +381,15 @@ var tdd = {
 						/*
 						* Note: The ... below means that we wrap parameters in an extra [] as they are unpacked by the ... in the test here!!!
 						*/
-
-						theseParameters.push(thisCallback)
-						that.currentTestModule[thisTest.function](...theseParameters)
+						if(thisTest.unpackInput){
+							that.logger.log(moduleName, 2, 'unpacking input')
+							theseParameters.push(thisCallback)
+							that.currentTestModule[thisTest.function](...theseParameters)
+						} else {
+							that.logger.log(moduleName, 2, 'not unpacking input.')
+							that.currentTestModule[thisTest.function](theseParameters, thisCallback)
+						}
+						
 
 					} else {
 						// no parameters so just have a callback

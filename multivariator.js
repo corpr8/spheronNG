@@ -28,14 +28,6 @@ var multivariator = {
 		var that = this
 		that.logger = logger;
 		that.logger.log(moduleName, 2,'init') 
-		
-		/*
-		var v = [[1,2,3],[2,3,4],[3,4,5]]
-		that.multivariate(v, function(testResult){
-			that.logger.log(moduleName, 2,'test variate: ' + JSON.stringify(testResult))
-			process.exitCode = 1
-			
-		})*/
 		callback()
 	},
 	MapIterator:function(thisMaps, thisMapIdxArray, callback){
@@ -47,24 +39,20 @@ var multivariator = {
 				thisMapIdxArray.push(0)
 			}
 		}
-		that.logger.log(moduleName, 4,'thisMaps: ' + thisMaps.join(','))
+		that.logger.log(moduleName, 2,'thisMaps: ' + thisMaps.join(','))
 		that.MapPointerIterator(thisMaps, thisMapIdxArray, 1, function(){
 			callback()
 		})
-
 	},
 	MapPointerIterator: function(thisMaps, thisMapIdxArray, MapIdxArrayPointer, callback){
 		var that = this
 
 		if(thisMapIdxArray[0] < thisMaps[0].length){
-			//that.logger.log(moduleName, 2,'building excluded array') 
 			multivariator.buildExcludedArrays(thisMaps, thisMapIdxArray, function(ourResultantArray){
 				that.finalOutput.push(ourResultantArray)
 				thisMapIdxArray[0] += 1
 				that.MapPointerIterator(thisMaps, thisMapIdxArray, MapIdxArrayPointer, callback)
-			})
-
-			
+			})			
 		} else {
 			if(MapIdxArrayPointer < thisMaps.length){
 
@@ -85,7 +73,6 @@ var multivariator = {
 	},
 	buildExcludedArrays: function(thisMaps, sourceArrays, callback){
 		var that = this
-		//that.logger.log(moduleName, 2,'building excluded arrays')
 		that._buildExcludedArraysIterator(thisMaps, sourceArrays, 0, [], function(resultantArrays){
 			callback(resultantArrays)
 		})
@@ -133,47 +120,18 @@ var multivariator = {
 	multivariate: function(sourceVariantArrays, callback){
 		var that = this
 		that.logger.log(moduleName, 6,'running multivariate')
-		that.logger.log(moduleName, 6,'source Variant Arrays: ' + sourceVariantArrays)
-		that.logger.log(moduleName, 6,'source Variant Arrays[0]: ' + sourceVariantArrays[0])
-		that.logger.log(moduleName, 6,'source Variant Arrays length: ' + sourceVariantArrays.length)
+		that.logger.log(moduleName, 2,'source Variant Arrays: ' + sourceVariantArrays)
+		that.logger.log(moduleName, 2,'source Variant Arrays[0]: ' + sourceVariantArrays[0])
+		that.logger.log(moduleName, 2,'source Variant Arrays length: ' + sourceVariantArrays.length)
 
 		that.finalOutput = []
 		multivariator.MapIterator(sourceVariantArrays, null, function(){
-			that.logger.log(moduleName, 2,'multivariate output: ' + that.finalOutput)
-			callback(that.finalOutput)
-		})		
-	}/*,
-	isVariated: function(path, variantMaps, callback){
-		var that = this
-		if(path.substring(-1) != ';'){
-			path += ';'
-		}
-		that.isVariatedIterator(path, variantMaps, 0, 0, function(result){
-			callback(result)
-		})
-	},
-	isVariatedIterator: function(path, variantMaps, variantMapIdx, variantMapIdxItemIdx, callback){
-		var that = this
-		that.logger.log(moduleName, 5,'in multivariator')
-		//note: will currentlhy only pull back the first iterant.
-		if(variantMaps[variantMapIdx]){
-			if(variantMaps[variantMapIdx][variantMapIdxItemIdx]){
-				that.logger.log(moduleName, 6,'searching for: ' + variantMaps[variantMapIdx][variantMapIdxItemIdx])
-				if(path.substring(variantMaps[variantMapIdx][variantMapIdxItemIdx]) != -1){
-					callback({map: variantMaps[variantMapIdx], id: variantMaps[variantMapIdx][variantMapIdxItemIdx]})
-				} else {
-					isVariatedIterator(path, variantMaps, variantMapIdx, variantMapIdxItemIdx +1, callback)
-				}
-			} else {
-				isVariatedIterator(path, variantMaps, variantMapIdx +1, 0, callback)
+			for(var v=0;v<that.finalOutput.length;v++){
+				that.logger.log(moduleName, 2,'multivariate output: ' + that.finalOutput[v])
 			}
-		} else {
-			callback(false)
-		}
-	}*/
+			callback(that.finalOutput)
+		})
+	}
 }
-
+ 
 module.exports = multivariator
-
-
-

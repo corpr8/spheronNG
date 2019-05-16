@@ -100,12 +100,13 @@
 				"expectedResults" : [
 					{
 						"function" : "getSignalIdsFromInputQueue",
+						"unpackInput" : true,
 						"parameters" : [0,[]],
 						"returnType" : "object",
 						"containsJSONArray" : false,
 						"atLeastTheseFields": false,
 						"ordered": true,
-						"results":[123456789,234567890,345678901,456789012]
+						"results":["123456789","234567890","345678901","456789012"]
 					},
 					{
 						"function" : "findInputNames",
@@ -142,12 +143,13 @@
 				"expectedResults" : [
 					{
 						"function" : "getSignalIdsFromInputQueue",
+						"unpackInput" : true,
 						"parameters" : [0,[]],
 						"returnType" : "object",
 						"containsJSONArray" : false,
 						"atLeastTheseFields": false,
 						"ordered": true,
-						"results":[123456789,234567890,345678901,456789012]
+						"results":["123456789","234567890","345678901","456789012"]
 					},
 					{
 						"function" : "findInputNames",
