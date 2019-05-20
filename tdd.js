@@ -221,6 +221,7 @@ var tdd = {
 		}
 	},
 	isArrayEqual: function(value, other) {
+
 		var that = this
 		//from https://gomakethings.com/check-if-two-arrays-or-objects-are-equal-with-javascript/
 		// Get the value type
@@ -262,14 +263,20 @@ var tdd = {
 
 						// If an object or array, compare recursively
 						if (['[object Array]', '[object Object]'].indexOf(itemType) >= 0) {
-							if (!that.isArrayEqual(item1, item2)) return false;
+							if (!that.isArrayEqual(item1, item2)){
+								that.logger.log(moduleName, 2, 'recursive compare failed - compare fails.')
+								return false;
+							} 
 						}
 
 						// Otherwise, do a simple comparison
 						else {
 
 							// If the two items are not the same type, return false
-							if (itemType !== Object.prototype.toString.call(item2)) return false;
+							if (itemType !== Object.prototype.toString.call(item2)){
+								that.logger.log(moduleName, 2, 'types are different.')
+								return false;
+							} 
 
 							// Else if it's a function, convert to a string and compare
 							// Otherwise, just compare
@@ -285,12 +292,19 @@ var tdd = {
 					// Compare properties
 					if (type === '[object Array]') {
 						for (var i = 0; i < valueLen; i++) {
-							if (compare(value[i], other[i]) === false) return false;
+							if (compare(value[i], other[i]) === false){
+								that.logger.log(moduleName, 2, 'object array properties do not match.')
+								that.logger.log(moduleName, 2, 'value[i]: ' + value[i] + ' other[i]: ' + other[i])
+							 	return false;	
+							}
 						}
 					} else {
 						for (var key in value) {
 							if (value.hasOwnProperty(key)) {
-								if (compare(value[key], other[key]) === false) return false;
+								if (compare(value[key], other[key]) === false){
+									that.logger.log(moduleName, 2, 'properties do not match(2).')	
+									return false;
+								}
 							}
 						}
 					}

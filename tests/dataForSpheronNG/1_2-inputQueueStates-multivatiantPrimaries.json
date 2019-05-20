@@ -124,9 +124,21 @@
 						"atLeastTheseFields": true,
 						"ordered": true, 
 						"results":[
-							{"1000":[{"input" : "input1", "val" : 1, "path" : "input1", "lessonId":"whatIsAnd","lessonIdx":0},{"input" : "input2", "val" : 1, "path" : "input2", "lessonId":"whatIsAnd","lessonIdx":0}, {"input" : "input3", "val" : 1, "path" : "input3", "lessonId":"whatIsAnd","lessonIdx":0}]},
-							{"1001":[{"input" : "input1", "val" : 0, "path" : "input1", "lessonId":"whatIsAnd","lessonIdx":1},{"input" : "input2", "val" : 0, "path" : "input2", "lessonId":"whatIsAnd","lessonIdx":1}, {"input" : "input3", "val" : 0, "path" : "input3", "lessonId":"whatIsAnd","lessonIdx":1}]},
-							{"1002":[{"input" : "input1", "val" : 1, "path" : "input1", "lessonId":"whatIsAnd","lessonIdx":2},{"input" : "input2", "val" : 1, "path" : "input2", "lessonId":"whatIsAnd","lessonIdx":2}, {"input" : "input3", "val" : 1, "path" : "input3", "lessonId":"whatIsAnd","lessonIdx":2}]}
+							{"signalId" :"1000",
+								"io":[
+									{"input" : "input1", "val" : 1, "path" : "input1", "lessonId":"whatIsAnd","lessonIdx":0},
+									{"input" : "input2", "val" : 1, "path" : "input2", "lessonId":"whatIsAnd","lessonIdx":0}, 
+									{"input" : "input3", "val" : 1, "path" : "input3", "lessonId":"whatIsAnd","lessonIdx":0}]},
+							{"signalId" :"1001",
+								"io":[
+									{"input" : "input1", "val" : 0, "path" : "input1", "lessonId":"whatIsAnd","lessonIdx":1},
+									{"input" : "input2", "val" : 0, "path" : "input2", "lessonId":"whatIsAnd","lessonIdx":1}, 
+									{"input" : "input3", "val" : 0, "path" : "input3", "lessonId":"whatIsAnd","lessonIdx":1}]},
+							{"signalId" :"1002",
+								"io":[
+									{"input" : "input1", "val" : 1, "path" : "input1", "lessonId":"whatIsAnd","lessonIdx":2},
+									{"input" : "input2", "val" : 1, "path" : "input2", "lessonId":"whatIsAnd","lessonIdx":2}, 
+									{"input" : "input3", "val" : 1, "path" : "input3", "lessonId":"whatIsAnd","lessonIdx":2}]}
 						] 
 					}
 				]

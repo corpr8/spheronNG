@@ -30,108 +30,36 @@ var multivariator = {
 		that.logger.log(moduleName, 2,'init') 
 		callback()
 	},
-	MapIterator:function(thisMaps, thisMapIdxArray, callback){
+	multivariate: function(array, callback){
 		var that = this
-		that.logger.log(moduleName, 4,'running map iterator')
-		if(!thisMapIdxArray){
-			thisMapIdxArray = []
-			for(var v=0;v<thisMaps.length;v++){
-				thisMapIdxArray.push(0)
-			}
-		}
-		that.logger.log(moduleName, 2,'thisMaps: ' + thisMaps.join(','))
-		that.MapPointerIterator(thisMaps, thisMapIdxArray, 1, function(){
-			callback()
-		})
-	},
-	MapPointerIterator: function(thisMaps, thisMapIdxArray, MapIdxArrayPointer, callback){
-		var that = this
+	    var v = permute(array)
 
-		if(thisMapIdxArray[0] < thisMaps[0].length){
-			multivariator.buildExcludedArrays(thisMaps, thisMapIdxArray, function(ourResultantArray){
-				that.finalOutput.push(ourResultantArray)
-				thisMapIdxArray[0] += 1
-				that.MapPointerIterator(thisMaps, thisMapIdxArray, MapIdxArrayPointer, callback)
-			})			
-		} else {
-			if(MapIdxArrayPointer < thisMaps.length){
-
-				thisMapIdxArray[MapIdxArrayPointer] += 1
-				if(thisMapIdxArray[MapIdxArrayPointer] > thisMaps[MapIdxArrayPointer].length-1){
-					thisMapIdxArray[MapIdxArrayPointer] = 0
-					MapIdxArrayPointer += 1
-					that.MapPointerIterator(thisMaps, thisMapIdxArray, MapIdxArrayPointer, callback)
-				} else {
-					MapIdxArrayPointer = 1
-					thisMapIdxArray[0] = 0
-					that.MapPointerIterator(thisMaps, thisMapIdxArray, MapIdxArrayPointer, callback)
-				}
-			} else {
-				callback()
-			}
-		}		
-	},
-	buildExcludedArrays: function(thisMaps, sourceArrays, callback){
-		var that = this
-		that._buildExcludedArraysIterator(thisMaps, sourceArrays, 0, [], function(resultantArrays){
-			callback(resultantArrays)
-		})
-	},
-	_buildExcludedArraysIterator: function(thisMaps, sourceArrays, sourceArraysIdx, resultantArray, callback){
-		var that = this
-		resultantArray = (resultantArray) ? resultantArray : []
-		if(sourceArrays[sourceArraysIdx] != null){
-			that.logger.log(moduleName, 4,"sourceArrays[sourceArraysIdx]: " +sourceArrays[sourceArraysIdx])
-
-			that.excludeFromArray(thisMaps[sourceArraysIdx], sourceArrays[sourceArraysIdx], function(superArrayResult){
-				that.logger.log(moduleName, 4,"superArrayResult: " + superArrayResult)
-				resultantArray.push(superArrayResult)
-				that._buildExcludedArraysIterator(thisMaps, sourceArrays, sourceArraysIdx +1, resultantArray, callback)
-			})
-		} else {
-			callback(resultantArray)
-		}
-	},
-	excludeFromArray: function(sourceArray, excludeIdx, callback){
-		var that = this
-		that._excludeFromArrayIterator(sourceArray, [], 0, excludeIdx, function(resultantArray){
-			callback(resultantArray)
-		})
-	},
-	_excludeFromArrayIterator: function(sourceArray, resultantArray, sourceArrayIdx, excludedIdx, callback){
-		var that = this
-		sourceArrayIdx = (sourceArrayIdx) ? sourceArrayIdx : 0
-		resultantArray = (resultantArray) ? resultantArray : []
-
-		if(sourceArray[sourceArrayIdx]){
-			if(sourceArray.length == 1){
-				resultantArray.push(sourceArray[sourceArrayIdx])
-			} else if(sourceArrayIdx != excludedIdx){
-				resultantArray.push(sourceArray[sourceArrayIdx])
-			}
-			process.nextTick(function(){
-				that._excludeFromArrayIterator(sourceArray, resultantArray, sourceArrayIdx +1, excludedIdx, callback)	
-			})
-			
-		} else {
-			callback(resultantArray)
-		}
-	},
-	multivariate: function(sourceVariantArrays, callback){
-		var that = this
-		that.logger.log(moduleName, 6,'running multivariate')
-		that.logger.log(moduleName, 2,'source Variant Arrays: ' + sourceVariantArrays)
-		that.logger.log(moduleName, 2,'source Variant Arrays[0]: ' + sourceVariantArrays[0])
-		that.logger.log(moduleName, 2,'source Variant Arrays length: ' + sourceVariantArrays.length)
-
-		that.finalOutput = []
-		multivariator.MapIterator(sourceVariantArrays, null, function(){
-			for(var v=0;v<that.finalOutput.length;v++){
-				that.logger.log(moduleName, 2,'multivariate output: ' + that.finalOutput[v])
-			}
-			callback(that.finalOutput)
-		})
+	    //v now contains an exclusion map of each of the arrays
+	    callback(v)
 	}
+
 }
- 
+
+//https://stackoverflow.com/questions/21952437/combinations-of-elements-of-multiple-arrays
+
+var permute = function(input)
+{
+  var out = [];
+
+  (function permute_r(input, current) {
+    if (input.length === 0) {
+      out.push(current);
+      return;
+    }
+
+    var next = input.slice(1);
+
+    for (var i = 0, n = input[0].length; i != n; ++i) {
+      permute_r(next, current.concat([input[0][i]]));
+    }
+  }(input, []));
+
+  return out;
+}
+
 module.exports = multivariator

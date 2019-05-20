@@ -80,25 +80,14 @@
 				},
 				"expectedResults" : [
 					{
-						"function" : "getInputVarients",
-						"parameters" : [["input1"]],
+						"function" : "getInputVariantArray",
+						"parameters" : null,
 						"returnType" : "object",
 						"containsJSONArray" : false,
 						"atLeastTheseFields": true,
 						"ordered": true, 
 						"results":[
-							"input1","input1a","none"
-						] 
-					},
-					{
-						"function" : "getInputVarients",
-						"parameters" : [["input2"]],
-						"returnType" : "object",
-						"containsJSONArray" : false,
-						"atLeastTheseFields": true,
-						"ordered": true, 
-						"results":[
-							"input2","input2a","none"
+							["input1","input1a","none"],["input2","input2a","none"]
 						] 
 					}
 				]
@@ -113,22 +102,22 @@
 				"expectedResults" : [
 					{
 						"function" : "multivariate",
-						"note" : "passing variables in a single array returns an exclusion map - i.e. the inputs to exclude from the multivariation.",
-						"parameters" : [[["input1","input1a","none"],["input2","input2a","none"]]],
+						"note" : "Passing variables gives an INCLUSION map...",
+						"parameters" : [["input1","input1a","none"],["input2","input2a","none"]],
 						"returnType" : "object",
 						"containsJSONArray" : false,
 						"atLeastTheseFields": true,
 						"ordered": true,
 						"results": [
-							["input1a","none","input2a","none"],
-							["input1","none","input2a","none"],
-							["input1","input1a","input2a","none"],
-							["input1a","none","input2","none"],
-							["input1","none","input2","none"],
-							["input1","input1a","input2","none"],
-							["input1a","none","input2","input2a"],
-							["input1","none","input2","input2a"],
-							["input1","input1a","input2","input2a"]
+							["input1","input2"], 
+							["input1","input2a"],
+							["input1","none"], 
+							["input1a","input2"],
+							["input1a","input2a"], 
+							["input1a","none"],
+							["none","input2"], 
+							["none","input2a"],
+							["none","none"]
 						]
 					}
 				]
@@ -142,8 +131,8 @@
 				},
 				"expectedResults" : [
 					{
-						"function" : "iterateQueueVariantsAndExpand",
-						"note" : "This function should loop all entries in the Activation queue and see if they have variants. If so, replace them with variated versions.",
+						"function" : "iterateActivationQueue",
+						"note" : "Loop all entries and variate if required.",
 						"parameters" : null,
 						"returnType" : null,
 						"containsJSONArray" : false,
@@ -160,69 +149,97 @@
 						"atLeastTheseFields": true,
 						"ordered": true, 
 						"results":[
-							{"1000":[
-								{"input" : "input1", "val" : 1, "path" : "input1", "lessonId":"whatIsAnd","lessonIdx":0},
-								{"input" : "input1a", "val" : "excluded", "path" : "excluded", "lessonId":"whatIsAnd","lessonIdx":0},
-								{"input" : "input2", "val" : 1, "path" : "input2", "lessonId":"whatIsAnd","lessonIdx":0},
-								{"input" : "input2a", "val" : "excluded", "path" : "excluded", "lessonId":"whatIsAnd","lessonIdx":0}, 
-								{"input" : "input3", "val" : "static", "path" : "input3"}
-							]},
-							{"1000":[
-								{"input" : "input1", "val" : "excluded", "path" : "excluded", "lessonId":"whatIsAnd","lessonIdx":0},
-								{"input" : "input1a", "val" : 1, "path" : "input1a", "lessonId":"whatIsAnd","lessonIdx":0},
-								{"input" : "input2", "val" : 1, "path" : "input2", "lessonId":"whatIsAnd","lessonIdx":0},
-								{"input" : "input2a", "val" : "excluded", "path" : "excluded", "lessonId":"whatIsAnd","lessonIdx":0}, 
-								{"input" : "input3", "val" : "static", "path" : "input3"}
-							]},
-							{"1000":[
-								{"input" : "input1", "val" : "excluded", "path" : "excluded", "lessonId":"whatIsAnd","lessonIdx":0},
-								{"input" : "input1a", "val" : "excluded", "path" : "excluded", "lessonId":"whatIsAnd","lessonIdx":0},
-								{"input" : "input2", "val" : 1, "path" : "input2", "lessonId":"whatIsAnd","lessonIdx":0},
-								{"input" : "input2a", "val" : "excluded", "path" : "excluded", "lessonId":"whatIsAnd","lessonIdx":0}, 
-								{"input" : "input3", "val" : "static", "path" : "input3"}
-							]},
-							{"1000":[
-								{"input" : "input1", "val" : 1, "path" : "input1", "lessonId":"whatIsAnd","lessonIdx":0},
-								{"input" : "input1a", "val" : "excluded", "path" : "excluded", "lessonId":"whatIsAnd","lessonIdx":0},
-								{"input" : "input2", "val" : "excluded", "path" : "excluded", "lessonId":"whatIsAnd","lessonIdx":0},
-								{"input" : "input2a", "val" : 1, "path" : "input2a", "lessonId":"whatIsAnd","lessonIdx":0}, 
-								{"input" : "input3", "val" : "static", "path" : "input3"}
-							]},
-							{"1000":[
-								{"input" : "input1", "val" : "excluded", "path" : "excluded", "lessonId":"whatIsAnd","lessonIdx":0},
-								{"input" : "input1a", "val" : 1, "path" : "input1a", "lessonId":"whatIsAnd","lessonIdx":0},
-								{"input" : "input2", "val" : "excluded", "path" : "excluded", "lessonId":"whatIsAnd","lessonIdx":0},
-								{"input" : "input2a", "val" : 1, "path" : "input2a", "lessonId":"whatIsAnd","lessonIdx":0}, 
-								{"input" : "input3", "val" : "static", "path" : "input3"}
-							]},
-							{"1000":[
-								{"input" : "input1", "val" : "excluded", "path" : "excluded", "lessonId":"whatIsAnd","lessonIdx":0},
-								{"input" : "input1a", "val" : "excluded", "path" : "excluded", "lessonId":"whatIsAnd","lessonIdx":0},
-								{"input" : "input2", "val" : "excluded", "path" : "excluded", "lessonId":"whatIsAnd","lessonIdx":0},
-								{"input" : "input2a", "val" : 1, "path" : "input2a", "lessonId":"whatIsAnd","lessonIdx":0}, 
-								{"input" : "input3", "val" : "static", "path" : "input3"}
-							]},
-							{"1000":[
-								{"input" : "input1", "val" : 1, "path" : "input1", "lessonId":"whatIsAnd","lessonIdx":0},
-								{"input" : "input1a", "val" : "excluded", "path" : "excluded", "lessonId":"whatIsAnd","lessonIdx":0},
-								{"input" : "input2", "val" : "excluded", "path" : "excluded", "lessonId":"whatIsAnd","lessonIdx":0},
-								{"input" : "input2a", "val" : "excluded", "path" : "excluded", "lessonId":"whatIsAnd","lessonIdx":0}, 
-								{"input" : "input3", "val" : "static", "path" : "input3"}
-							]},
-							{"1000":[
-								{"input" : "input1", "val" : "excluded", "path" : "excluded", "lessonId":"whatIsAnd","lessonIdx":0},
-								{"input" : "input1a", "val" : 1, "path" : "input1a", "lessonId":"whatIsAnd","lessonIdx":0},
-								{"input" : "input2", "val" : "excluded", "path" : "excluded", "lessonId":"whatIsAnd","lessonIdx":0},
-								{"input" : "input2a", "val" : "excluded", "path" : "excluded", "lessonId":"whatIsAnd","lessonIdx":0}, 
-								{"input" : "input3", "val" : "static", "path" : "input3"}
-							]},
-							{"1000":[
-								{"input" : "input1", "val" : "excluded", "path" : "excluded", "lessonId":"whatIsAnd","lessonIdx":0},
-								{"input" : "input1a", "val" : "excluded", "path" : "excluded", "lessonId":"whatIsAnd","lessonIdx":0},
-								{"input" : "input2", "val" : "excluded", "path" : "excluded", "lessonId":"whatIsAnd","lessonIdx":0},
-								{"input" : "input2a", "val" : "excluded", "path" : "excluded", "lessonId":"whatIsAnd","lessonIdx":0}, 
-								{"input" : "input3", "val" : "static", "path" : "input3"}
-							]}
+							{
+								"signalId" :"1000",
+								"io":[
+									{"input" : "input1", "val" : 1, "path" : "input1", "lessonId":"whatIsAnd","lessonIdx":0},
+									{"input" : "input1a", "val" : "excluded", "path" : "excluded", "lessonId":"whatIsAnd","lessonIdx":0},
+									{"input" : "input2", "val" : 1, "path" : "input2", "lessonId":"whatIsAnd","lessonIdx":0},
+									{"input" : "input2a", "val" : "excluded", "path" : "excluded", "lessonId":"whatIsAnd","lessonIdx":0}, 
+									{"input" : "input3", "val" : "static", "path" : "input3"}
+								], 
+								"variated": true
+							},
+							{
+								"signalId" :"1000",
+								"io":[
+									{"input" : "input1", "val" : "excluded", "path" : "excluded", "lessonId":"whatIsAnd","lessonIdx":0},
+									{"input" : "input1a", "val" : 1, "path" : "input1a", "lessonId":"whatIsAnd","lessonIdx":0},
+									{"input" : "input2", "val" : 1, "path" : "input2", "lessonId":"whatIsAnd","lessonIdx":0},
+									{"input" : "input2a", "val" : "excluded", "path" : "excluded", "lessonId":"whatIsAnd","lessonIdx":0}, 
+									{"input" : "input3", "val" : "static", "path" : "input3"}
+								], 
+								"variated": true},
+							{
+								"signalId" :"1000",
+								"io":[
+									{"input" : "input1", "val" : "excluded", "path" : "excluded", "lessonId":"whatIsAnd","lessonIdx":0},
+									{"input" : "input1a", "val" : "excluded", "path" : "excluded", "lessonId":"whatIsAnd","lessonIdx":0},
+									{"input" : "input2", "val" : 1, "path" : "input2", "lessonId":"whatIsAnd","lessonIdx":0},
+									{"input" : "input2a", "val" : "excluded", "path" : "excluded", "lessonId":"whatIsAnd","lessonIdx":0}, 
+									{"input" : "input3", "val" : "static", "path" : "input3"}
+								], 
+								"variated": true},
+							{
+								"signalId" :"1000",
+								"io":[
+									{"input" : "input1", "val" : 1, "path" : "input1", "lessonId":"whatIsAnd","lessonIdx":0},
+									{"input" : "input1a", "val" : "excluded", "path" : "excluded", "lessonId":"whatIsAnd","lessonIdx":0},
+									{"input" : "input2", "val" : "excluded", "path" : "excluded", "lessonId":"whatIsAnd","lessonIdx":0},
+									{"input" : "input2a", "val" : 1, "path" : "input2a", "lessonId":"whatIsAnd","lessonIdx":0}, 
+									{"input" : "input3", "val" : "static", "path" : "input3"}
+								], 
+								"variated": true},
+							{
+								"signalId" :"1000",
+								"io":[
+									{"input" : "input1", "val" : "excluded", "path" : "excluded", "lessonId":"whatIsAnd","lessonIdx":0},
+									{"input" : "input1a", "val" : 1, "path" : "input1a", "lessonId":"whatIsAnd","lessonIdx":0},
+									{"input" : "input2", "val" : "excluded", "path" : "excluded", "lessonId":"whatIsAnd","lessonIdx":0},
+									{"input" : "input2a", "val" : 1, "path" : "input2a", "lessonId":"whatIsAnd","lessonIdx":0}, 
+									{"input" : "input3", "val" : "static", "path" : "input3"}
+								], 
+								"variated": true},
+							{
+								"signalId" :"1000",
+								"io":[
+									{"input" : "input1", "val" : "excluded", "path" : "excluded", "lessonId":"whatIsAnd","lessonIdx":0},
+									{"input" : "input1a", "val" : "excluded", "path" : "excluded", "lessonId":"whatIsAnd","lessonIdx":0},
+									{"input" : "input2", "val" : "excluded", "path" : "excluded", "lessonId":"whatIsAnd","lessonIdx":0},
+									{"input" : "input2a", "val" : 1, "path" : "input2a", "lessonId":"whatIsAnd","lessonIdx":0}, 
+									{"input" : "input3", "val" : "static", "path" : "input3"}
+								], 
+								"variated": true},
+							{
+								"signalId" :"1000",
+								"io":[
+									{"input" : "input1", "val" : 1, "path" : "input1", "lessonId":"whatIsAnd","lessonIdx":0},
+									{"input" : "input1a", "val" : "excluded", "path" : "excluded", "lessonId":"whatIsAnd","lessonIdx":0},
+									{"input" : "input2", "val" : "excluded", "path" : "excluded", "lessonId":"whatIsAnd","lessonIdx":0},
+									{"input" : "input2a", "val" : "excluded", "path" : "excluded", "lessonId":"whatIsAnd","lessonIdx":0}, 
+									{"input" : "input3", "val" : "static", "path" : "input3"}
+								], 
+								"variated": true},
+							{
+								"signalId" :"1000",
+								"io":[
+									{"input" : "input1", "val" : "excluded", "path" : "excluded", "lessonId":"whatIsAnd","lessonIdx":0},
+									{"input" : "input1a", "val" : 1, "path" : "input1a", "lessonId":"whatIsAnd","lessonIdx":0},
+									{"input" : "input2", "val" : "excluded", "path" : "excluded", "lessonId":"whatIsAnd","lessonIdx":0},
+									{"input" : "input2a", "val" : "excluded", "path" : "excluded", "lessonId":"whatIsAnd","lessonIdx":0}, 
+									{"input" : "input3", "val" : "static", "path" : "input3"}
+								], 
+								"variated": true},
+							{
+								"signalId" :"1000",
+								"io":[
+									{"input" : "input1", "val" : "excluded", "path" : "excluded", "lessonId":"whatIsAnd","lessonIdx":0},
+									{"input" : "input1a", "val" : "excluded", "path" : "excluded", "lessonId":"whatIsAnd","lessonIdx":0},
+									{"input" : "input2", "val" : "excluded", "path" : "excluded", "lessonId":"whatIsAnd","lessonIdx":0},
+									{"input" : "input2a", "val" : "excluded", "path" : "excluded", "lessonId":"whatIsAnd","lessonIdx":0}, 
+									{"input" : "input3", "val" : "static", "path" : "input3"}
+								], 
+								"variated": true} 
 						] 
 					}
 				]

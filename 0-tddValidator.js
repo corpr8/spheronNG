@@ -32,7 +32,8 @@ var tddValidator = {
 	},
 	cbArrayOfStringArrays: function(callback){
  		//callback(["first","second","third","fourth","fifth","sixth"])
- 		callback([["first","second"],["third","fourth"],["fifth","sixth"]])
+ 		//callback([["first","second"],["third","fourth"],["fifth","sixth"]])
+ 		callback([['first','second'],['third','fourth'],['fifth','sixth']])
 	},
 	mirror: function(thisParams, callback){
 		var that = this

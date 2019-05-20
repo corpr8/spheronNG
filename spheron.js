@@ -293,6 +293,24 @@ Spheron.prototype.pushSignalToInputMessageQueue = function(thisSignal, callback)
 	callback()
 }
 
+Spheron.prototype.pushSignalGroupToActivationQueue = function(thisSignalGroup, callback){
+	var that = this;
+	/*
+	* Note: this is a hairy hack to cope with my by standards up till now.s
+	*
+	*/
+
+	//note: we have changed the activationquee standard to have {signalId: x, signal:[]} 
+	//however, this function accepts the old sgtandard and transforms it...
+
+	var thisSignal = {
+		"signalId": Object.keys(thisSignalGroup)[0],
+		"io": thisSignalGroup[Object.keys(thisSignalGroup)[0]]
+	}
+
+	that.activationQueue.push(thisSignal) 
+	callback()
+}
 
 Spheron.prototype.pushSignalToActivationQueue = function(thisSignal, callback){
 	var that = this;

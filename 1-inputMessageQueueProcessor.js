@@ -341,7 +341,7 @@ var inputMessageQueueProcessor = {
 		 var that = this
 		signalIdx = (signalIdx) ? signalIdx : 0
 		if(signals[signalIdx]){
-			that.spheron.pushSignalToActivationQueue(signals[signalIdx], function(){
+			that.spheron.pushSignalGroupToActivationQueue(signals[signalIdx], function(){
 				that._pushSignalsToActivationQueueIterator(signalIdx+1, signals,callback)
 			})
 		} else {
