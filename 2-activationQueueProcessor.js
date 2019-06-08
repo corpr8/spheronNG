@@ -2,6 +2,7 @@ var moduleName = 'activationQueueProcessor'
 var path = require('path');
 var appDir = path.dirname(require.main.filename);
 var settings = require(appDir +'/settings.json')
+var multivariator = require(appDir +'/multivariator.js')
 
 /*
 * Module to handle activations
@@ -15,16 +16,18 @@ var activationQueueProcessor = {
 		that.logger = logger
 		that.spheron = thisSpheron
 		that.logger.log(moduleName, 2,'init')
-			
-		if(!that.spheron.tdd){
-			that.logger.log(moduleName, 2, 'Module running in Production mode')
-			that.processPhases(function(){
-				callback(that.spheron)
-			}) 
-		} else {
-			that.logger.log(moduleName, 2, 'Module running in TDD mode')
-			callback() 
-		}
+		
+		multivariator.init(that.logger, function(){
+			if(!that.spheron.tdd){
+				that.logger.log(moduleName, 2, 'Module running in Production mode')
+				that.processPhases(function(){
+					callback(that.spheron)
+				}) 
+			} else {
+				that.logger.log(moduleName, 2, 'Module running in TDD mode')
+				callback() 
+			}
+		})
 	},
 	processPhases: function(callback){
  		var that = this
@@ -37,11 +40,17 @@ var activationQueueProcessor = {
 		switch(phaseIdx){
 			case 0:
 				that.logger.log(moduleName, 2, 'Running Phase 0')
-				/*
-				* TODO: Call the functions...
-				*/
-				that.processorPhaseIterator(phaseIdx +1, callback)
-
+				that.hasVariants(function(hasVariants){
+					if(hasVariants){
+						//iterate the input queue and see if items need to be variated.
+						that.iterateActivationQueue(function(){
+							that.processorPhaseIterator(phaseIdx +1, callback)
+						})
+					} else {
+						//no variation work to do so lets go to the next phase...
+						that.processorPhaseIterator(phaseIdx +1, callback)
+					}
+				})
 			break;
 				default:
 				/*any post processing and callback*/
@@ -52,7 +61,7 @@ var activationQueueProcessor = {
 	},
 	hasVariants:function(callback){
 		var that = this
-		if(that.spheron.variatns.inputs.length > 0){
+		if(that.spheron.variants.inputs.length > 0){
 			callback(true)
 		} else {
 			callback(false)
@@ -77,13 +86,13 @@ var activationQueueProcessor = {
 		var that = this
 		if(that.spheron.variants.inputs[idx]){
 			if(variantItemIdx == 0){
-				that.logger.log(moduleName, 2, 'pushing to resultantArray. ')
+				that.logger.log(moduleName, 4, 'pushing to resultantArray. ')
 				resultantArray.push([that.spheron.variants.inputs[idx].original])
 			}
 
 			if(that.spheron.variants.inputs[idx].variants[variantItemIdx]){
-				that.logger.log(moduleName, 2, 'resultantArray: ' + resultantArray)
-				that.logger.log(moduleName, 2, 'resultantArray length: ' + resultantArray.length)
+				that.logger.log(moduleName, 4, 'resultantArray: ' + resultantArray)
+				that.logger.log(moduleName, 4, 'resultantArray length: ' + resultantArray.length)
 				resultantArray[idx].push(that.spheron.variants.inputs[idx].variants[variantItemIdx])
 				that.getInputVariantArrayIterator(idx, variantItemIdx+1, resultantArray, callback)
 			} else {
@@ -95,30 +104,154 @@ var activationQueueProcessor = {
 	},
 	iterateActivationQueue:function(callback){
 		var that = this
-		that.iterateActivationQueueIterator(0, function(){
-			callback()	
+		that.getInputVariantArray(function(inputVariantArray){
+			multivariator.multivariate(inputVariantArray, function(variatedArray){
+				for(var v=0;v<variatedArray.length;v++){
+					that.logger.log(moduleName, 2, 'Input Variant variatedArray[' + v + ']: ' + variatedArray[v])	
+				}
+				that.iterateActivationQueueIterator(variatedArray, 0, function(){
+					callback()	
+				})		
+			})
+			
 		})
 	},
-	iterateActivationQueueIterator:function(idx, callback){
+	iterateActivationQueueIterator:function(inputVariantArray, idx, callback){
 		var that = this
 		if(that.spheron.activationQueue[idx]){
 			that.isVariated(idx, function(isVariated){
 				if(isVariated){
-					that.iterateActivationQueueIterator(idx+1, callback)
+					that.iterateActivationQueueIterator(inputVariantArray, idx+1, callback)
 				} else {
-					that.spheron.activationQueue[idx].variated = true
-					
-					//do work on variating this signal
 					/*
-					* TODO:
+					* TODO: do work on variating this signal
 					*/
 
-					process.exitCode = 1
+					/*
+					* 1: make a copy of this signal
+					*/
+					var originalSignal = JSON.parse(JSON.stringify(that.spheron.activationQueue[idx]))
+					originalSignal.variated = true
+
+					/*
+					* 2: remove this signal from the queue
+					*/
+					that.spheron.removeItemFromActivationQueueByIdx(idx, function(){
+						/*
+						* 
+						* 3: get all permutations
+						* 4: for each permutation, make a copy and remove the non included variants
+						* 5: push each permutation onto the variant queue
+						*/
+						that.buildVariants(inputVariantArray, originalSignal, function(){
+							//7: eventually iterate but without incrementing the counter as we have deleted this idx.
+							that.iterateActivationQueueIterator(inputVariantArray, idx, callback)	
+						})
+						
+					})
 				}
 			})
 		} else {
 			callback()
 		}
+	},
+	findIfInputIsvariated: function(inputId, callback){
+		var that = this
+		that.findIfInputIsVariatedIterator(inputId, 0, -1, function(result){
+			callback(result)
+		})	
+	},
+	findIfInputIsVariatedIterator: function(inputId, variantIdx, variantItemIdx, callback){
+		var that = this
+		if(that.spheron.variants.inputs[variantIdx]){
+			if(variantItemIdx == -1){
+				if(inputId == that.spheron.variants.inputs[variantIdx].original){
+					callback(true)
+				} else {
+					that.findIfInputIsVariatedIterator(inputId, variantIdx, variantItemIdx +1, callback)
+				}
+			} else if(that.spheron.variants.inputs[variantIdx].variants[variantItemIdx]){
+				//iterate through each item then iterate the variatnIdx
+				if(inputId == that.spheron.variants.inputs[variantIdx].variants[variantItemIdx]){
+					callback(true)
+				} else {
+					that.findIfInputIsVariatedIterator(inputId, variantIdx, variantItemIdx +1, callback)	
+				}
+			} else { 
+				that.findIfInputIsVariatedIterator(inputId, variantIdx+1, -1, callback)
+			}
+		} else {
+			callback(false)
+		}
+	},
+	buildVariants: function(inputVariantArray, originalSignal, callback){
+		//Todo:
+		//Iterate each member of the variantArray
+		//If it can be built from the data in this activtionQueueItem then do so
+		var that = this
+		that.buildVariantsIterator(inputVariantArray, originalSignal, 0, function(){
+			callback()
+		})
+	},
+	buildVariantsIterator: function(inputVariantArray, originalSignal, variantIdx, callback){
+		//Todo:
+		//Iterate each member of the variantArray
+		//If it can be built from the data in this activtionQueueItem then do so
+		var that = this
+		that.logger.log(moduleName, 2, 'ok we are iterating in the buildVariantsIterator: ')
+		that.logger.log(moduleName, 2, 'inputVariantArray[variantIdx] is: ' + inputVariantArray[variantIdx])
+		that.logger.log(moduleName, 2, 'originalSignal is: ' + JSON.stringify(originalSignal))
+
+		// for each part of original signal,
+		if(inputVariantArray[variantIdx]){
+			that.buildVariantItem(inputVariantArray[variantIdx], 0, originalSignal, null, function(resultantSignal){
+				that.spheron.pushSignalToActivationQueue(resultantSignal, function(){
+					that.buildVariantsIterator(inputVariantArray, originalSignal, variantIdx+1 , callback)
+				})
+			})
+		} else {
+			//all done
+			callback()
+		}
+	},
+	buildVariantItem: function(inclusionArray, originalSignalIoIdx, originalSignal, resultantSignal, callback){
+		var that = this
+		resultantSignal = (resultantSignal) ? resultantSignal : {
+			"signalId" :originalSignal.signalId,
+			"io":[], 
+			"variated": true
+		}
+
+		if(originalSignal.io[originalSignalIoIdx]){
+			// is the input variated? If not, push it straight onto the output.
+			// if it is variated, is it part of the inclusion array? If so, push it onto the output
+			that.findIfInputIsvariated(originalSignal.io[originalSignalIoIdx].input, function(isVariated){
+				if(!isVariated){
+					resultantSignal.io.push(originalSignal.io[originalSignalIoIdx])
+					that.buildVariantItem(inclusionArray, originalSignalIoIdx+1, originalSignal, resultantSignal, callback)
+				}else {
+					if(inclusionArray.indexOf(originalSignal.io[originalSignalIoIdx].input) != -1){
+						resultantSignal.io.push(originalSignal.io[originalSignalIoIdx])
+					} else {
+						var editedSignal = JSON.parse(JSON.stringify(originalSignal.io[originalSignalIoIdx]))
+						editedSignal.val = "excluded"
+						editedSignal.path = "excluded"
+						resultantSignal.io.push(editedSignal)
+						
+					}
+					that.buildVariantItem(inclusionArray, originalSignalIoIdx+1, originalSignal, resultantSignal, callback)
+				}
+			})
+		}else {
+			callback(resultantSignal)
+		}
+	},
+	getActivationQueue: function(callback){
+		var that = this
+		that.spheron.getActivationQueue(function(activationQueue){
+			that.logger.log(moduleName, 2, 'activationQueue: ' + JSON.stringify(activationQueue))
+			callback(activationQueue)
+		})
 	}
 }
 module.exports = activationQueueProcessor;

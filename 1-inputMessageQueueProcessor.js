@@ -345,7 +345,7 @@ var inputMessageQueueProcessor = {
 				that._pushSignalsToActivationQueueIterator(signalIdx+1, signals,callback)
 			})
 		} else {
-			callback()
+			callback() 
 		}
 	},
 	_removeSigIDsFromInputQueue: function(sigIds, callback){

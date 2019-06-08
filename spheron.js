@@ -321,12 +321,14 @@ Spheron.prototype.pushSignalToActivationQueue = function(thisSignal, callback){
 
 Spheron.prototype.removeItemFromInputQueueByIdx = function(thisIdx, callback){
 	var that = this;
-	
-	//that.logger.log(moduleName, 4, that.spheronId + '****inputQueue: ' + JSON.stringify(that.inputMessageQueue))
 	that.inputMessageQueue.splice(thisIdx,1)
-	//that.logger.log(moduleName, 4, that.spheronId + '****inputQueue: ' + JSON.stringify(that.inputMessageQueue))
 	callback()
+}
 
+Spheron.prototype.removeItemFromActivationQueueByIdx = function(thisIdx, callback){
+	var that = this;
+	that.activationQueue.splice(thisIdx,1)
+	callback()
 }
 
 module.exports = Spheron;
