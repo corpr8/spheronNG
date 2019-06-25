@@ -1,7 +1,7 @@
 var moduleName = 'tdd'
 var settings = require('./settings.json')
 var Logger = require('./logger.js')
-var mongoUtils = require('./mongoUtils.js')
+//var mongoUtils = require('./mongoUtils.js')
 var Spheron = require('./spheron.js')
 var asyncRequire = require('async-require');
 var fs = require('fs');
@@ -146,13 +146,13 @@ var tdd = {
 					if(thisTest.containsJSONArray == false){
 						if(thisTest.ordered == true){
 							//match the array, in order
-							//if(result.join(',') == thisTest.results){
+							//if(result.join(',') == thisTest.results){ 
 
 							if(that.isArrayEqual(result, thisTest.results) == true){
 								that.logger.log(moduleName, 2, 'test passed')
 								tdd.testIterator(testIdx, resultIdx +1, failureCount, callback)
 							} else {
-								that.logger.log(moduleName, 2, 'ordered array test failed.')
+								that.logger.log(moduleName, 2, '*** ordered array test failed.')
 								that.logger.log(moduleName, 2, 'expected[0]: ' + thisTest.results[0] + ' got: ' + result[0])
 								that.logger.log(moduleName, 2, 'expedted length: ' + (thisTest.results).length + ' got: ' + result.length)
 								that.logger.log(moduleName, 2, 'expected typeof: ' + typeof(thisTest.results) + ' got: ' + typeof result)
@@ -160,6 +160,8 @@ var tdd = {
 								that.logger.log(moduleName, 2, 'thisTest: ' + JSON.stringify(thisTest))
 								that.logger.log(moduleName, 2, 'equality: ' + (thisTest.results == result))
 								process.exitCode = 1 
+
+
 							}
 						} else {
 							that.logger.log(moduleName, 2, 'TODO: handle unordered array...')
@@ -184,8 +186,13 @@ var tdd = {
 			})	
 		} else if(thisTest.returnType == "string"){
 			if(typeof result == "string"){
-				that.logger.log(moduleName, 2, 'returned string - test passed')
-				tdd.testIterator(testIdx, resultIdx +1, failureCount, callback)
+				if(thisTest.results == result){
+					that.logger.log(moduleName, 2, 'returned string - test passed')
+					tdd.testIterator(testIdx, resultIdx +1, failureCount, callback)	
+				} else {
+					that.logger.log(moduleName, 2, 'string value incorrect')
+					process.exitCode = 1
+				}
 			} else {
 				//we expect a string
 				that.logger.log(moduleName, 2, 'expected a string')
@@ -193,8 +200,13 @@ var tdd = {
 			}
 		} else if(thisTest.returnType == "number"){
 			if(typeof result == "number"){
-				that.logger.log(moduleName, 2, 'returned number - test passed')
-				tdd.testIterator(testIdx, resultIdx +1, failureCount, callback)
+				if(thisTest.results == result){
+					that.logger.log(moduleName, 2, 'returned number - test passed')
+					tdd.testIterator(testIdx, resultIdx +1, failureCount, callback)
+				} else {
+					that.logger.log(moduleName, 2, 'numeric value incorrect')
+					process.exitCode = 1					
+				}
 			} else {
 				//we expect a string
 				that.logger.log(moduleName, 2, 'expected an number')
@@ -247,8 +259,8 @@ var tdd = {
 				if (valueLen !== otherLen){
 					that.logger.log(moduleName, 2, 'lengths are not equal - compare fails.')
 					that.logger.log(moduleName, 2, 'valueLen (result):' + valueLen + ' otherLen (expected):' + otherLen)
-					that.logger.log(moduleName, 2, 'value (result): ' + value)
-					that.logger.log(moduleName, 2, 'other (expected): ' + other)
+					that.logger.log(moduleName, 2, 'value (result): ' + value + ' : ' + JSON.stringify(value))
+					that.logger.log(moduleName, 2, 'other (expected): ' + other + ' : ' + JSON.stringify(other))
 					that.logger.log(moduleName, 2, 'value[0] (result): ' + value[0])
 					that.logger.log(moduleName, 2, 'other[0] (expected): ' + other[0])
 					return false;
@@ -343,10 +355,18 @@ var tdd = {
 							if(that.config.tdd.tddTests[testIdx].input.hasInitMethod){
 								that.logger.log(moduleName, 2, 'calling init on a spheron')
 								that.spheron.tdd = 'tdd'
-								that.currentTestModule.init(that.spheron, that.logger, function(){
-									that.logger.log(moduleName, 2, 'called back from init')
-									that.testIterator(testIdx, 0, failureCount, callback)
-								})
+								if(that.config.tdd.tddTests[testIdx].input.hasMongo){
+									//the normal call to this library would pass a ref to mongo - but we are just going to pass null.
+									that.currentTestModule.init(that.spheron, that.logger, null, function(){
+										that.logger.log(moduleName, 2, 'called back from init (with mongo placeholder)')
+										that.testIterator(testIdx, 0, failureCount, callback)
+									})
+								} else {
+									that.currentTestModule.init(that.spheron, that.logger, function(){
+										that.logger.log(moduleName, 2, 'called back from init')
+										that.testIterator(testIdx, 0, failureCount, callback)
+									})
+								}
 							} else {
 								that.testIterator(testIdx, 0, failureCount, callback)
 							}
@@ -385,8 +405,8 @@ var tdd = {
 					if(thisTest.parameters){
 						//build and apply an array of parameters to the function
 						var theseParameters = thisTest.parameters
-						that.logger.log(moduleName, 4, 'parameters: ' + theseParameters)
-						that.logger.log(moduleName, 4, 'parameter length: ' + theseParameters.length)
+						that.logger.log(moduleName, 2, 'parameters: ' + theseParameters)
+						that.logger.log(moduleName, 2, 'parameter length: ' + theseParameters.length)
 
 						var thisCallback = function(result){
 							that.handleTestResult(thisTest, result, resultIdx, testIdx, failureCount, callback)
@@ -402,7 +422,7 @@ var tdd = {
 						} else {
 							that.logger.log(moduleName, 2, 'not unpacking input.')
 							that.currentTestModule[thisTest.function](theseParameters, thisCallback)
-						}
+						} 
 						
 
 					} else {

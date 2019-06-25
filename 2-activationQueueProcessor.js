@@ -18,15 +18,18 @@ var activationQueueProcessor = {
 		that.logger.log(moduleName, 2,'init')
 		
 		multivariator.init(that.logger, function(){
-			if(!that.spheron.tdd){
-				that.logger.log(moduleName, 2, 'Module running in Production mode')
-				that.processPhases(function(){
-					callback(that.spheron)
-				}) 
-			} else {
-				that.logger.log(moduleName, 2, 'Module running in TDD mode')
-				callback() 
-			}
+			
+				if(!that.spheron.tdd){
+					that.logger.log(moduleName, 2, 'Module running in Production mode')
+					that.processPhases(function(){
+						callback(that.spheron)
+					}) 
+				} else {
+					that.spheron.init(that.logger, function(){  //is this really needed???
+						that.logger.log(moduleName, 2, 'Module running in TDD mode')
+				 		callback() 
+			 		}) 
+				}	
 		})
 	},
 	processPhases: function(callback){
@@ -39,11 +42,11 @@ var activationQueueProcessor = {
 		var that = this
 		switch(phaseIdx){
 			case 0:
-				that.logger.log(moduleName, 2, 'Running Phase 0')
+				that.logger.log(moduleName, 2, 'Running Phase 0 - expanding out signals in the activationQueue')
 				that.hasVariants(function(hasVariants){
 					if(hasVariants){
 						//iterate the input queue and see if items need to be variated.
-						that.iterateActivationQueue(function(){
+						that.variateActivationQueue(function(){
 							that.processorPhaseIterator(phaseIdx +1, callback)
 						})
 					} else {
@@ -52,9 +55,15 @@ var activationQueueProcessor = {
 					}
 				})
 			break;
+			case 1:
+				that.logger.log(moduleName, 2, 'Running Phase 1 - activating the spheron and pushing to propogationQueue')
+				that.iterateActivationQueueAndActivate(function(){
+					that.processorPhaseIterator(phaseIdx +1, callback)
+				})
+			break;
 				default:
 				/*any post processing and callback*/
-				that.logger.log(moduleName, 2, 'Calling back from inputMessageQueueProcessor to main runner')
+				that.logger.log(moduleName, 2, 'Calling back from activationQueueProcessor to main runner')
 				callback()
 			break;
 		}
@@ -102,50 +111,40 @@ var activationQueueProcessor = {
 			callback(resultantArray)
 		}
 	},
-	iterateActivationQueue:function(callback){
+	variateActivationQueue:function(callback){
 		var that = this
 		that.getInputVariantArray(function(inputVariantArray){
 			multivariator.multivariate(inputVariantArray, function(variatedArray){
 				for(var v=0;v<variatedArray.length;v++){
-					that.logger.log(moduleName, 2, 'Input Variant variatedArray[' + v + ']: ' + variatedArray[v])	
+					that.logger.log(moduleName, 4, 'Input Variant variatedArray[' + v + ']: ' + variatedArray[v])	
 				}
-				that.iterateActivationQueueIterator(variatedArray, 0, function(){
+				that.iterateVariatingActivationQueueIterator(variatedArray, 0, function(){
 					callback()	
 				})		
 			})
 			
 		})
 	},
-	iterateActivationQueueIterator:function(inputVariantArray, idx, callback){
+	iterateVariatingActivationQueueIterator:function(inputVariantArray, idx, callback){
 		var that = this
 		if(that.spheron.activationQueue[idx]){
 			that.isVariated(idx, function(isVariated){
 				if(isVariated){
-					that.iterateActivationQueueIterator(inputVariantArray, idx+1, callback)
+					that.iterateVariatingActivationQueueIterator(inputVariantArray, idx+1, callback)
 				} else {
-					/*
-					* TODO: do work on variating this signal
-					*/
-
-					/*
-					* 1: make a copy of this signal
-					*/
+					/* 1: make a copy of this signal*/
 					var originalSignal = JSON.parse(JSON.stringify(that.spheron.activationQueue[idx]))
 					originalSignal.variated = true
 
-					/*
-					* 2: remove this signal from the queue
-					*/
-					that.spheron.removeItemFromActivationQueueByIdx(idx, function(){
-						/*
-						* 
-						* 3: get all permutations
+					/* 2: remove this signal from the queue */
+					that.spheron.removeItemFromActivationQueueByIdx(idx, function(){ 
+						/* 3: get all permutations
 						* 4: for each permutation, make a copy and remove the non included variants
 						* 5: push each permutation onto the variant queue
 						*/
 						that.buildVariants(inputVariantArray, originalSignal, function(){
 							//7: eventually iterate but without incrementing the counter as we have deleted this idx.
-							that.iterateActivationQueueIterator(inputVariantArray, idx, callback)	
+							that.iterateVariatingActivationQueueIterator(inputVariantArray, idx, callback)	
 						})
 						
 					})
@@ -198,9 +197,9 @@ var activationQueueProcessor = {
 		//Iterate each member of the variantArray
 		//If it can be built from the data in this activtionQueueItem then do so
 		var that = this
-		that.logger.log(moduleName, 2, 'ok we are iterating in the buildVariantsIterator: ')
-		that.logger.log(moduleName, 2, 'inputVariantArray[variantIdx] is: ' + inputVariantArray[variantIdx])
-		that.logger.log(moduleName, 2, 'originalSignal is: ' + JSON.stringify(originalSignal))
+		that.logger.log(moduleName, 4, 'ok we are iterating in the buildVariantsIterator: ')
+		that.logger.log(moduleName, 4, 'inputVariantArray[variantIdx] is: ' + inputVariantArray[variantIdx])
+		that.logger.log(moduleName, 4, 'originalSignal is: ' + JSON.stringify(originalSignal))
 
 		// for each part of original signal,
 		if(inputVariantArray[variantIdx]){
@@ -210,7 +209,7 @@ var activationQueueProcessor = {
 				})
 			})
 		} else {
-			//all done
+			//all done 
 			callback()
 		}
 	},
@@ -249,8 +248,35 @@ var activationQueueProcessor = {
 	getActivationQueue: function(callback){
 		var that = this
 		that.spheron.getActivationQueue(function(activationQueue){
-			that.logger.log(moduleName, 2, 'activationQueue: ' + JSON.stringify(activationQueue))
+			that.logger.log(moduleName, 4, 'activationQueue: ' + JSON.stringify(activationQueue))
 			callback(activationQueue)
+		})
+	},
+	iterateActivationQueueAndActivate: function(callback){
+		var that = this
+		that.iterateActivationQueueAndActivateIterator(function(){
+			that.logger.log(moduleName, 2,'finished processing the activation queue. ')
+			callback()
+		})
+	},
+	iterateActivationQueueAndActivateIterator: function(callback){
+		var that = this
+		if(that.spheron.activationQueue[0]){
+			that.spheron.activate(that.spheron.activationQueue[0], function(){
+				that.spheron.removeItemFromActivationQueueByIdx(0, function(){
+					that.iterateActivationQueueAndActivateIterator(callback)
+				})
+			})
+		} else {
+			//done iterating
+			callback()
+		}
+	},
+	getPropogationMessageQueue: function(callback){
+		var that = this
+		that.spheron.getPropagationMessageQueue(function(propagationMessageQueue){
+			that.logger.log(moduleName, 2, 'propagationMessageQueue is: ' + JSON.stringify(propagationMessageQueue))
+			callback(propagationMessageQueue)
 		})
 	}
 }

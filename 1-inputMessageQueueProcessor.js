@@ -23,8 +23,10 @@ var inputMessageQueueProcessor = {
 				callback(that.spheron)
 			}) 
 		} else {
-			that.logger.log(moduleName, 2, 'Module running in TDD mode')
-			callback() 
+			that.spheron.init(that.logger, function(){ //not sure if we need to run init in this mode either?!?!
+				that.logger.log(moduleName, 2, 'Module running in TDD mode')
+				callback() 
+			})
 		}
 	},
 	processPhases: function(callback){

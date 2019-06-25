@@ -23,6 +23,7 @@ var spheron_runner = {
 	backpropQueueProcessor: null,
 	multivariateTestProcessor: null,
 	lessonMaintenanceProcessor: null,
+	networkMaintenanceProcessor: null,
 	spheron: null,
 	systemTickTimer: null,
 	systemTick: null,
@@ -39,6 +40,7 @@ var spheron_runner = {
 		that.backpropQueueProcessor = require('./4-backpropQueueProcessor.js')
 		that.multivariateTestProcessor = require('./5-multivariateTestProcessor.js')
 		that.lessonMaintenanceProcessor = require('./6-lessonMaintenanceProcessor.js')
+		that.networkMaintenanceProcessor = require('./7-networkMaintenanceProcessor.js')
 
 		//disable UDP if as we are offline...
 		if(settings.loadUDP){
@@ -85,10 +87,11 @@ var spheron_runner = {
 				if(that.isSpheron(result) == true){
 					that.logger.log(moduleName, 2,'Processing spheron: ' + result.spheronId)
 					that.spheron = new Spheron(result)
-					that.spheron.init(that.logger)
-					that.logger.log(moduleName, 4,'Loaded spheron: ' + that.spheron.spheronId + ' - starting runtime functions.')
-					that.processSpheron(0, function(){
-						that.inTick = false
+					that.spheron.init(that.logger, function(){
+						that.logger.log(moduleName, 4,'Loaded spheron: ' + that.spheron.spheronId + ' - starting runtime functions.')
+						that.processSpheron(0, function(){
+							that.inTick = false
+						})	
 					})
 				} else {
 					that.systemTick += 1
@@ -163,7 +166,7 @@ var spheron_runner = {
 				* Handle propagation to downstream spherons...
 				*/
 				that.logger.log(moduleName, 2,'Phase3: propagate results to downstream spherons')
-				that.propagationQueueProcessor.init(that.spheron, that.logger, function(){
+				that.propagationQueueProcessor.init(that.spheron, that.logger, mongoUtils, function(){ 
 					that.logger.log(moduleName, 4,'finished Phase 3')
 					//that.logger.log(moduleName, 4,'dump: ' + JSON.stringify(that.spheron))
 			        that.postPhaseHandler(phaseIdx, callback)
@@ -175,7 +178,7 @@ var spheron_runner = {
 		        * if the lesson is in mode=autoTrain:
 		        */
 		        that.logger.log(moduleName, 2,'Phase4: propagating backprop messages')
-				that.backpropQueueProcessor.init(that.spheron, that.logger, function(){
+				that.backpropQueueProcessor.init(that.spheron, that.logger, mongoUtils, function(){
 					that.logger.log(moduleName, 4,'finished Phase 4')
 					that.postPhaseHandler(phaseIdx, callback)
 				})
@@ -196,27 +199,50 @@ var spheron_runner = {
 					that.postPhaseHandler(phaseIdx, callback)
 				})
 				break;
-		    case 6:
+			case 6:
+		        that.logger.log(moduleName, 2,'Phase6: lesson maintenance')
+		        /*
+				* If we are an input spheron and the lesson is still in mode=autoTrain then check if the input queueLength is less than
+			    * the number of test states and if so, push more lessons onto the stack.
+			    */
+		
+				that.lessonMaintenanceProcessor.init(that.spheron, that.logger, function(){
+					that.logger.log(moduleName, 4,'finished Phase 6 - lessonMaintenanceProcessor')
+					that.postPhaseHandler(phaseIdx, callback)
+				})
+				break;
+			case 7:
+				/*
+				* If the life of any of the connections to the spheron has decayed below a certain threshold then it is effctively static.
+				* So convert it to a bias and 'vector add' that bias with the existent bias?
+				* and convert that into an A/B test:
+				* A: existant bias
+				* B: existant bias vector added atrophed input.
+				*/
+
+		        that.logger.log(moduleName, 2,'Phase7: networkMaintenanceProcessor')
+				that.networkMaintenanceProcessor.init(that.spheron, that.logger, function(){
+					that.logger.log(moduleName, 4,'finished Phase 7 - networkMaintenanceProcessor')
+					that.postPhaseHandler(phaseIdx, callback)
+				})
+				break;
+		    case 8:
 				/*
 			     * Persist spheron to mongo.
 			    */
-				that.logger.log(moduleName, 2,'Phase6: persisting ' + that.spheron.spheronId + ' back to mongo...')
+				that.logger.log(moduleName, 2,'Phase8: persisting ' + that.spheron.spheronId + ' back to mongo...')
 		    	that.persistSpheron({updateState: false}, function(){
-		    		that.logger.log(moduleName, 4,'finished Phase 6')
+		    		that.logger.log(moduleName, 4,'finished Phase 8')
 					that.postPhaseHandler(phaseIdx, callback)
 		    	})
 		        break;
 		    default:
 		    	that.logger.log(moduleName, 2,'in default phase handler (i.e. The fallback.) - phase is: ' + phaseIdx)
-		    	if(phaseIdx <= 6){
+		    	if(phaseIdx <= 8){
 		    		that.postPhaseHandler(phaseIdx, callback)
 		    	} else {
-			    	that.logger.log(moduleName, 4,'Phase7: TODO recode this.... loading new tests into the spheron network')
-				    /*
-				    * If we are an input spheron and the lesson is still in mode=autoTrain then check if the input queueLength is less than
-				    * the number of test states and if so, push more lessons onto the stack.
-				    */
-					that.lessonMaintenanceProcessor.init(that.spheron, that.logger, function(){
+				    
+					//that.lessonMaintenanceProcessor.init(that.spheron, that.logger, function(){
 						phaseIdx = 0
 						if(settings.haltAfterTick == true){
 							if(settings.haltAfterTickNo <= that.systemTick){
@@ -233,7 +259,7 @@ var spheron_runner = {
 						} else {
 							callback()	
 						}
-					})
+					//})
 		    	}
 		}
 	},
@@ -275,7 +301,13 @@ var spheron_runner = {
 		}
 		*/
 
+		/*
+		* not tested...  
+		*/
+		that.spheron.logger = null //get rid of the logger in the context of the spheron as we don't need it and don't want it in the database...
+
 		mongoUtils.persistSpheron((that.spheron).spheronId, that.spheron,function(){
+			that.spheron.logger = that.logger
 			callback()	
 		})
 	}

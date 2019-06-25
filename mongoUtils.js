@@ -1,10 +1,12 @@
-var moduleName = 'mongo'
-var Logger = require('./logger.js')
-var logger;
-var settings = require('./settings.json')
-var generateUUID = require('./generateUUID.js');
+var moduleName = 'mongoUtils'
+//var logger;
+var path = require('path');
+var appDir = path.dirname(require.main.filename);
+var settings = require(appDir + '/settings.json')
+var generateUUID = require(appDir + '/generateUUID.js');
 var mongo = require('mongodb');
 var fs = require('fs');
+var asyncRequire = require('async-require');
 var MongoClient = require('mongodb').MongoClient;
 var ObjectId = require('mongodb').ObjectID; 
 //var url = "mongodb://127.0.0.1:27017/"; //if running locally on network.
@@ -18,10 +20,11 @@ var mongoNet = [];
 */ 
 
 var mongoUtils = {
-	logger,
+	logger : null,
 	init: function(logger, callback){
 		var that = this
 		that.logger = logger 
+		that.logger.log(moduleName, 2, 'Firing init')
 		MongoClient.connect(url, { useNewUrlParser: true }, function(err, thisDb) {
 			db = thisDb
 			if (err) throw err;
@@ -31,7 +34,7 @@ var mongoUtils = {
 			callback()
 		});
 	},
-	closeDb: function(){
+	closeDb: function(){ 
 		db.close()
 		return
 	},
@@ -139,14 +142,6 @@ var mongoUtils = {
 	    	}
 		});
 	},
-	_old_saveSpheron: function(spheronData, callback){
-		var that = this
-		that.logger.log(4,'saving spheron')
-		that.logger.log(5,'new data: ' + JSON.stringify(spheronData))
-		mongoNet.updateOne({"spheronId" : spheronData.spheronId}, spheronData, function(err, result){
-			callback()
-		})
-	},
 	deleteSpheron: function(id, callback){
 		var that = this
 		/*
@@ -168,11 +163,26 @@ var mongoUtils = {
 		* 
 		*/
 	},
-	dropCollection: function(callback){
+	dropCollection: function(callback){ 
 		var that = this
 		mongoNet.drop()
 		that.logger.log(4,'Collection dropped')
 		callback()
+	},
+	setupDemoDataFromFile: function(fileName, callback){
+		/*
+		* Use this from the TDD framework to load a specific network - i.e. typically the current document (by file name)
+		*/
+
+		var that = this
+		//asyncRequire(appDir + fileName).then(function(thisData){
+		var thisData = require(appDir + '/' + fileName)	
+		that.logger.log(moduleName, 2, 'loaded testData: ' + thisData)
+			
+		that.setupDemoData(thisData, function(){
+			that.logger.log(moduleName, 2, 'Test Data Loaded...')
+			callback()
+		}) 
 	},
 	setupDemoData: function(demoData, callback){
 		var that = this
@@ -256,8 +266,8 @@ var mongoUtils = {
 	},
 	persistSpheron: function(spheronId, updateJSON, callback){
 		var that = this
-		that.logger.log(4,'about to persist spheron: ' + spheronId)
-		that.logger.log(6,'update JSON is: ' + JSON.stringify(updateJSON))
+		that.logger.log(moduleName, 2, 'about to persist spheron: ' + spheronId)
+		that.logger.log(moduleName, 2, 'update JSON is: ' + JSON.stringify(updateJSON))
 		mongoNet.findOneAndUpdate({
 			spheronId: spheronId
 		},{
@@ -266,8 +276,10 @@ var mongoUtils = {
 		{}, 
 		function(err,doc){
 			if(err){
-				callback({})
+				that.logger.log(moduleName, 2, 'persist spheron error')
+				callback()
 			} else { 
+				that.logger.log(moduleName, 2, 'success persisting spheron')
 				callback()
 			}	
 		})
@@ -280,6 +292,72 @@ var mongoUtils = {
 	    	if (err) throw err;
 	    	callback(result.tests)
 		});		
+	},
+	pushMessageToInputQueueBySpheronIdAndPort: function(spheronIdAndPort, thisMessage, callback){
+		var that = this
+		if(spheronIdAndPort){
+			that.logger.log(moduleName, 2, 'spheronIdAndPort is:' + spheronIdAndPort) 
+			that.logger.log(moduleName, 2, 'about to push stuff to:' + JSON.stringify(spheronIdAndPort))
+			that.logger.log(moduleName, 2, 'got here')
+			that.logger.log(moduleName, 2, 'toid:' + spheronIdAndPort.toId)
+			that.getSpheron(spheronIdAndPort.toId, function(thisSpheron){
+				if(thisSpheron){
+					//TODO: None of this is validated...
+					that.logger.log(moduleName, 2, 'Pushing to spherons inputQueue: ' +  thisSpheron.spheronId)
+					that.logger.log(moduleName, 2, 'inputQueue is currently: ' +  JSON.stringify(thisSpheron.inputMessageQueue))
+
+					thisSpheron.inputMessageQueue.push(thisMessage)
+					that.logger.log(moduleName, 2, 'pushed to inputQueue')
+					that.logger.log(moduleName, 2, 'inputQueue is now: ' +  JSON.stringify(thisSpheron.inputMessageQueue))
+				
+					that.pushVariants(thisSpheron, 0, -1, thisMessage, spheronIdAndPort.toPort, function(){
+						that.logger.log(moduleName, 2, 'about to persist spheron: ' + JSON.stringify(thisSpheron))
+						that.persistSpheron(thisSpheron.spheronId, thisSpheron, function(){
+							that.logger.log(moduleName, 2, 'Spheron updated') 
+							callback()
+						})
+					})
+				} else {
+					that.logger.log(2,'cannot update spheron, it did not exist...')
+					process.exitCode = 1
+				}
+			})
+		} else {
+			callback()
+		} 
+	},
+	pushVariants: function(thisSpheron, variantIdx, variantItemIdx, thisMessage, toPort, callback){
+		var that = this
+		that.logger.log(moduleName, 2, 'running pushVariants')
+		that.logger.log(moduleName, 2, 'thisSpheron is: ' + JSON.stringify(thisSpheron))
+		if(thisSpheron.variants.inputs.length == 0){
+			that.logger.log(moduleName, 2, 'no inputs to variate')
+			callback()
+		} else {
+
+			if(thisSpheron.variants.inputs[variantIdx]){
+				if(variantItemIdx == -1){
+					if(thisSpheron.variants.inputs[variantIdx].original == toPort){
+						that.pushVariants(thisSpheron, variantIdx, 0, thisMessage, toPort, callback)
+					} else {
+						that.pushVariants(thisSpheron, variantIdx +1, -1, thisMessage, toPort, callback)
+					}
+				} else if(thisSpheron.variants.inputs[variantIdx].variants[variantItemIdx]){
+
+
+					//TODO: ok - substitiute this one and push it onto the queue...
+					that.logger.log(moduleName, 2, 'about to substitute, push and iterate')
+					//process.exitCode = 1
+
+
+				} else {
+					that.pushVariants(thisSpheron, variantIdx +1, -1, thisMessage, toPort, callback)
+				}
+			} else {
+				that.logger.log(moduleName, 2, 'calling back from push variants')
+				callback()
+			}
+		}
 	}
 }
 

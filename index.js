@@ -23,12 +23,13 @@ var thisApp ={
 		});
 
 		that.tddChild.on('exit', function (code, signal) {
+			console.log('exited with code: ' + code + ' and signal: ' + signal)
 		  if(code == 1){
 		  	console.log('TDD Tests failed.');
 		  	//process.exitCode = 1
 		  	callback('failed')
 		  } else {
-		  	console.log('TDD Tests passed.');
+		  	console.log('TDD Tests passed.'); 
 		  	callback('passed')
 		  }
 		});

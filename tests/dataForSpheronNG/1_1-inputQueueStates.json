@@ -167,6 +167,6 @@
 				]
 			}
 		],
-		"nextTestFile": "./tests/dataForSpheronNG/1_2-inputQueueStates-multivatiantPrimaries.json"
+		"nextTestFile": "./tests/dataForSpheronNG/1_2-inputQueueStates-multivariantPrimaries.json"
 	}
 }
