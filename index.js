@@ -6,6 +6,7 @@ var terminate = require('terminate');
 
 var thisApp ={
 	tddChild: null,
+	logAnalyserChild: null,
 	mainProgChild: null,
 	deleteLogfile: function(callback){
  		fs.unlink(settings.logOptions.logPath, function(){
@@ -17,7 +18,7 @@ var thisApp ={
 		that.tddChild = fork('./tdd.js', [], {
 		  stdio: 'pipe'
 		});
-
+ 
 		that.tddChild.stderr.on('data', (data) => {
 		  console.error(`child stderr:\n${data}`);
 		});
@@ -34,6 +35,27 @@ var thisApp ={
 		  }
 		});
 
+	},
+	runLogAnalysis: function(callback){
+		console.log('running log analysis') 
+		var that = this
+		that.logAnalyserChild = fork('./logAnalyser.js', [], {});
+
+		that.logAnalyserChild.on('message', (data) => {
+		  console.error(`child message:\n${data}`);
+		}); 
+ 
+		that.logAnalyserChild.on('exit', function (code, signal) {
+			console.log('log analyser exited with code: ' + code + ' and signal: ' + signal)
+		  if(code == 1){
+		  	console.log('Log analyser failed.');
+		  	//process.exitCode = 1
+		  	callback('failed')
+		  } else {
+		  	console.log('Log analyser passed.'); 
+		  	callback('passed')
+		  }
+		});
 	},
 	runMainProg: function(callback){
 		var that = this
@@ -94,16 +116,25 @@ var thisApp ={
 		var that = this
 		that.deleteLogfile(function(){
 			that.killOtherProcesses(function(){
-				that.runTdd(function(testResult){
-					//console.log('TDD test result: ' + testResult)
-					if(testResult == 'passed'){
-						that.runMainProg(function(){
-							callback('finished running main program...')
-					  	})
-					} else {
-						console.log('killing any running processes (TDD or Main Program).')
-						that.killOtherProcesses(function(){})
-					}
+				that.runTdd(function(tddTestResult){
+					console.log('waiting for .5 second so log buffer clears :-/')
+					setTimeout(function(){ 
+						that.runLogAnalysis(function(logAnalysisResult){
+						
+							//console.log('TDD test result: ' + testResult)
+							if(tddTestResult == 'passed' && logAnalysisResult == 'passed'){
+								console.log('running code in production mode') 
+								that.runMainProg(function(){
+									callback('finished running main program...')
+							  	})
+							} else {
+								console.log('killing any running processes (TDD or Main Program).')
+
+								that.killOtherProcesses(function(){}) 
+							}
+						})	
+					}, 1000)   
+				
 				})
 			})	
 		})

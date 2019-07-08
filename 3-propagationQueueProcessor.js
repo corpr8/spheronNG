@@ -143,7 +143,7 @@ var propagationQueueProcessor = {
 		} else {
 			callback()
 		}
-	}, 
+	},  
 	pushMessageToInputQueueBySpheronIdAndPort: function(spheronIdAndPort, thisMessage, callback){
 		var that = this
 		that.logger.log(moduleName, 2, 'running pushMessageToInputQueueBySpheronIdAndPort')

@@ -53,7 +53,7 @@
 			"inputMessageQueue": [],
 			"activationQueue": [],
 			"propagationMessageQueue": [
-				{"signalPath":"input1;input2;input3;bias1;internal2;","output":"internal2","type":"output","val":20.22718}
+				{"signalPath":"input1;input2;input3;bias1;internal2;","output":"internal2","val":20.22718}
 			],
 			"variants" : {
 				"inputs" : [],
@@ -70,8 +70,8 @@
 			"activationHistory" : ["998","999"],
 			"nextTick" : 1,
 			"io": [
-				{"id" : "internal1", "type": "input", "angle": 0, "fromId": "ext", "fromPort": "ext", "val":-1, "life" : 1},
-				{"id" : "internal2", "type": "input", "angle": 10, "fromId": "ext", "fromPort": "ext", "val":-1, "life" : 1},
+				{"id" : "internal1", "type": "input", "angle": 0, "fromId": "inputSpheron1", "fromPort": "internal1", "val":-1, "life" : 1},
+				{"id" : "internal2", "type": "input", "angle": 10, "fromId": "inputSpheron2", "fromPort": "internal2", "val":-1, "life" : 1},
 				{"id" : "mainOutput", "type": "extOutput", "angle": -60, "toId": "outputSpheron1", "toPort": "internal1", "val":-1}
 			],
 			"inputMessageQueue": [],
@@ -139,7 +139,10 @@
 					},
 					{ 
 						"function" : "transformPropagationToInputMessages",   
-						"parameters" : {"lessonId":"whatIsAnd","lessonIdx":0,"signalId":"1000","io":[{"signalPath":"input1;input2;input3;bias1;internal1;","output":"internal1","val":15.82635},{"signalPath":"input1;input2;input3;bias1;internal2;","output":"internal2","val":1.82635}]},
+						"parameters" : {"lessonId":"whatIsAnd","lessonIdx":0,"signalId":"1000","io":[
+							{"signalPath":"input1;input2;input3;bias1;internal1;","output":"internal1","val":15.82635},
+							{"signalPath":"input1;input2;input3;bias1;internal2;","output":"internal2","val":1.82635}
+						]},
 						"returnType" : "object",
 						"containsJSONArray" : false,
 						"atLeastTheseFields": false,

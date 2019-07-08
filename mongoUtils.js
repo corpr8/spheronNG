@@ -23,8 +23,9 @@ var mongoUtils = {
 	logger : null,
 	init: function(logger, callback){
 		var that = this
+
 		that.logger = logger 
-		that.logger.log(moduleName, 2, 'Firing init')
+		that.logger.log(moduleName, 2, 'running init')
 		MongoClient.connect(url, { useNewUrlParser: true }, function(err, thisDb) {
 			db = thisDb
 			if (err) throw err;
@@ -102,14 +103,22 @@ var mongoUtils = {
 		});
 	},
 	getLessonLength: function(lessonId, callback){
+		var that = this
+		that.logger.log(moduleName, 2, 'Getting lesson length')  
+		
 		mongoNet.findOne({
 			type: "lesson",
-			problemId: lessonId
+			lessonId: lessonId
 		}, function(err, results) {
 	    	if (err){
+
+	    		that.logger.log(moduleName, 2, 'mongo error: ' + err)
 	    		callback();
 	    	} else {	
-	    		callback(results.tests.length)
+
+				that.logger.log(moduleName, 2, 'lesson length: ' + results.lesson.length)
+	    		callback(results.lesson.length)
+	    		//process.exitCode = 1
 	    	}
 		});
 	},
@@ -118,7 +127,7 @@ var mongoUtils = {
 			type: "lesson",
 			problemId: problemId
 		}, function(err, results) {
-	    	if (err){
+	    	if (err) {
 	    		callback();
 	    	} else {	
 	    		if(lowestFound < results.options.errorThreshold){
@@ -276,7 +285,7 @@ var mongoUtils = {
 		{}, 
 		function(err,doc){
 			if(err){
-				that.logger.log(moduleName, 2, 'persist spheron error')
+				that.logger.log(moduleName, 2, 'persist spheron error' + err)
 				callback()
 			} else { 
 				that.logger.log(moduleName, 2, 'success persisting spheron')
@@ -343,11 +352,18 @@ var mongoUtils = {
 						that.pushVariants(thisSpheron, variantIdx +1, -1, thisMessage, toPort, callback)
 					}
 				} else if(thisSpheron.variants.inputs[variantIdx].variants[variantItemIdx]){
+					var NewMessage = JSON.parse(JSON.stringify(thisMessage))
+					that.logger.log(moduleName, 2, '****** ')
+					that.logger.log(moduleName, 2, 'new message is: ' + JSON.stringify(NewMessage))
 
 
-					//TODO: ok - substitiute this one and push it onto the queue...
+
+
+					//TODO: ok - substitiute this one and push it onto the queue... - note we have to update the database...
+
+
 					that.logger.log(moduleName, 2, 'about to substitute, push and iterate')
-					//process.exitCode = 1
+					process.exitCode = 1
 
 
 				} else {
@@ -358,6 +374,17 @@ var mongoUtils = {
 				callback()
 			}
 		}
+	},
+	pushToUpstreamSpheronBPQueueBySpheronId: function(spheronId, bpErrorMessage, callback){
+		var that = this
+		that.logger.log(moduleName, 2, 'updating spherons bpQueue: ' + spheronId)
+		that.getSpheron(spheronId, function(targetSpheron){
+			targetSpheron.bpQueue.push(bpErrorMessage) 
+			that.persistSpheron(spheronId, {bpQueue: targetSpheron.bpQueue}, function(){ 
+				that.logger.log(moduleName, 2, 'updated spheron: ' + spheronId + ' bpQueue is now: ' + JSON.stringify(targetSpheron.bpQueue))
+				callback() 
+			})
+		})
 	}
 }
 

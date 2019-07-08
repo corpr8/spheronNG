@@ -177,7 +177,7 @@ var spheron_runner = {
 		        * Handle backprop messages
 		        * if the lesson is in mode=autoTrain:
 		        */
-		        that.logger.log(moduleName, 2,'Phase4: propagating backprop messages')
+		        that.logger.log(moduleName, 2,'Phase4: propagating backprop messages') 
 				that.backpropQueueProcessor.init(that.spheron, that.logger, mongoUtils, function(){
 					that.logger.log(moduleName, 4,'finished Phase 4')
 					that.postPhaseHandler(phaseIdx, callback)
@@ -194,7 +194,7 @@ var spheron_runner = {
 		        * Increment phaseIdx and iterate
 		        */
 		        that.logger.log(moduleName, 2,'Phase5: handle multi-variant data storage and test resolution')
-				that.multivariateTestProcessor.init(that.spheron, that.logger, function(){
+				that.multivariateTestProcessor.init(that.spheron, that.logger, mongoUtils, function(){
 					that.logger.log(moduleName, 4,'finished Phase 5')
 					that.postPhaseHandler(phaseIdx, callback)
 				})

@@ -144,7 +144,7 @@ var tdd = {
 			that.isObject(result, function(isObject){
 				if(isObject){
 					if(thisTest.containsJSONArray == false){
-						if(thisTest.ordered == true){
+						if(thisTest.ordered == true){ 
 							//match the array, in order
 							//if(result.join(',') == thisTest.results){ 
 
@@ -180,6 +180,7 @@ var tdd = {
 						}
 					}
 				} else {
+					that.logger.log(moduleName, 2, 'expected[0]: ' + thisTest.results + ' got: ' + result)
 					that.logger.log(moduleName, 2, 'test failed - not an object')
 					process.exitCode = 1
 				}
@@ -480,7 +481,7 @@ var tdd = {
 				}
 			})
 		} else {
-			callback(failureCount)
+			callback(failureCount)  
 		}
 	},
 	init: function(){
@@ -488,7 +489,7 @@ var tdd = {
 		that.logger = (that.logger) ? that.logger : new Logger(settings.logOptions)
 		that.testIterator(0, 0, 0, function(failureCount){
 			if(failureCount == 0){
-				that.logger.log(moduleName, 2, 'we passed all test(\'s)\r\n-----------------------\r\n---- exiting tdd ------\r\n-----------------------')
+				that.logger.log(moduleName, 2, 'we passed all test(s)\r\n-----------------------\r\n---- exiting tdd ------\r\n-----------------------')
 				process.exitCode = 0
 			} else{
 				that.logger.log(moduleName, 2, 'we failed: ' + failureCount + ' test(\'s)')

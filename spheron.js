@@ -30,7 +30,7 @@ var Spheron = function (config) {
 	that.activationQueue = (config.activationQueue) ? config.activationQueue : [] //the martialled, coherant signal - i.e. sigId 1234 on ports 1 and 2
 	that.variants = (config.variants) ? config.variants : [] //the post activation signals
 	that.propagationMessageQueue = (config.propagationMessageQueue) ? config.propagationMessageQueue : [] //messages waiting to be passed downstream
-	that.bpErrorMessageQueue = (config.bpErrorMessageQueue) ? config.bpErrorMessageQueue : [] //backpropped messages waiting to be processed and passed upstream 
+	that.bpQueue = (config.bpQueue) ? config.bpQueue : [] //backpropped messages waiting to be processed and passed upstream 
 	that.nextTick = (config.nextTick) ? config.nextTick : 0 
 }
 
@@ -356,6 +356,13 @@ Spheron.prototype.getToSpheronIdAndPortFromPortIterator =function(portId, idx, c
 		callback(null)
 	}
 }
+
+Spheron.prototype.removebpQueueItemByIdx = function(thisIdx, callback){
+	var that = this;
+	that.bpQueue.splice(thisIdx,1)
+	callback()
+}
+
 
 
 module.exports = Spheron;
