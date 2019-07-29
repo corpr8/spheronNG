@@ -17,17 +17,29 @@
 			"activationHistory" : ["998","999"],
 			"nextTick" : 1,
 			"io": [
-				{"id" : "input1", "type": "extInput", "angle": 0, "fromId": "ext", "fromPort": "ext", "val":-1, "life" : 1, "errorMap": []},
+				{"id" : "input1", "type": "extInput", "angle": 0, "fromId": "ext", "fromPort": "ext", "val":-1, "life" : 1, "errorMap": [
+					{"signalPath":"input1;input2;input3;bias1;internal1;","bpSignalDepth":1,"errorMap":{"0":0.82635,"1":0.12635,"2":0.32635,"3":0.22635}}
+				]},
+				{"id" : "input1a", "type": "extInput", "angle": 10, "fromId": "ext", "fromPort": "ext", "val":-1, "life" : 1, "errorMap": [
+					{"signalPath":"input1a;input2;input3;bias1;internal1;","bpSignalDepth":1,"errorMap":{"0":0.12635,"1":0.02635,"2":0.02635,"3":0.02635}}
+				]},
 				{"id" : "bias1", "type": "bias", "angle": 20, "val":-1, "errorMap": []},
 				{"id" : "internal1", "type": "output", "angle": -60, "toId": "outputSpheron1", "toPort": "internal1", "val":-1, "errorMap": [
-					{"signalPath":"input1;input2;input3;bias1;internal1;","bpSignalDepth":1,"errorMap":{"0":0.82635}}
+					{"signalPath":"input1;input2;input3;bias1;internal1;","bpSignalDepth":1,"errorMap":{"0":0.82635}},
+					{"signalPath":"input1;input2;input3;bias1a;internal1;","bpSignalDepth":1,"errorMap":{"0":0.82635,"1":0.12635,"2":0.32635,"3":0.22635}}
+
 				]}
 			],
 			"inputMessageQueue": [],
 			"activationQueue": [],
 			"propagationMessageQueue": [],
 			"variants" : {
-				"inputs" : [],
+				"inputs" : [
+					{
+						"original" : "input1",
+						"variants" : ["input1a"],
+						"startTick" : -1
+					}],
 				"biases" : [], 
 				"outputs" : []
 			},
@@ -74,13 +86,7 @@
 			"activationQueue": [],
 			"propagationMessageQueue": [],
 			"variants" : {
-				"inputs" : [
-					{
-						"original" : "internal1",
-						"variants" : ["internal1a", "none"],
-						"startTick" : -1
-					}
-				],
+				"inputs" : [],
 				"biases" : [], 
 				"outputs" : []
 			},
@@ -117,7 +123,7 @@
 					},
 					{
 						"function" : "setupTestDataByFileName", 
-						"parameters" : "tests/dataForSpheronNG/5_0-resolve_mv_tests.json",
+						"parameters" : "tests/dataForSpheronNG/5_1-resolve_mv_tests.json",
 						"returnType" : null,
 						"containsJSONArray" : false,
 						"atLeastTheseFields": true,
@@ -125,28 +131,73 @@
 						"results":[] 
 					},
 					{
-						"function" : "getLessonLength", 
-						"parameters" : "whatIsAnd",
+						"function" : "getCompleteTestFromErrorObject", 
+						"parameters" : [{"0":0.82635,"3":0.1101},4],
+						"unpackInput" : true,
+						"returnType" : "boolean", 
+						"containsJSONArray" : false,
+						"atLeastTheseFields": true,
+						"ordered": true, 
+						"results": false  
+					},
+					{
+						"function" : "getCompleteTestFromErrorObject", 
+						"parameters" : [{"0":0.82635,"1":0.12635,"2":0.32635,"3":0.22635},4],
+						"unpackInput" : true,
 						"returnType" : "number",
 						"containsJSONArray" : false,
 						"atLeastTheseFields": true,
 						"ordered": true, 
-						"results": 4  
+						"results": 0.2313
 					},
 					{
-						"function" : "getErrorMapsByIoName", 
-						"parameters" : "internal1",
+						"function" : "getCompleteTestsByPortIdAndLessonName", 
+						"parameters" : ["internal1","whatIsAnd"],
+						"unpackInput" : true,
 						"returnType" : "object",
 						"containsJSONArray" : false,
 						"atLeastTheseFields": true,
 						"ordered": true, 
 						"results": [
-							{"signalPath":"input1;input2;input3;bias1;internal1;","bpSignalDepth":1,"errorMap":{"0":0.82635}}
-						]  
+							{"signalPath": "input1;input2;input3;bias1a;internal1;", "rmsError" : 0.2313}
+						]
+					},
+					{
+						"function" : "resolveIfMVTestComplete", 
+						"parameters" : [["input1", "input1a"],"whatIsAnd"],
+						"unpackInput" : true,
+						"returnType" : "object",
+						"containsJSONArray" : false,
+						"atLeastTheseFields": true,
+						"ordered": true, 
+						"results": {"winner": "input1a", "rmsError" : 0.0335}
+					},
+					{
+						"function" : "resolveIfMVTestCompleteFromMVObject", 
+						"parameters" : [{
+								"type" : " input",
+								"original" : "input1",
+								"variants" : ["input1a"],
+								"startTick" : -1
+							},"whatIsAnd"],
+						"unpackInput" : true,
+						"returnType" : "object",
+						"containsJSONArray" : false,
+						"atLeastTheseFields": true,
+						"ordered": true, 
+						"results": {"winner": "input1a", "rmsError" : 0.0335}
+					}, 
+					{
+						"function" : "throwAnError",
+						"parameters" : null,
+						"returnType" : null,
+						"containsJSONArray" : false,
+						"atLeastTheseFields": true,
+						"ordered": true, 
+						"results": null
 					}
 				]
 			}
-		],
-		"nextTestFile": "./tests/dataForSpheronNG/5_1-resolve_mv_tests.json"
+		]
 	}
 }

@@ -83,8 +83,7 @@ var multivariateTestProcessor = {
 		})
 	},
 	mvTestIterator: function(callback){
-		//iterate through each test and see if we have the required data to terminate it.
-		//Note: we might have multiple 'paths' of applicable data. If so, we are searching for a complete set with a consistent path. 
+		//iterate variants of inputs, biases and outputs and call resolveIfMVTestCompleteFromMVObject for each one...
 		that.logger.log(moduleName, 2, 'running test iterator - BackProp MV test resolution.') 
 		process.exitCode = 1
 	},
@@ -93,32 +92,6 @@ var multivariateTestProcessor = {
  		that.getCompletedTestsByIoNameIterator(ioName, 0, -1, 0, testLength, {}, function(completedTestsObject){
  			callback(completedTestsObject)
  		})
-	},
-	getCompletedTestsByIoNameIterator: function(ioName, ioIdx, testIdx, testsIdx, testLength, completedTestsObject, callback){
-		var that = this
-		if(that.spheron.io[ioIdx]){
-			if(that.spheron.io[ioIdx].id == ioName){
-				//ok so we are in the correct connection - however, we need to iterate over every test object in this io
-				//testIdx - checks inside an individual test so we need another iterator
-				//let there be testsIdx
-				if(that.spheron.io[ioIdx].errorMap[testsIdx]){
-					if(testIdx < testLength){
-						//ok so lets check if each test object exists????
-
-					} else {
-
-					}
-				} else {
-					that.getCompletedTestsByIoNameIterator(ioName, ioIdx+1, 0, testsIdx+1, testLength, completedTestsObject, callback)
-				}
-
-				
-			} else {
-				that.getCompletedTestsByIoNameIterator(ioName, ioIdx+1, testIdx, testsIdx, testLength, completedTestsObject, callback)
-			}
-		} else {
-			callback(completedTestsObject)
-		}
 	},
 	getLessonLength: function(lessonId, callback){ 
 		var that = this
@@ -130,24 +103,345 @@ var multivariateTestProcessor = {
 		}) 
 		 
 	},
-	getErrorMapByIoName: function(ioName, callback){
+	getErrorMapsByIoName: function(ioName, callback){
 		var that = this
 		that.logger.log(moduleName, 2, 'running get lesson length')
-		that.getErrorMapByIoNameIterator(ioName, 0, function(lessonLength){
+		that.getErrorMapsByIoNameIterator(ioName, 0, function(lessonLength){
 			callback(lessonLength)
 		})
 	},
-	getErrorMapByIoNameIterator: function(ioName, ioIdx, callback){
+	getErrorMapsByIoNameIterator: function(ioName, ioIdx, callback){
 		var that = this
 		if(that.spheron.io[ioIdx]){
 			if(that.spheron.io[ioIdx].id == ioName){
 				callback(that.spheron.io[ioIdx].errorMap)
 			} else {
-				that.getErrorMapByIoNameIterator(ioName, ioIdx+1, callback)
+				that.getErrorMapsByIoNameIterator(ioName, ioIdx+1, callback)
 			}
 		} else {
 			callback(null)
 		}
+	},
+	getCompleteTestFromErrorObject: function(ioObject, lessonLength, callback){
+		// test an individual error object to see if it is complete:
+		// where an object is:
+		// 
+		var that = this
+		that.logger.log(moduleName, 2, 'running getCompleteTestFromErrorObject')
+		that.getCompleteTestFromErrorObjectIterator(ioObject, lessonLength, 0, 0, function(returnObject){
+			that.logger.log(moduleName, 2, 'back from getCompleteTestFromErrorObjectIterator')
+			that.logger.log(moduleName, 2, 'rms error is: ' + returnObject)
+			callback(returnObject)
+		})	
+	},
+	getCompleteTestFromErrorObjectIterator: function(ioObject, lessonLength, ioObjectIdx, aggregateError, callback){
+		var that = this
+		that.logger.log(moduleName, 2, 'running getCompleteTestFromErrorObjectIterator')
+		if(ioObjectIdx <= lessonLength){
+			if(ioObjectIdx == lessonLength){
+				//note we should root this
+				var root = Math.sqrt(aggregateError)
+				var rmsError = (Math.floor((root / lessonLength) * 10000) / 10000)
+				that.logger.log(moduleName, 2, 'rms error: ' + rmsError)
+				callback( rmsError )
+			} else {
+				if(ioObject[ioObjectIdx]){
+					aggregateError += Math.pow(ioObject[ioObjectIdx], 2)
+					that.getCompleteTestFromErrorObjectIterator(ioObject, lessonLength, ioObjectIdx+1, aggregateError, callback)
+				} else {
+					callback(false)
+				}
+			}
+		} else {
+			callback(false) 
+		}
+	},
+	getCompleteTestsByPortIdAndLessonName: function(portId, lessonName, callback){
+		var that = this
+		that.logger.log(moduleName, 2, 'running getCompleteTestsByPortIdAndLessonName')
+		that.getLessonLength(lessonName, function(lessonLength){
+			that.logger.log(moduleName, 2, 'lesson name is:' + lessonName + ' lesson length is: ' + lessonLength)
+			if(lessonLength && lessonLength > 0){
+				that.getErrorMapsByIoName(portId, function(errorMaps){
+					that.logger.log(moduleName, 2, portId + ' error map is: ' + JSON.stringify(errorMaps))
+					if(errorMaps){
+						that.getCompleteTestsByPortIdErrorMapsIterator(errorMaps, lessonLength, [], 0, function(completeTestArray){
+							that.logger.log(moduleName, 2, 'completeTestArray:  ' + JSON.stringify(completeTestArray))
+							callback(completeTestArray)
+						})
+					} else {
+						callback()
+					}
+				})
+			} else {
+				callback()
+			}
+		})
+	},
+	getCompleteTestsByPortIdErrorMapsIterator: function(errorMaps, lessonLength, completeTestArray, idx, callback){
+		var that = this
+		that.logger.log(moduleName, 2, 'running getCompleteTestsByPortIdErrorMapsIterator')
+		if(errorMaps[idx]){
+			that.logger.log(moduleName, 4, 'errorMaps[' + idx +'] exists')
+			var thisTestObject = {
+				signalPath: errorMaps[idx].signalPath 
+			}
+			that.logger.log(moduleName, 4, 'thisTestObject is: ' + JSON.stringify(thisTestObject))
+			that.getCompleteTestFromErrorObject(errorMaps[idx].errorMap, lessonLength, function(result){
+				if(result){
+					thisTestObject.rmsError = result 
+					that.logger.log(moduleName, 4, 'thisTestObject is: ' + JSON.stringify(thisTestObject))
+					completeTestArray.push(thisTestObject)
+					that.getCompleteTestsByPortIdErrorMapsIterator(errorMaps, lessonLength, completeTestArray, idx+1, callback)
+				} else {
+					that.getCompleteTestsByPortIdErrorMapsIterator(errorMaps, lessonLength, completeTestArray, idx+1, callback)
+				}
+			})
+		} else {
+			callback(completeTestArray)
+		}
+	},
+	resolveIfMVTestComplete: function(variants, lessonName, callback){
+		var that = this
+		that.logger.log(moduleName, 2, 'running resolveIfMVTestComplete')
+		that.resolveIfMVTestCompleteIterator(variants, 0, lessonName, {}, function(result){
+			that.logger.log(moduleName, 2, 'completeness:' + JSON.stringify(result))
+			callback(result)
+		})	
+	},
+	resolveIfMVTestCompleteIterator: function(variants, idx, lessonName, completionMap, callback){
+		var that = this
+		if(variants[idx]){
+			if(variants[idx] == 'none'){
+				that.searchForNone(variants, lessonName, function(searchForNoneResult){
+					if(searchForNoneResult){
+						/*
+						* ok so the searchForNoneResult has been prepard to put into the completionMap...
+						*/
+						completionMap.push(searchForNoneResult)
+						that.resolveIfMVTestCompleteIterator(variants, idx+1, lessonName, completionMap, callback)
+					} else {
+						//we do not have a 'none' test completed so we do not have a complete A/B test
+						callback()
+					}
+				})
+			} else {
+				that.getCompleteTestsByPortIdAndLessonName(variants[idx], lessonName, function(result){
+					if(result){
+						completionMap[variants[idx]] = result
+						that.resolveIfMVTestCompleteIterator(variants, idx+1, lessonName, completionMap, callback)
+					} else {
+						//this result was not complete so call back... 
+						callback()
+					}
+					
+				})
+			}
+		} else{			
+			/*
+			* Note: Currently we are assuming that only 1 test is complete in a map so we are taking the first index of something complete. This is a flawed assumption...
+			*/
+			that.logger.log(moduleName, 2, 'completion map: ' + JSON.stringify(completionMap))
+			var winnersRMSerror = false
+			var winner = false
+			Object.keys(completionMap).forEach(function(thisKey) {
+			    if(!winner || completionMap[thisKey][0].rmsError < winnersRMSerror){
+			    	winner = thisKey
+			    	winnersRMSerror = completionMap[thisKey][0].rmsError
+			    }
+			});
+
+			if(winner){
+				callback({
+					winner: winner,
+					rmsError: winnersRMSerror
+				})
+			} else {
+				callback()
+			}
+		}
+	},
+	searchForNone: function(variants, lessonName, callback){
+		var that = this
+		that.searchForNoneIoIterator(variants, lessonName, 0, function(result){
+
+/*
+*
+* This result has to be turned into a completion object just like a positive result
+*/
+
+
+
+
+
+
+			callback(result)
+		})
+	},
+	searchForNoneIoIterator:function(variants, lessonName, Idx, callback){
+		var that = this
+		if(that.spheron.io[idx]){
+			if(variants.indexOf(that.spheron.io[idx].id) == -1) {
+				that.searchForNoneIoTestIterator(variants, lessonName, Idx, 0, function(completeTests){
+					if(completeTests){
+						//handle the completed test and turn it into a test result object for processing,...
+						//then call back.
+					} else {
+						that.searchForNoneIoIterator(variants, lessonName, Idx+1, callback)
+					}
+				})
+			} else {
+				that.searchForNoneIoIterator(variants, lessonName, Idx+1, callback)
+			}
+		} else {
+			callback()
+		}
+	},
+	searchForNoneIoTestIterator:function(variants, lessonName, Idx, testIdx, callback){
+		if(that.spheron.io[idx].errorMap[testIdx]){
+
+		} else {
+			callback()
+		}
+	},
+	getConnectionTypeById: function(connectionId, callback){
+		var that = this
+		that.getConnectionTypeByIdIterator(0, connectionId, function(connectionType){
+			callback(connectionType)
+		})
+	},
+	getConnectionTypeByIdIterator: function(idx, connectionId, callback){
+		var that = this
+		if(that.spheron.io[idx]){
+			if(that.spheron.io[idx].id == connectionId){
+				callback(that.spheron.io[idx].type)
+			} else {
+				that.getConnectionTypeByIdIterator(idx+1, connectionId, callback)
+			}
+		} else {
+			callback()
+		}
+	},
+	resolveIfMVTestCompleteFromMVObject: function(mvTestObject, lessonName, callback){
+		var that = this
+
+		that.logger.log(moduleName, 2, 'running resolveIfMVTestCompleteFromMVObject')
+		var allInputs = [mvTestObject.original]
+		that.logger.log(moduleName, 2, 'mvTestObject:' + JSON.stringify(mvTestObject))		
+		mvTestObject.variants.forEach(function(thisObject){
+			allInputs.push(thisObject)
+		})
+
+		that.logger.log(moduleName, 2, 'all inputs: ' + allInputs)
+		that.resolveIfMVTestComplete(allInputs, lessonName, function(result){
+			that.logger.log(moduleName, 2, 'resolveIfMVTestCompleteFromMVObject result: ' + JSON.stringify(result))
+			if(result){
+				that.getConnectionTypeById(result.winner, function(connectionType){
+					if(connectionType == "extInput"){
+						if(result.winner == mvTestObject.original){
+							that.logger.log(moduleName, 2, 'concluding MV Test, existent extInput won.')
+						
+							/*
+							* winner is the existent extInput:
+							* > Delete variants
+							* > Delete all test data in this speheron
+							* > Delete the test object
+							*/
+
+						} else {
+							that.logger.log(moduleName, 2, 'concluding MV Test, variant extInput won.')
+							/*
+							* winner is a variant extInput:
+							* > find test which feeds the existent input
+							* > update toPort to point to variant extInput
+							* > delete all test data
+							* > delete test object
+							*/
+						}
+					} else if(connectionType == "input"){
+						if(result.winner == mvTestObject.original){
+							that.logger.log(moduleName, 2, 'concluding MV Test, existent input won.')
+							/*
+							* winner is the existent input:
+							* > Delete variants
+							* > Delete all test data in this speheron
+							* > Delete the test object
+							* 
+							*/
+
+						} else {
+							that.logger.log(moduleName, 2, 'concluding MV Test, variant input won.')
+							/*
+							* winner is a variant:
+							* > find upstream spheron
+							* > update toPort to point to variant connection
+							* > delete all test data
+							* > delete test object
+							*/
+						}
+					} else if(connectionType == "bias"){
+						that.logger.log(moduleName, 2, 'concluding MV Test, a bias won.')
+						/*
+						* > Delete other biases in this test
+						* > Delete all test data in this speheron
+						* > Delete the test object
+						*/
+
+					} else if(connectionType == "output"){
+						if(result.winner == mvTestObject.original){
+							that.logger.log(moduleName, 2, 'concluding MV Test, existent output won.')
+							/*
+							* winner is the existent output:
+							* > Delete variants
+							* > Delete all test data in this speheron
+							* > Delete the test object
+							*/
+						} else {
+							that.logger.log(moduleName, 2, 'concluding MV Test, variant output won.')
+							/*
+							* winner is a variant output:
+							* > find downstream spheron
+							* > update frmoPort to point to variant output
+							* > delete all test data
+							* > delete test object
+							*/
+						}
+					} else if(connectionType == "extOutput"){
+						if(result.winner == mvTestObject.original){
+							that.logger.log(moduleName, 2, 'concluding MV Test, existent extOutput won.')
+							/*
+							* winner is the existent extOutput:
+							* > Delete variants
+							* > Delete all test data in this speheron
+							* > Delete the test object
+							*/
+						} else {
+							that.logger.log(moduleName, 2, 'concluding MV Test, variant extOutput won.')
+							/*
+							* winner is a variant extOutput:
+							* > find test which is fed by the existent output
+							* > update frmoPort to point to variant extOutput
+							* > delete all test data
+							* > delete test object
+							*/
+						}
+					} else if(connectionType == "none"){
+						that.logger.log(moduleName, 2, 'concluding MV Test, variant extOutput won.')
+						/*
+						* winner is none of the variants:
+						* > if other variants are inputs or outputs de-wire them in the upstream / downstream spherons
+						* > if other variants are extInputs or extOutputs then this is a null test and not a supported usecase
+						* > delete other port variants in this object
+						* > delete all test data for whole spheron
+						* > delete test object
+						*/
+					}
+				})
+			} else {
+				that.logger.log(moduleName, 2, 'not complete. Nothing else to do at this juncture.')
+				callback()
+			}
+		})
 	}
 }
  

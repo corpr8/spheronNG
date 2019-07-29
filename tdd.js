@@ -191,12 +191,12 @@ var tdd = {
 					that.logger.log(moduleName, 2, 'returned string - test passed')
 					tdd.testIterator(testIdx, resultIdx +1, failureCount, callback)	
 				} else {
-					that.logger.log(moduleName, 2, 'string value incorrect')
+					that.logger.log(moduleName, 2, 'string value incorrect. failed.')
 					process.exitCode = 1
 				}
 			} else {
 				//we expect a string
-				that.logger.log(moduleName, 2, 'expected a string')
+				that.logger.log(moduleName, 2, 'expected a string. failed.')
 				process.exitCode = 1
 			}
 		} else if(thisTest.returnType == "number"){
@@ -205,12 +205,12 @@ var tdd = {
 					that.logger.log(moduleName, 2, 'returned number - test passed')
 					tdd.testIterator(testIdx, resultIdx +1, failureCount, callback)
 				} else {
-					that.logger.log(moduleName, 2, 'numeric value incorrect')
+					that.logger.log(moduleName, 2, 'numeric value incorrect. failed.')
 					process.exitCode = 1					
 				}
 			} else {
 				//we expect a string
-				that.logger.log(moduleName, 2, 'expected an number')
+				that.logger.log(moduleName, 2, 'expected a number. failed.')
 				process.exitCode = 1
 			}
 		} else if(thisTest.returnType == null){
@@ -287,7 +287,7 @@ var tdd = {
 
 							// If the two items are not the same type, return false
 							if (itemType !== Object.prototype.toString.call(item2)){
-								that.logger.log(moduleName, 2, 'types are different.')
+								that.logger.log(moduleName, 2, 'types are different. failed.')
 								return false;
 							} 
 
@@ -307,7 +307,7 @@ var tdd = {
 						for (var i = 0; i < valueLen; i++) {
 							if (compare(value[i], other[i]) === false){
 								that.logger.log(moduleName, 2, 'object array properties do not match.')
-								that.logger.log(moduleName, 2, 'value[i]: ' + value[i] + ' other[i]: ' + other[i])
+								that.logger.log(moduleName, 2, 'value[i]: ' + JSON.stringify(value[i]) + ' other[i]: ' + JSON.stringify(other[i]))
 							 	return false;	
 							}
 						}
@@ -315,7 +315,8 @@ var tdd = {
 						for (var key in value) {
 							if (value.hasOwnProperty(key)) {
 								if (compare(value[key], other[key]) === false){
-									that.logger.log(moduleName, 2, 'properties do not match(2).')	
+									that.logger.log(moduleName, 2, 'value[i]: ' + JSON.stringify(value[key]) + ' other[i]: ' + JSON.stringify(other[key]))
+									that.logger.log(moduleName, 2, 'properties do not match(2). failed.')
 									return false;
 								}
 							}
@@ -451,7 +452,7 @@ var tdd = {
 		}
 	},
 	checkLoadNextFile: function(failureCount, callback){
-		var that = this
+		var that = this 
 		if(that.config.tdd.nextTestFile){
 			that.logger.log(moduleName, 2, 'Trying to load: ' + that.config.tdd.nextTestFile)
 			testIdx = 0
