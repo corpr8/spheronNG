@@ -42,11 +42,6 @@
 						"original" : "input1",
 						"variants" : ["input1a"],
 						"startTick" : -1
-					},
-					{
-						"original" : "input1",
-						"variants" : ["input1a", "none"],
-						"startTick" : -1
 					}],
 				"biases" : [], 
 				"outputs" : []
@@ -121,106 +116,16 @@
 				},
 				"expectedResults" : [
 					{
-						"function" : "nukeTestData", 
+						"function" : "throwAnError",
 						"parameters" : null,
 						"returnType" : null,
 						"containsJSONArray" : false,
 						"atLeastTheseFields": true,
 						"ordered": true, 
-						"results":[] 
-					},
-					{
-						"function" : "setupTestDataByFileName", 
-						"parameters" : "tests/dataForSpheronNG/5_1-resolve_mv_tests.json",
-						"returnType" : null,
-						"containsJSONArray" : false,
-						"atLeastTheseFields": true,
-						"ordered": true, 
-						"results":[] 
-					},
-					{
-						"function" : "getCompleteTestFromErrorObject", 
-						"parameters" : [{"0":0.82635,"3":0.1101},4],
-						"unpackInput" : true,
-						"returnType" : "boolean", 
-						"containsJSONArray" : false,
-						"atLeastTheseFields": true,
-						"ordered": true, 
-						"results": false  
-					},
-					{
-						"function" : "getCompleteTestFromErrorObject", 
-						"parameters" : [{"0":0.82635,"1":0.12635,"2":0.32635,"3":0.22635},4],
-						"unpackInput" : true,
-						"returnType" : "number",
-						"containsJSONArray" : false,
-						"atLeastTheseFields": true,
-						"ordered": true, 
-						"results": 0.2313
-					},
-					{
-						"function" : "getCompleteTestsByPortIdAndLessonName", 
-						"parameters" : ["internal1","whatIsAnd"],
-						"unpackInput" : true,
-						"returnType" : "object",
-						"containsJSONArray" : false,
-						"atLeastTheseFields": true,
-						"ordered": true, 
-						"results": [
-							{"signalPath": "input1;input2;input3;bias1a;internal1;", "rmsError" : 0.2313}
-						]
-					},
-					{
-						"function" : "resolveIfMVTestComplete", 
-						"parameters" : [["input1", "input1a"],"whatIsAnd"],
-						"unpackInput" : true,
-						"returnType" : "object",
-						"containsJSONArray" : false,
-						"atLeastTheseFields": true,
-						"ordered": true, 
-						"results": {"winner": "input1a", "rmsError" : 0.0335}
-					},
-					{
-						"function" : "resolveIfMVTestCompleteFromMVObject", 
-						"parameters" : [{
-								"original" : "input1",
-								"variants" : ["input1a"],
-								"startTick" : -1
-							},"whatIsAnd"],
-						"unpackInput" : true,
-						"returnType" : "object",
-						"containsJSONArray" : false,
-						"atLeastTheseFields": true,
-						"ordered": true, 
-						"results": {"winner": "input1a", "rmsError" : 0.0335}
-					},
-					{
-						"function" : "resolveIfMVTestComplete", 
-						"parameters" : [["input1", "input1a", "none"],"whatIsAnd"],
-						"unpackInput" : true,
-						"returnType" : "object",
-						"containsJSONArray" : false,
-						"atLeastTheseFields": true,
-						"ordered": true, 
-						"results": {"winner": "none", "rmsError" : 0.0031}
-					},
-					{
-						"function" : "resolveIfMVTestCompleteFromMVObject", 
-						"parameters" : [{
-								"original" : "input1",
-								"variants" : ["input1a","none"],
-								"startTick" : -1
-							},"whatIsAnd"],
-						"unpackInput" : true,
-						"returnType" : "object",
-						"containsJSONArray" : false,
-						"atLeastTheseFields": true,
-						"ordered": true, 
-						"results": {"winner": "none", "rmsError" : 0.0031}
+						"results": null
 					}
 				]
 			}
 		]
-	},
-	"nextTestFile": "./tests/dataForSpheronNG/5_2-trake_action_on_complete_MV_tests.json"
+	}
 }

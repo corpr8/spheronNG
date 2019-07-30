@@ -57,7 +57,7 @@ var multivariateTestProcessor = {
 			case 0: 
 
 				that.logger.log(moduleName, 2, 'Running Phase 0: iterating multivariant tests')
-				that.mvTestIterator(function(){
+				that.mvTestIterator(0, 0, function(){
 					that.processorPhaseIterator(phaseIdx +1, callback)
 				})
 			break;
@@ -82,10 +82,48 @@ var multivariateTestProcessor = {
 			callback() 
 		})
 	},
-	mvTestIterator: function(callback){
+	mvTestIterator: function(testPhase, testIdx, callback){
 		//iterate variants of inputs, biases and outputs and call resolveIfMVTestCompleteFromMVObject for each one...
+		var that = this
 		that.logger.log(moduleName, 2, 'running test iterator - BackProp MV test resolution.') 
-		process.exitCode = 1
+		if(testPhase < 3){
+			if(testPhase == 0){
+				//input tests
+				if(that.spheron.variants.inputs[testIdx]){
+					that.resolveIfMVTestCompleteFromMVObject(that.spheron.variants.inputs[testIdx], that.spheron.lessonId, function(result){
+						that.handleCompleteMVTest(result, that.spheron.variants.inputs[testIdx], function(){
+							that.mvTestIterator(testPhase, testIdx+1, callback)
+						})
+					})
+				} else {
+					that.mvTestIterator(testPhase+1, 0, callback)
+				}
+			} else if(testPhase == 1){
+				//bias tests
+				if(that.spheron.variants.biases[testIdx]){
+					that.resolveIfMVTestCompleteFromMVObject(that.spheron.variants.biases[testIdx], that.spheron.lessonId, function(){
+						that.handleCompleteMVTest(result, that.spheron.variants.biases[testIdx], function(){
+							that.mvTestIterator(testPhase, testIdx+1, callback)
+						})
+					})
+				} else {
+					that.mvTestIterator(testPhase+1, 0, callback)
+				}
+			} else {
+				//output tests
+				if(that.spheron.variants.outputs[testIdx]){
+					that.resolveIfMVTestCompleteFromMVObject(that.spheron.variants.outputs[testIdx], that.spheron.lessonId, function(){
+						that.handleCompleteMVTest(result, that.spheron.variants.outputs[testIdx], function(){
+							that.mvTestIterator(testPhase, testIdx+1, callback)
+						})
+					})
+				} else {
+					that.mvTestIterator(testPhase+1, 0, callback)
+				}
+			}
+		} else {
+			callback()
+		}
 	},
 	getCompletedTestsByIoName: function(ioName, testLength, callback){
  		var that = this
@@ -127,7 +165,7 @@ var multivariateTestProcessor = {
 		// where an object is:
 		// 
 		var that = this
-		that.logger.log(moduleName, 2, 'running getCompleteTestFromErrorObject')
+		that.logger.log(moduleName, 2, 'running getCompleteTestFromErrorObject. Lesson length is:' + lessonLength + ' ioObject is: ' + JSON.stringify(ioObject))
 		that.getCompleteTestFromErrorObjectIterator(ioObject, lessonLength, 0, 0, function(returnObject){
 			that.logger.log(moduleName, 2, 'back from getCompleteTestFromErrorObjectIterator')
 			that.logger.log(moduleName, 2, 'rms error is: ' + returnObject)
@@ -215,10 +253,13 @@ var multivariateTestProcessor = {
 			if(variants[idx] == 'none'){
 				that.searchForNone(variants, lessonName, function(searchForNoneResult){
 					if(searchForNoneResult){
+
+
 						/*
 						* ok so the searchForNoneResult has been prepard to put into the completionMap...
-						*/
-						completionMap.push(searchForNoneResult)
+						*/ 
+						that.logger.log(moduleName, 2, 'completionMap is: ' + JSON.stringify(completionMap))
+						completionMap["none"] = [{"signalPath" : "NA" ,"rmsError" : searchForNoneResult}]
 						that.resolveIfMVTestCompleteIterator(variants, idx+1, lessonName, completionMap, callback)
 					} else {
 						//we do not have a 'none' test completed so we do not have a complete A/B test
@@ -233,8 +274,7 @@ var multivariateTestProcessor = {
 					} else {
 						//this result was not complete so call back... 
 						callback()
-					}
-					
+					}				
 				})
 			}
 		} else{			
@@ -244,7 +284,10 @@ var multivariateTestProcessor = {
 			that.logger.log(moduleName, 2, 'completion map: ' + JSON.stringify(completionMap))
 			var winnersRMSerror = false
 			var winner = false
+
+			
 			Object.keys(completionMap).forEach(function(thisKey) {
+				that.logger.log(moduleName, 2, 'this key is: ' + thisKey)
 			    if(!winner || completionMap[thisKey][0].rmsError < winnersRMSerror){
 			    	winner = thisKey
 			    	winnersRMSerror = completionMap[thisKey][0].rmsError
@@ -259,54 +302,60 @@ var multivariateTestProcessor = {
 			} else {
 				callback()
 			}
+
 		}
 	},
 	searchForNone: function(variants, lessonName, callback){
 		var that = this
-		that.searchForNoneIoIterator(variants, lessonName, 0, function(result){
-
-/*
-*
-* This result has to be turned into a completion object just like a positive result
-*/
-
-
-
-
-
-
-			callback(result)
+		that.logger.log(moduleName, 2, 'running searchForNone')
+		that.getLessonLength(lessonName, function(lessonLength){
+			that.searchForNoneIoIterator(variants, lessonName, lessonLength, 0, function(completeTest){
+				callback(completeTest)
+			})	
 		})
 	},
-	searchForNoneIoIterator:function(variants, lessonName, Idx, callback){
+	searchForNoneIoIterator:function(variants, lessonName, lessonLength, idx, callback){
 		var that = this
+		that.logger.log(moduleName, 2, 'running searchForNoneIterator - iterating io')
 		if(that.spheron.io[idx]){
+			that.logger.log(moduleName, 2, 'variants:' + variants.join(','))
+			that.logger.log(moduleName, 2, 'variants index of:' + that.spheron.io[idx].id + ': ' + variants.indexOf(that.spheron.io[idx].id))
 			if(variants.indexOf(that.spheron.io[idx].id) == -1) {
-				that.searchForNoneIoTestIterator(variants, lessonName, Idx, 0, function(completeTests){
-					if(completeTests){
-						//handle the completed test and turn it into a test result object for processing,...
-						//then call back.
+				/*
+				* note: we need to check and see if we need to implement the below in normal tests...
+				*/
+				that.searchForNoneWithinIoMapsIterator(that.spheron.io[idx].errorMap, 0, lessonLength, function(result){
+					if(result){
+						callback(result)
 					} else {
-						that.searchForNoneIoIterator(variants, lessonName, Idx+1, callback)
+						that.searchForNoneIoIterator(variants, lessonName, lessonLength, idx+1, callback)
 					}
 				})
 			} else {
-				that.searchForNoneIoIterator(variants, lessonName, Idx+1, callback)
+				that.searchForNoneIoIterator(variants, lessonName, lessonLength, idx+1, callback)
 			}
 		} else {
 			callback()
 		}
 	},
-	searchForNoneIoTestIterator:function(variants, lessonName, Idx, testIdx, callback){
-		if(that.spheron.io[idx].errorMap[testIdx]){
-
+	searchForNoneWithinIoMapsIterator: function(parentErrorMap, errorMapIdx, lessonLength, callback){
+		var that = this
+		if(parentErrorMap[errorMapIdx]){
+			that.getCompleteTestFromErrorObject(parentErrorMap[errorMapIdx].errorMap, lessonLength, function(completeTest){
+				if(completeTest){
+					that.logger.log(moduleName, 2, 'found a complete none test: ' + JSON.stringify(completeTest))
+					callback(completeTest)
+				} else {
+					that.searchForNoneWithinIoMapsIterator(parentErrorMap, errorMapIdx+1, lessonLength, callback)
+				}
+			})
 		} else {
 			callback()
 		}
 	},
 	getConnectionTypeById: function(connectionId, callback){
 		var that = this
-		that.getConnectionTypeByIdIterator(0, connectionId, function(connectionType){
+		that.getConnectionTypeByIdIterator(0, connectionId, function(connectionType){ 
 			callback(connectionType)
 		})
 	},
@@ -335,111 +384,109 @@ var multivariateTestProcessor = {
 		that.logger.log(moduleName, 2, 'all inputs: ' + allInputs)
 		that.resolveIfMVTestComplete(allInputs, lessonName, function(result){
 			that.logger.log(moduleName, 2, 'resolveIfMVTestCompleteFromMVObject result: ' + JSON.stringify(result))
-			if(result){
-				that.getConnectionTypeById(result.winner, function(connectionType){
-					if(connectionType == "extInput"){
-						if(result.winner == mvTestObject.original){
-							that.logger.log(moduleName, 2, 'concluding MV Test, existent extInput won.')
+			callback(result)
+		})
+	},
+	handleCompleteMVTest: function(result, mvTestObject, callback){
+		that.getConnectionTypeById(result.winner, function(connectionType){
+			if(connectionType == "extInput"){
+				if(result.winner == mvTestObject.original){
+					that.logger.log(moduleName, 2, 'concluding MV Test, existent extInput won.')
 						
-							/*
-							* winner is the existent extInput:
-							* > Delete variants
-							* > Delete all test data in this speheron
-							* > Delete the test object
-							*/
+					/*
+					* winner is the existent extInput:
+					* > Delete variants
+					* > Delete all test data in this speheron
+\					* > Delete the test object
+					*/
 
-						} else {
-							that.logger.log(moduleName, 2, 'concluding MV Test, variant extInput won.')
-							/*
-							* winner is a variant extInput:
-							* > find test which feeds the existent input
-							* > update toPort to point to variant extInput
-							* > delete all test data
-							* > delete test object
-							*/
-						}
-					} else if(connectionType == "input"){
-						if(result.winner == mvTestObject.original){
-							that.logger.log(moduleName, 2, 'concluding MV Test, existent input won.')
-							/*
-							* winner is the existent input:
-							* > Delete variants
-							* > Delete all test data in this speheron
-							* > Delete the test object
-							* 
-							*/
+				} else {
+					that.logger.log(moduleName, 2, 'concluding MV Test, variant extInput won.')
+					/*
+					* winner is a variant extInput:
+					* > find test which feeds the existent input
+					* > update toPort to point to variant extInput
+					* > delete all test data
+					* > delete test object
+					*/
+				}
+			} else if(connectionType == "input"){
+				if(result.winner == mvTestObject.original){
+					that.logger.log(moduleName, 2, 'concluding MV Test, existent input won.')
+					/*
+					* winner is the existent input:
+					* > Delete variants
+					* > Delete all test data in this speheron
+					* > Delete the test object
+					* 
+					*/
 
-						} else {
-							that.logger.log(moduleName, 2, 'concluding MV Test, variant input won.')
-							/*
-							* winner is a variant:
-							* > find upstream spheron
-							* > update toPort to point to variant connection
-							* > delete all test data
-							* > delete test object
-							*/
-						}
-					} else if(connectionType == "bias"){
-						that.logger.log(moduleName, 2, 'concluding MV Test, a bias won.')
-						/*
-						* > Delete other biases in this test
-						* > Delete all test data in this speheron
-						* > Delete the test object
-						*/
+				} else {
+					that.logger.log(moduleName, 2, 'concluding MV Test, variant input won.')
+					/*
+					* winner is a variant:
+					* > find upstream spheron
+					* > update toPort to point to variant connection (including deleting any MV tests the original port was part of)
+					* > delete all test data
+					* > delete test object
+					*/
+				}
+			} else if(connectionType == "bias"){
+				that.logger.log(moduleName, 2, 'concluding MV Test, a bias won.')
+				/*
+				* > Delete other biases in this test
+				* > Delete all test data in this speheron
+				* > Delete the test object
+				*/
 
-					} else if(connectionType == "output"){
-						if(result.winner == mvTestObject.original){
-							that.logger.log(moduleName, 2, 'concluding MV Test, existent output won.')
-							/*
-							* winner is the existent output:
-							* > Delete variants
-							* > Delete all test data in this speheron
-							* > Delete the test object
-							*/
-						} else {
-							that.logger.log(moduleName, 2, 'concluding MV Test, variant output won.')
-							/*
-							* winner is a variant output:
-							* > find downstream spheron
-							* > update frmoPort to point to variant output
-							* > delete all test data
-							* > delete test object
-							*/
-						}
-					} else if(connectionType == "extOutput"){
-						if(result.winner == mvTestObject.original){
-							that.logger.log(moduleName, 2, 'concluding MV Test, existent extOutput won.')
-							/*
-							* winner is the existent extOutput:
-							* > Delete variants
-							* > Delete all test data in this speheron
-							* > Delete the test object
-							*/
-						} else {
-							that.logger.log(moduleName, 2, 'concluding MV Test, variant extOutput won.')
-							/*
-							* winner is a variant extOutput:
-							* > find test which is fed by the existent output
-							* > update frmoPort to point to variant extOutput
-							* > delete all test data
-							* > delete test object
-							*/
-						}
-					} else if(connectionType == "none"){
-						that.logger.log(moduleName, 2, 'concluding MV Test, variant extOutput won.')
-						/*
-						* winner is none of the variants:
-						* > if other variants are inputs or outputs de-wire them in the upstream / downstream spherons
-						* > if other variants are extInputs or extOutputs then this is a null test and not a supported usecase
-						* > delete other port variants in this object
-						* > delete all test data for whole spheron
-						* > delete test object
-						*/
-					}
-				})
-			} else {
-				that.logger.log(moduleName, 2, 'not complete. Nothing else to do at this juncture.')
-				callback()
+			} else if(connectionType == "output"){
+				if(result.winner == mvTestObject.original){
+					that.logger.log(moduleName, 2, 'concluding MV Test, existent output won.')
+					/*
+					* winner is the existent output:
+					* > Delete variants
+					* > Delete all test data in this speheron
+					* > Delete the test object
+					*/
+				} else {
+					that.logger.log(moduleName, 2, 'concluding MV Test, variant output won.')
+					/*
+					* winner is a variant output:
+					* > find downstream spheron
+					* > update fromPort to point to variant output
+					* > delete all test data
+					* > delete test object
+					*/
+				}
+			} else if(connectionType == "extOutput"){
+				if(result.winner == mvTestObject.original){
+					that.logger.log(moduleName, 2, 'concluding MV Test, existent extOutput won.')
+					/*
+					* winner is the existent extOutput:
+					* > Delete variants
+					* > Delete all test data in this speheron
+					* > Delete the test object
+					*/
+				} else {
+					that.logger.log(moduleName, 2, 'concluding MV Test, variant extOutput won.')
+					/*
+					* winner is a variant extOutput:
+					* > find test which is fed by the existent output
+					* > update frmoPort to point to variant extOutput
+					* > delete all test data
+					* > delete test object
+					*/
+				}
+			} else if(connectionType == "none"){
+				that.logger.log(moduleName, 2, 'concluding MV Test, variant extOutput won.')
+				/*
+				* winner is none of the variants:
+				* > if other variants are inputs or outputs de-wire them in the upstream / downstream spherons (including deleting any MV tests they are part of)
+				* > if other variants are extInputs or extOutputs then this is a null test and not a supported usecase
+				* > delete other port variants in this object
+				* > delete all test data for whole spheron
+				* > delete test object
+				*/
 			}
 		})
 	}

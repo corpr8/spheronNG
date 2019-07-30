@@ -223,6 +223,9 @@ var mongoUtils = {
 	},
 	createProblemDefinition: function(demoData, callback){
 		var thisProblemDefinition = JSON.parse(JSON.stringify(demoData))
+		delete thisProblemDefinition.network
+		delete thisProblemDefinition.tdd
+
 		//delete thisProblemDefinition.network
 		mongoNet.insertOne(thisProblemDefinition, function(err, res) {
 			if (err) throw err;

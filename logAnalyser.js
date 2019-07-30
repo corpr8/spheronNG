@@ -15,11 +15,13 @@ var logAnalyser = {
 		var that = this
 		that.lr = new LineByLineReader(settings.logOptions.logPath);
 
-		that.lr.on('error', function (err) {
+		/*
+		that.lr.on('failed', function (err) {
 			// 'err' contains error object
 			console.log('log analysis error:' + err)
 			process.exit(1)
-		}); 
+		});
+		*/ 
 
 		that.lr.on('line', function (line) {
 			// 'line' contains the current line without the trailing newline character.

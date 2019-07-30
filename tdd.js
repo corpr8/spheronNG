@@ -491,7 +491,10 @@ var tdd = {
 		that.testIterator(0, 0, 0, function(failureCount){
 			if(failureCount == 0){
 				that.logger.log(moduleName, 2, 'we passed all test(s)\r\n-----------------------\r\n---- exiting tdd ------\r\n-----------------------')
-				process.exitCode = 0
+				setTimeout(function(){
+					process.exit(0)
+				},2000)
+				
 			} else{
 				that.logger.log(moduleName, 2, 'we failed: ' + failureCount + ' test(\'s)')
 				process.exitCode = 1
