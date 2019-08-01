@@ -110,7 +110,7 @@ var propagationQueueProcessor = {
 				thisMessage.lessonId = inputMessage.lessonId
 				thisMessage.sigId = inputMessage.signalId
 				thisMessage.lessonIdx = inputMessage.lessonIdx
-				resultantMessages.push(thisMessage)
+				resultantMessages.push(thisMessage)  
 				that.transformPropagationToInputMessagesIterator(inputMessage, idx +1, resultantMessages, callback)
 			} else {
 				callback(resultantMessages)
