@@ -137,10 +137,62 @@
 						"atLeastTheseFields": true,
 						"ordered": true, 
 						"results":[] 
+					},
+					{
+						"note" : "This is a success function for multivariant test resolution where network external input is the lesson itself...",
+						"function" : "updateLessonInputs", 
+						"parameters" : ["whatIsAnd", "inputSpheron1", "input1", "input1a"],
+						"unpackInput" : true,  
+						"returnType" : null,
+						"containsJSONArray" : false,
+						"atLeastTheseFields": true,
+						"ordered": true, 
+						"results": null 
+					},
+					{
+						"function" : "getLesson", 
+						"parameters" : ["whatIsAnd"],
+						"unpackInput" : true,
+						"returnType" : "object",
+						"containsJSONArray" : false,
+						"atLeastTheseFields": true,
+						"ordered": true, 
+						"results": [
+							{"inputs": {"inputSpheron1": {"input1a": {"val": 0}}, "inputSpheron2": {"input2": {"val": 0}}}, "outputs": {"ext": {"ANDout": {"val": 0}}}},
+							{"inputs": {"inputSpheron1": {"input1a": {"val": 1}}, "inputSpheron2": {"input2": {"val": 0}}}, "outputs": {"ext": {"ANDout": {"val": 0}}}},
+							{"inputs": {"inputSpheron1": {"input1a": {"val": 0}}, "inputSpheron2": {"input2": {"val": 1}}}, "outputs": {"ext": {"ANDout": {"val": 0}}}},
+							{"inputs": {"inputSpheron1": {"input1a": {"val": 1}}, "inputSpheron2": {"input2": {"val": 1}}}, "outputs": {"ext": {"ANDout": {"val": 1}}}}
+						]
+					},
+					{
+						"note" : "This is a success function for multivariant test resolution where external output is the lesson itself...",
+						"function" : "updateLessonOutputs", 
+						"parameters" : ["whatIsAnd", "ext", "ANDout", "newOutput"],
+						"unpackInput" : true,  
+						"returnType" : null,
+						"containsJSONArray" : false,
+						"atLeastTheseFields": true,
+						"ordered": true, 
+						"results": null 
+					},
+					{
+						"function" : "getLesson", 
+						"parameters" : ["whatIsAnd"],
+						"unpackInput" : true,
+						"returnType" : "object",
+						"containsJSONArray" : false,
+						"atLeastTheseFields": true,
+						"ordered": true, 
+						"results": [
+							{"inputs": {"inputSpheron1": {"input1a": {"val": 0}}, "inputSpheron2": {"input2": {"val": 0}}}, "outputs": {"ext": {"newOutput": {"val": 0}}}},
+							{"inputs": {"inputSpheron1": {"input1a": {"val": 1}}, "inputSpheron2": {"input2": {"val": 0}}}, "outputs": {"ext": {"newOutput": {"val": 0}}}},
+							{"inputs": {"inputSpheron1": {"input1a": {"val": 0}}, "inputSpheron2": {"input2": {"val": 1}}}, "outputs": {"ext": {"newOutput": {"val": 0}}}},
+							{"inputs": {"inputSpheron1": {"input1a": {"val": 1}}, "inputSpheron2": {"input2": {"val": 1}}}, "outputs": {"ext": {"newOutput": {"val": 1}}}}
+						]
 					}
 				]
 			}
-		]
-	},
-	"nextTestFile": "./tests/dataForSpheronNG/9_9-stop.json"
+		],
+		"nextTestFile": "./tests/dataForSpheronNG/5_3-take_action_on_complete_MV_tests.json"
+	}
 }

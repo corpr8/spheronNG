@@ -55,9 +55,14 @@ var mongoUtils = {
 	},
 	dropDb: function(callback){
 		var that = this
-		mongoNet.drop()
-		that.logger.log(4,'dropped old database')
-		callback()
+		try {
+			mongoNet.drop(function(err, doc){
+				that.logger.log(4,'dropped old database')
+				callback()
+			})
+		} catch(err){
+			callback()
+		}
 	},
 	find: function(callback){
 		mongoNet.find({}).toArray(function(err, result) {
@@ -73,6 +78,15 @@ var mongoUtils = {
 	    	if (err) throw err;
 	    	callback(result)
 		});
+	},
+	getConnectionsBySpheronId(spheronId, callback){
+		mongoNet.findOne({
+			type: "spheron",
+			spheronId: spheronId
+		}, function(err, result) {
+	    	if (err) throw err;
+	    	callback(result.io)
+		});	
 	},
 	getLessonModeById: function(lessonId, callback){
 		mongoNet.findOne({
@@ -174,9 +188,14 @@ var mongoUtils = {
 	},
 	dropCollection: function(callback){ 
 		var that = this
-		mongoNet.drop()
-		that.logger.log(4,'Collection dropped')
-		callback()
+		try{
+			mongoNet.drop(function(err,doc){
+				that.logger.log(4,'Collection dropped')
+				callback()	
+			})
+		} catch(err){
+			callback()
+		}
 	},
 	setupDemoDataFromFile: function(fileName, callback){
 		/*
@@ -388,7 +407,156 @@ var mongoUtils = {
 				callback() 
 			})
 		})
+	},
+	getLessonDataByLessonId: function(lessonId, callback){
+		var that = this
+		mongoNet.findOne({
+			type: "lesson",
+			lessonId: lessonId
+		}, function(err, result) {
+	    	if (err) throw err;
+	    	callback(result)
+		});
+	},
+	updateLessonInputs: function(lessonId, spheronId, oldInput, newInput, callback){
+		var that = this
+		that.logger.log(moduleName, 2, 'running mongo - updateLessonInputs.')
+		that.getLessonDataByLessonId(lessonId, function(result){
+			that.logger.log(moduleName, 2, 'current lesson data is:' + JSON.stringify(result))
+			that.updateLessonInputIterator(0, spheronId, oldInput, newInput, result, function(updatedResult){
+				that.logger.log(moduleName, 2, 'updated lesson data is:' + JSON.stringify(updatedResult))
+				/*
+				* TODO: persist the updatedResult...
+				*/
+				mongoNet.updateOne({
+					type: "lesson", 
+					lessonId: lessonId
+				},{
+					$set: {
+						lesson: updatedResult.lesson
+					}
+				}, 
+				{}, 
+				function(err,doc){
+					if(err){
+						that.logger.log(moduleName, 2, 'persisted lesson error' + err)
+						callback()
+					} else { 
+						that.logger.log(moduleName, 2, 'success persisting lesson: ' + JSON.stringify(doc))
+
+						callback()
+					}	
+				})
+			})
+		})
+	},
+	updateSpheronConnectionBySpheronId:function(upstreamSpheronId, originalConnectionId, newConnectionId, callback){
+		var that = this
+		mongoNet.findOne({
+			type: "spheron",
+			spheronId: upstreamSpheronId
+		}, function(err, spheronData) {
+	    	if (err) throw err;
+	    	that.updateSpheronConnectionBySpheronIdIterator(spheronData, 0, originalConnectionId, newConnectionId, function(spheronData){
+	    		mongoNet.updateOne({
+					type: "spheron", 
+					spheronId: spheronData.spheronId
+				},{
+					$set: {
+						spheronData
+					}
+				}, 
+				{}, 
+				function(err,doc){
+					if(err){
+						that.logger.log(moduleName, 2, 'persist upstream spheron error' + err)
+						callback()
+					} else { 
+						that.logger.log(moduleName, 2, 'success persisting upstream spheron: ' + JSON.stringify(doc))
+						callback()
+					}	
+				})
+	    	})
+		});
+	},
+	updateSpheronConnectionBySpheronIdIterator: function(spheronData, idx, originalConnectionId, newConnectionId, callback){
+		var that = this
+		if(spheronData.io[idx]){
+			if(spheronData.io[idx].toId == originalConnectionId){
+				spheronData.io[idx].toId == newConnectionId
+				callback(spheronData)
+			} else {
+				that.updateSpheronConnectionBySpheronIdIterator(spheronData, idx+1, originalConnectionId, newConnectionId, callback)
+			}
+		} else {
+			that.logger.log(moduleName, 2, 'nothing to do, calling back. this is probably a problem. error.')
+			callback(spheronData)
+		}
+	},
+	updateLessonInputIterator:function(lessonIdx, spheronId, oldInput, newInput, lessonData, callback){
+		var that = this
+		if(lessonData.lesson[lessonIdx]){
+			if(lessonData.lesson[lessonIdx].inputs[spheronId][oldInput]){
+				lessonData.lesson[lessonIdx].inputs[spheronId][newInput] = JSON.parse(JSON.stringify(lessonData.lesson[lessonIdx].inputs[spheronId][oldInput]))
+				delete lessonData.lesson[lessonIdx].inputs[spheronId][oldInput]
+				that.updateLessonInputIterator(lessonIdx+1 , spheronId, oldInput, newInput, lessonData, callback)
+			} else {
+				that.updateLessonInputIterator(lessonIdx+1 , spheronId, oldInput, newInput, lessonData, callback)
+			}
+		} else {
+			callback(lessonData)
+		}
+	},
+	updateLessonOutputs: function(lessonId, spheronId, oldOutput, newOutput, callback){
+		var that = this
+		that.logger.log(moduleName, 2, 'running mongo - updateLessonOutputs.')
+		that.getLessonDataByLessonId(lessonId, function(result){
+			that.logger.log(moduleName, 2, 'current lesson data is:' + JSON.stringify(result))
+			that.updateLessonOutputIterator(0, spheronId, oldOutput, newOutput, result, function(updatedResult){
+				that.logger.log(moduleName, 2, 'updated lesson data is:' + JSON.stringify(updatedResult))
+				/*
+				* TODO: persist the updatedResult...
+				*/
+				mongoNet.updateOne({
+					type: "lesson", 
+					lessonId: lessonId
+				},{
+					$set: {
+						lesson: updatedResult.lesson
+					}
+				}, 
+				{}, 
+				function(err,doc){
+					if(err){
+						that.logger.log(moduleName, 2, 'persisted lesson error' + err)
+						callback()
+					} else { 
+						that.logger.log(moduleName, 2, 'success persisting lesson: ' + JSON.stringify(doc))
+
+						callback()
+					}	
+				})
+			})
+		})
+	},
+	updateLessonOutputIterator:function(lessonIdx, spheronId, oldOutput, newOutput, lessonData, callback){
+		/*
+		* TODO: Write the test use cases around this function as a urgency!!!!!!!!!!!!!!!!!!!!
+		*/
+		var that = this
+		if(lessonData.lesson[lessonIdx]){
+			if(lessonData.lesson[lessonIdx].outputs[spheronId][oldOutput]){
+				lessonData.lesson[lessonIdx].outputs[spheronId][newOutput] = JSON.parse(JSON.stringify(lessonData.lesson[lessonIdx].outputs[spheronId][oldOutput]))
+				delete lessonData.lesson[lessonIdx].outputs[spheronId][oldOutput]
+				that.updateLessonOutputIterator(lessonIdx+1 , spheronId, oldOutput, newOutput, lessonData, callback)
+			} else {
+				that.updateLessonOutputIterator(lessonIdx+1 , spheronId, oldOutput, newOutput, lessonData, callback)
+			}
+		} else {
+			callback(lessonData)
+		}
 	}
+
 }
 
 module.exports = mongoUtils;

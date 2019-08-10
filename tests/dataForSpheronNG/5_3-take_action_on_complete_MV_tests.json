@@ -117,7 +117,7 @@
 					"hasInitMethod" : true,
 					"hasMongo" : true,
 					"type": "spheron",
-					"spheronId" : "inputSpheron1"
+					"spheronId" : "outputSpheron1"
 				},
 				"expectedResults" : [
 					{
@@ -131,7 +131,7 @@
 					},
 					{
 						"function" : "setupTestDataByFileName", 
-						"parameters" : "tests/dataForSpheronNG/5_1-resolve_mv_tests.json",
+						"parameters" : "tests/dataForSpheronNG/5_3-take_action_on_complete_MV_tests.json",
 						"returnType" : null,
 						"containsJSONArray" : false,
 						"atLeastTheseFields": true,
@@ -139,88 +139,42 @@
 						"results":[] 
 					},
 					{
-						"function" : "getCompleteTestFromErrorObject", 
-						"parameters" : [{"0":0.82635,"3":0.1101},4],
-						"unpackInput" : true,
-						"returnType" : "boolean", 
+						"note" : "This is a success function for multivariant test resolution where external output is the lesson itself... testing a part of one piece...",
+						"function" : "updateUpstreamSpheron", 
+						"parameters" : ["internal1","myNewConnection"],
+						"unpackInput" : true,  
+						"returnType" : null,
 						"containsJSONArray" : false,
 						"atLeastTheseFields": true,
 						"ordered": true, 
-						"results": false  
+						"results": null 
 					},
 					{
-						"function" : "getCompleteTestFromErrorObject", 
-						"parameters" : [{"0":0.82635,"1":0.12635,"2":0.32635,"3":0.22635},4],
-						"unpackInput" : true,
-						"returnType" : "number",
-						"containsJSONArray" : false,
-						"atLeastTheseFields": true,
-						"ordered": true, 
-						"results": 0.2313
-					},
-					{
-						"function" : "getCompleteTestsByPortIdAndLessonName", 
-						"parameters" : ["internal1","whatIsAnd"],
+						"note" : "todo - delete the errormap data from myNewConnection as the connection has changed!",
+						"function" : "getConnectionsBySpheronId", 
+						"parameters" : ["inputSpheron1"],
 						"unpackInput" : true,
 						"returnType" : "object",
 						"containsJSONArray" : false,
 						"atLeastTheseFields": true,
 						"ordered": true, 
 						"results": [
-							{"signalPath": "input1;input2;input3;bias1a;internal1;", "rmsError" : 0.2313}
+							{"id" : "input1", "type": "extInput", "angle": 0, "fromId": "ext", "fromPort": "ext", "val":-1, "life" : 1, "errorMap": [
+								{"signalPath":"input1;input2;input3;bias1;internal1;","bpSignalDepth":1,"errorMap":{"0":0.82635,"1":0.12635,"2":0.32635,"3":0.22635}}
+							]},
+							{"id" : "input1a", "type": "extInput", "angle": 10, "fromId": "ext", "fromPort": "ext", "val":-1, "life" : 1, "errorMap": [
+								{"signalPath":"input1a;input2;input3;bias1;internal1;","bpSignalDepth":1,"errorMap":{"0":0.12635,"1":0.02635,"2":0.02635,"3":0.02635}}
+							]},
+							{"id" : "input1b", "type": "extInput", "angle": 10, "fromId": "ext", "fromPort": "ext", "val":-1, "life" : 1, "errorMap": [
+								{"signalPath":"input1b;input2;input3;bias1;internal1;","bpSignalDepth":1,"errorMap":{"0":0.00635,"1":0.00635,"2":0.00635,"3":0.00635}}
+							]},
+							{"id" : "bias1", "type": "bias", "angle": 20, "val":-1, "errorMap": []},
+							{"id" : "internal1", "type": "output", "angle": -60, "toId": "outputSpheron1", "toPort": "myNewConnection", "val":-1, "errorMap": []}
 						]
-					},
-					{
-						"function" : "resolveIfMVTestComplete", 
-						"parameters" : [["input1", "input1a"],"whatIsAnd"],
-						"unpackInput" : true,
-						"returnType" : "object",
-						"containsJSONArray" : false,
-						"atLeastTheseFields": true,
-						"ordered": true, 
-						"results": {"winner": "input1a", "rmsError" : 0.0335}
-					},
-					{
-						"function" : "resolveIfMVTestCompleteFromMVObject", 
-						"parameters" : [{
-								"original" : "input1",
-								"variants" : ["input1a"],
-								"startTick" : -1
-							},"whatIsAnd"],
-						"unpackInput" : true,
-						"returnType" : "object",
-						"containsJSONArray" : false,
-						"atLeastTheseFields": true,
-						"ordered": true, 
-						"results": {"winner": "input1a", "rmsError" : 0.0335}
-					},
-					{
-						"function" : "resolveIfMVTestComplete", 
-						"parameters" : [["input1", "input1a", "none"],"whatIsAnd"],
-						"unpackInput" : true,
-						"returnType" : "object",
-						"containsJSONArray" : false,
-						"atLeastTheseFields": true,
-						"ordered": true, 
-						"results": {"winner": "none", "rmsError" : 0.0031}
-					},
-					{
-						"function" : "resolveIfMVTestCompleteFromMVObject", 
-						"parameters" : [{
-								"original" : "input1",
-								"variants" : ["input1a","none"],
-								"startTick" : -1
-							},"whatIsAnd"],
-						"unpackInput" : true,
-						"returnType" : "object",
-						"containsJSONArray" : false,
-						"atLeastTheseFields": true,
-						"ordered": true, 
-						"results": {"winner": "none", "rmsError" : 0.0031}
 					}
 				]
 			}
 		],
-		"nextTestFile": "./tests/dataForSpheronNG/5_2-take_action_on_complete_MV_tests.json"
+		"nextTestFile": "./tests/dataForSpheronNG/9_9-stop.json"
 	}
 }

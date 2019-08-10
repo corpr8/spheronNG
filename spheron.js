@@ -363,6 +363,64 @@ Spheron.prototype.removebpQueueItemByIdx = function(thisIdx, callback){
 	callback()
 }
 
+Spheron.prototype.deleteConnectionById = function(thisId, callback){
+	var that = this
+	that.deleteConnectionByIdIterator(thisId, 0, function(){
+		callback()
+	})
+}
+
+Spheron.prototype.deleteConnectionByIdIterator = function(thisId, idx, callback){
+	var that = this
+	if(that.io[idx]){
+		if(that.io[idx].id == thisId){
+			delete that.io[idx]
+			callback()
+		} else {
+			that.deleteConnectionById(thisId, idx +1, callback)
+		}
+	} else {
+		callback()
+	}
+}
+
+Spheron.prototype.deleteAllTestData = function(callback){
+	var that = this
+	that.deleteAllTestDataIterator(0, function(){
+		callback()
+	})
+}
+
+Spheron.prototype.deleteAllTestDataIterator = function(idx, callback){
+	var that = this;
+	if(that.io[idx]){
+		that.io[idx].errorMap = []
+		that.deleteAllTestDataIterator(idx+1, callback)
+	} else {
+		callback()
+	}
+}
+
+Spheron.prototype.deleteInputTestObject = function(mvTestObject, callback){
+	var that = this
+	that.deleteInputTestObjectIterator(mvTestObject, 0, function(){
+		callback()
+	})
+}
+
+Spheron.prototype.deleteInputTestObjectIterator = function(mvTestObject, idx, callback){
+	var that = this
+	if(that.variants.inputs[idx]){
+		if(that.variants.inputs[idx] == mvTestObject){
+			delete that.variants.inputs[idx]
+			callback()
+		} else {
+			that.deleteInputTestObjectIterator(mvTestObject, idx+1, callback)
+		}
+	} else {
+		callback()
+	}
+}
 
 
 module.exports = Spheron;
