@@ -4,7 +4,14 @@ var appDir = path.dirname(require.main.filename);
 var settings = require(appDir +'/settings.json')
 
 /*
-* Module to handle propogating messages from the propagation queue
+* Module to handle back progsation
+* outputs
+* when lessons are passed
+* etc
+*
+* Find spherons which have become 'dead' - i.e. having neither inputs nor outputs which can happen as a result of petrification.
+*
+* Note this module will run as a standalone item rather than as part of a spheron
 */ 
 
 var lessonMaintenanceProcessor = {

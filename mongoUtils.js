@@ -88,15 +88,41 @@ var mongoUtils = {
 	    	callback(result.io)
 		});	
 	},
+	getVariantsBySpheronId(spheronId, callback){
+		mongoNet.findOne({
+			type: "spheron",
+			spheronId: spheronId
+		}, function(err, result) {
+	    	if (err) throw err;
+	    	callback(result.variants)
+		});	
+	},
 	getLessonModeById: function(lessonId, callback){
 		mongoNet.findOne({
 			type: "lesson",
-			problemId: lessonId
+			lessonId: lessonId
 		}, function(err, result) {
 	    	if (err){
 	    		callback();
 	    	} else {	
 	    		callback(result.options.mode)
+	    	}
+		});
+	},
+	getLessonPetrificationThresholdById: function(lessonId, callback){
+		mongoNet.findOne({
+			type: "lesson",
+			lessonId: lessonId
+		}, function(err, result) {
+	    	if (err){
+	    		callback();
+	    	} else {
+	    		if(result.options.petrificationThreshold){
+					callback(result.options.petrificationThreshold)
+	    		} else {
+	    			callback(-1)
+	    		}
+	    		
 	    	}
 		});
 	},
@@ -297,8 +323,13 @@ var mongoUtils = {
 	},
 	persistSpheron: function(spheronId, updateJSON, callback){
 		var that = this
+		if(updateJSON.logger != null){
+			updateJSON.logger = null
+		}
+
 		that.logger.log(moduleName, 2, 'about to persist spheron: ' + spheronId)
 		that.logger.log(moduleName, 2, 'update JSON is: ' + JSON.stringify(updateJSON))
+
 		mongoNet.findOneAndUpdate({
 			spheronId: spheronId
 		},{
@@ -407,7 +438,7 @@ var mongoUtils = {
 				callback() 
 			})
 		})
-	},
+	}, 
 	getLessonDataByLessonId: function(lessonId, callback){
 		var that = this
 		mongoNet.findOne({
@@ -450,21 +481,75 @@ var mongoUtils = {
 			})
 		})
 	},
-	updateSpheronConnectionBySpheronId:function(upstreamSpheronId, originalConnectionId, newConnectionId, callback){
+	updateSpheronInputConnectionBySpheronId:function(downstreamSpheronId, originalConnectionId, newConnectionId, callback){
+		var that = this
+		mongoNet.findOne({
+			type: "spheron",
+			spheronId: downstreamSpheronId
+		}, function(err, spheronData) {
+	    	if (err) throw err;
+	    	that.updateSpheronInputConnectionBySpheronIdIterator(spheronData, 0, originalConnectionId, newConnectionId, function(spheronData){
+	    		mongoNet.updateOne({
+					type: "spheron", 
+					spheronId: downstreamSpheronId
+				},{
+					$set: spheronData
+				}, 
+				{}, 
+				function(err,doc){
+					if(err){
+						that.logger.log(moduleName, 2, 'persist downstream spheron error' + err)
+						callback()
+					} else { 
+						that.logger.log(moduleName, 2, 'success persisting downstream spheron: ' + JSON.stringify(doc))
+						callback()
+					}	
+				})
+	    	})
+		});
+	},
+	updateSpheronInputConnectionBySpheronIdIterator: function(spheronData, idx, originalConnectionId, newConnectionId, callback){
+		var that = this
+		try{
+			if(spheronData.io[idx]){
+				if(spheronData.io[idx].fromPort == originalConnectionId){
+					if(newConnectionId == "none"){
+						spheronData.io.splice(idx,1)
+						/*
+						* TODO: we should also delete any A/B test that this IO was part of (originalConnectionId)
+						*/
+					} else {
+						spheronData.io[idx].fromPort = newConnectionId
+						spheronData.io[idx].id = newConnectionId
+						spheronData.io[idx].errorMap = []
+					}
+
+					that.logger.log(moduleName, 2, 'rewrote connection temp data from ' + originalConnectionId + ' to: ' + newConnectionId)
+					callback(spheronData)
+				} else {
+					that.updateSpheronInputConnectionBySpheronIdIterator(spheronData, idx+1, originalConnectionId, newConnectionId, callback)
+				}
+			} else {
+				that.logger.log(moduleName, 2, 'nothing to do, calling back. this is probably a problem. error.')
+				callback(spheronData)
+			}
+		} catch (err){
+			that.logger.log(moduleName, 2, 'updateSpheronInputConnectionBySpheronIdIterator error: ' + err)
+		}
+	},
+	updateSpheronOutputConnectionBySpheronId:function(upstreamSpheronId, originalConnectionId, newConnectionId, callback){
 		var that = this
 		mongoNet.findOne({
 			type: "spheron",
 			spheronId: upstreamSpheronId
 		}, function(err, spheronData) {
 	    	if (err) throw err;
-	    	that.updateSpheronConnectionBySpheronIdIterator(spheronData, 0, originalConnectionId, newConnectionId, function(spheronData){
+	    	that.updateSpheronOutputConnectionBySpheronIdIterator(spheronData, 0, originalConnectionId, newConnectionId, function(spheronData){
 	    		mongoNet.updateOne({
 					type: "spheron", 
-					spheronId: spheronData.spheronId
+					spheronId: upstreamSpheronId
 				},{
-					$set: {
-						spheronData
-					}
+					$set: spheronData
 				}, 
 				{}, 
 				function(err,doc){
@@ -479,14 +564,25 @@ var mongoUtils = {
 	    	})
 		});
 	},
-	updateSpheronConnectionBySpheronIdIterator: function(spheronData, idx, originalConnectionId, newConnectionId, callback){
+	updateSpheronOutputConnectionBySpheronIdIterator: function(spheronData, idx, originalConnectionId, newConnectionId, callback){
 		var that = this
 		if(spheronData.io[idx]){
-			if(spheronData.io[idx].toId == originalConnectionId){
-				spheronData.io[idx].toId == newConnectionId
+			if(spheronData.io[idx].toPort == originalConnectionId){
+				if(newConnectionId == "none"){
+					spheronData.io.splice(idx,1)
+					/*
+					* TODO: we should also delete any A/B test that this IO was part of (originalConnectionId)
+					*/
+				} else {
+					spheronData.io[idx].toPort = newConnectionId
+					spheronData.io[idx].id = newConnectionId
+					spheronData.io[idx].errorMap = []
+				}
+				
+				that.logger.log(moduleName, 2, 'rewrote connection temp data from ' + originalConnectionId + ' to: ' + newConnectionId)
 				callback(spheronData)
 			} else {
-				that.updateSpheronConnectionBySpheronIdIterator(spheronData, idx+1, originalConnectionId, newConnectionId, callback)
+				that.updateSpheronOutputConnectionBySpheronIdIterator(spheronData, idx+1, originalConnectionId, newConnectionId, callback)
 			}
 		} else {
 			that.logger.log(moduleName, 2, 'nothing to do, calling back. this is probably a problem. error.')
@@ -514,9 +610,6 @@ var mongoUtils = {
 			that.logger.log(moduleName, 2, 'current lesson data is:' + JSON.stringify(result))
 			that.updateLessonOutputIterator(0, spheronId, oldOutput, newOutput, result, function(updatedResult){
 				that.logger.log(moduleName, 2, 'updated lesson data is:' + JSON.stringify(updatedResult))
-				/*
-				* TODO: persist the updatedResult...
-				*/
 				mongoNet.updateOne({
 					type: "lesson", 
 					lessonId: lessonId
@@ -540,9 +633,6 @@ var mongoUtils = {
 		})
 	},
 	updateLessonOutputIterator:function(lessonIdx, spheronId, oldOutput, newOutput, lessonData, callback){
-		/*
-		* TODO: Write the test use cases around this function as a urgency!!!!!!!!!!!!!!!!!!!!
-		*/
 		var that = this
 		if(lessonData.lesson[lessonIdx]){
 			if(lessonData.lesson[lessonIdx].outputs[spheronId][oldOutput]){
@@ -556,7 +646,6 @@ var mongoUtils = {
 			callback(lessonData)
 		}
 	}
-
 }
 
 module.exports = mongoUtils;

@@ -13,7 +13,7 @@
 			"state" : "pending",
 			"settings" : {
 				"maxInputQueueDepth" : 10
-			},
+			}, 
 			"activationHistory" : ["998","999"],
 			"nextTick" : 1,
 			"io": [

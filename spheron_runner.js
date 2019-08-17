@@ -39,8 +39,7 @@ var spheron_runner = {
 		that.propagationQueueProcessor = require('./3-propagationQueueProcessor.js')
 		that.backpropQueueProcessor = require('./4-backpropQueueProcessor.js')
 		that.multivariateTestProcessor = require('./5-multivariateTestProcessor.js')
-		that.lessonMaintenanceProcessor = require('./6-lessonMaintenanceProcessor.js')
-		that.networkMaintenanceProcessor = require('./7-networkMaintenanceProcessor.js')
+		that.lessonMaintenanceProcessor = require('./6-networkMaintenanceProcessor.js')
 
 		//disable UDP if as we are offline...
 		if(settings.loadUDP){
@@ -200,18 +199,7 @@ var spheron_runner = {
 				})
 				break;
 			case 6:
-		        that.logger.log(moduleName, 2,'Phase6: lesson maintenance')
-		        /*
-				* If we are an input spheron and the lesson is still in mode=autoTrain then check if the input queueLength is less than
-			    * the number of test states and if so, push more lessons onto the stack.
-			    */
-		
-				that.lessonMaintenanceProcessor.init(that.spheron, that.logger, function(){
-					that.logger.log(moduleName, 4,'finished Phase 6 - lessonMaintenanceProcessor')
-					that.postPhaseHandler(phaseIdx, callback)
-				})
-				break;
-			case 7:
+		        that.logger.log(moduleName, 2,'Phase6: network maintenance')
 				/*
 				* If the life of any of the connections to the spheron has decayed below a certain threshold then it is effctively static.
 				* So convert it to a bias and 'vector add' that bias with the existent bias?
@@ -226,7 +214,7 @@ var spheron_runner = {
 					that.postPhaseHandler(phaseIdx, callback)
 				})
 				break;
-		    case 8:
+		    case 7:
 				/*
 			     * Persist spheron to mongo.
 			    */
@@ -238,7 +226,10 @@ var spheron_runner = {
 		        break;
 		    default:
 		    	that.logger.log(moduleName, 2,'in default phase handler (i.e. The fallback.) - phase is: ' + phaseIdx)
-		    	if(phaseIdx <= 8){
+		    	/*
+		    	*Note: To Look at - the below phaseIdx <=7 is not required. It duplicates the switch statement
+		    	*/
+		    	if(phaseIdx <= 7){
 		    		that.postPhaseHandler(phaseIdx, callback)
 		    	} else {
 				    

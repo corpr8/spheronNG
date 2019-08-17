@@ -354,6 +354,7 @@ var tdd = {
 						}
 						if(foundSpheronIdx != -1){
 							that.spheron = new Spheron(that.config.network[foundSpheronIdx], settings.logOptions) //note tdd config document is the spheron config also!!
+							that.spheron.lessonId = that.config.lessonId
 							if(that.config.tdd.tddTests[testIdx].input.hasInitMethod){
 								that.logger.log(moduleName, 2, 'calling init on a spheron')
 								that.spheron.tdd = 'tdd'

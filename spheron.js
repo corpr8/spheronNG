@@ -374,10 +374,11 @@ Spheron.prototype.deleteConnectionByIdIterator = function(thisId, idx, callback)
 	var that = this
 	if(that.io[idx]){
 		if(that.io[idx].id == thisId){
-			delete that.io[idx]
+			that.logger.log(moduleName, 2, "deleting:" + thisId) 
+			that.io.splice(idx,1)
 			callback()
 		} else {
-			that.deleteConnectionById(thisId, idx +1, callback)
+			that.deleteConnectionByIdIterator(thisId, idx +1, callback)
 		}
 	} else {
 		callback()
@@ -401,26 +402,107 @@ Spheron.prototype.deleteAllTestDataIterator = function(idx, callback){
 	}
 }
 
-Spheron.prototype.deleteInputTestObject = function(mvTestObject, callback){
+Spheron.prototype.deleteTestObject = function(mvTestObject, callback){
 	var that = this
-	that.deleteInputTestObjectIterator(mvTestObject, 0, function(){
-		callback()
+	that.logger.log(moduleName, 2, 'running deleteTestObject') 
+	that.logger.log(moduleName, 2, 'test object is: ' + JSON.stringify(mvTestObject))
+	that.deleteTestObjectIterator(mvTestObject, 0, 0,function(){
+		callback();
 	})
 }
 
-Spheron.prototype.deleteInputTestObjectIterator = function(mvTestObject, idx, callback){
+Spheron.prototype.deleteTestObjectIterator = function(mvTestObject, idx, phaseIdx, callback){
 	var that = this
-	if(that.variants.inputs[idx]){
-		if(that.variants.inputs[idx] == mvTestObject){
-			delete that.variants.inputs[idx]
-			callback()
+	that.logger.log(moduleName, 2, 'running deleteTestObjectIterator') 
+	if(phaseIdx == 0){
+		if(that.variants.inputs[idx]){ 
+			that.logger.log(moduleName, 2, JSON.stringify(that.variants.inputs[idx]) + ' vs: ' + JSON.stringify(mvTestObject)) 
+			if(JSON.stringify(that.variants.inputs[idx]) == JSON.stringify(mvTestObject)){
+				that.logger.log(moduleName, 2, 'we found an input matching an mvTestObject!') 
+				that.variants.inputs.splice(idx,1)
+				callback()
+			} else {
+				that.deleteTestObjectIterator(mvTestObject, idx+1, phaseIdx, callback)
+			}
 		} else {
-			that.deleteInputTestObjectIterator(mvTestObject, idx+1, callback)
+				that.deleteTestObjectIterator(mvTestObject, 0, phaseIdx+1, callback)
+		}
+	} else if(phaseIdx == 1){
+		if(that.variants.biases[idx]){
+			if(JSON.stringify(that.variants.biases[idx]) == JSON.stringify(mvTestObject)){
+				that.logger.log(moduleName, 2, 'we found a bias matching an mvTestObject!') 
+				that.variants.biases.splice(idx,1)
+				callback()
+			} else {
+				that.deleteTestObjectIterator(mvTestObject, idx+1, phaseIdx, callback)
+			}
+		} else {
+			that.deleteTestObjectIterator(mvTestObject, 0, phaseIdx+1, callback)
+		}
+	} else if(phaseIdx == 2){
+		if(that.variants.outputs[idx]){
+			if(JSON.stringify(that.variants.outputs[idx]) == JSON.stringify(mvTestObject)){
+				that.logger.log(moduleName, 2, 'we found an output matching an mvTestObject!') 
+				that.variants.outputs.splice(idx,1)
+				callback()
+			} else {
+				that.deleteTestObjectIterator(mvTestObject, idx+1, phaseIdx, callback)
+			}
+		} else {
+			that.deleteTestObjectIterator(mvTestObject, 0, phaseIdx+1, callback)
+		}
+	} else {
+		that.logger.log(moduleName, 2, 'we found no matching mvTestObject!') 
+		callback();
+	}	
+}
+
+Spheron.prototype.updateThisSpheronFromId = function(originalId, newId, callback){
+	var that = this
+	that.updateThisSpheronFromIdIterator(0, originalId, newId, function(){
+		callback()	
+	})
+}
+
+Spheron.prototype.updateThisSpheronFromIdIterator = function(idx, originalId, newId, callback){
+	var that = this
+	if(that.io[idx]){
+		if(that.io[idx].id == originalId){
+			that.io.splice(idx,1)
+			that.updateThisSpheronFromIdIterator(idx, originalId, newId, callback)
+		} else if(that.io[idx].fromPort == originalId){
+			that.io[idx].fromPort = newId
+			that.updateThisSpheronFromIdIterator(idx+1, originalId, newId, callback)
+		} else{
+			that.updateThisSpheronFromIdIterator(idx+1, originalId, newId, callback)
 		}
 	} else {
 		callback()
 	}
 }
 
+Spheron.prototype.updateThisSpheronToId = function(originalId, newId, callback){
+	var that = this
+	that.updateThisSpheronToIdIterator(0, originalId, newId, function(){
+		callback()	
+	})
+}
+
+Spheron.prototype.updateThisSpheronToIdIterator = function(idx, originalId, newId, callback){
+	var that = this
+	if(that.io[idx]){
+		if(that.io[idx].id == originalId){
+			that.io.splice(idx,1)
+			that.updateThisSpheronToIdIterator(idx, originalId, newId, callback)
+		} else if(that.io[idx].toPort == originalId){
+			that.io[idx].toPort = newId
+			that.updateThisSpheronToIdIterator(idx+1, originalId, newId, callback)
+		} else{
+			that.updateThisSpheronToIdIterator(idx+1, originalId, newId, callback)
+		}
+	} else {
+		callback()
+	}
+}
 
 module.exports = Spheron;

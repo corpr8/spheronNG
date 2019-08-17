@@ -24,7 +24,7 @@
 				{"id" : "bias1", "type": "bias", "angle": 20, "val":-1},
 				{"id" : "internal1", "type": "output", "angle": -60, "toId": "outputSpheron1", "toPort": "internal1", "val":-1},
 				{"id" : "internal1a", "type": "output", "angle": -50, "toId": "outputSpheron1", "toPort": "internal1", "val":-1}
-			],
+			], 
 			"inputMessageQueue": [
 				{"lessonId" : "whatIsAnd", "toPort" : "input1", "path" : "input1", "lessonIdx": 0, "val": 1, "sigId" : "1000" },
 				{"lessonId" : "whatIsAnd", "toPort" : "input2", "path" : "input2", "lessonIdx": 0, "val": 1, "sigId" : "1000" },

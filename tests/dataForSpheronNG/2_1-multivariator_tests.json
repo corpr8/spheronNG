@@ -22,7 +22,7 @@
 					"hasInitMethod" : true,
 					"type": "dumbModule",
 					"spheronId" : null
-				},
+				}, 
 				"expectedResults" : [
 					{
 						"function" : "multivariate",

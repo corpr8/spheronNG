@@ -17,15 +17,7 @@
 			"activationHistory" : ["998","999"],
 			"nextTick" : 1,
 			"io": [
-				{"id" : "input1", "type": "extInput", "angle": 0, "fromId": "ext", "fromPort": "ext", "val":-1, "life" : 1, "errorMap": [
-					{"signalPath":"input1;input2;input3;bias1;internal1;","bpSignalDepth":1,"errorMap":{"0":0.82635,"1":0.12635,"2":0.32635,"3":0.22635}}
-				]},
-				{"id" : "input1a", "type": "extInput", "angle": 10, "fromId": "ext", "fromPort": "ext", "val":-1, "life" : 1, "errorMap": [
-					{"signalPath":"input1a;input2;input3;bias1;internal1;","bpSignalDepth":1,"errorMap":{"0":0.12635,"1":0.02635,"2":0.02635,"3":0.02635}}
-				]},
-				{"id" : "input1b", "type": "extInput", "angle": 10, "fromId": "ext", "fromPort": "ext", "val":-1, "life" : 1, "errorMap": [
-					{"signalPath":"input1b;input2;input3;bias1;internal1;","bpSignalDepth":1,"errorMap":{"0":0.00635,"1":0.00635,"2":0.00635,"3":0.00635}}
-				]},
+				{"id" : "input1", "type": "extInput", "angle": 0, "fromId": "ext", "fromPort": "ext", "val":-1, "life" : 1, "errorMap": []},
 				{"id" : "bias1", "type": "bias", "angle": 20, "val":-1, "errorMap": []},
 				{"id" : "internal1", "type": "output", "angle": -60, "toId": "outputSpheron1", "toPort": "internal1", "val":-1, "errorMap": []}
 			],
@@ -33,19 +25,13 @@
 			"activationQueue": [],
 			"propagationMessageQueue": [],
 			"variants" : {
-				"inputs" : [
-					{
-						"original" : "input1",
-						"variants" : ["input1a"],
-						"startTick" : -1
-					},
-					{
-						"original" : "input1",
-						"variants" : ["input1a", "none"],
-						"startTick" : -1
-					}],
+				"inputs" : [],
 				"biases" : [], 
-				"outputs" : []
+				"outputs" : [{
+						"original" : "internal1",
+						"variants" : ["internal1a"],
+						"startTick" : -1
+					}]
 			},
 			"bpQueue": []
 		},
@@ -82,6 +68,7 @@
 			"nextTick" : 1,
 			"io": [
 				{"id" : "internal1", "type": "input", "angle": 0, "fromId": "inputSpheron1", "fromPort": "internal1", "val":-1, "life" : 1, "errorMap": []},
+				{"id" : "internal1a", "type": "input", "angle": 0, "fromId": "inputSpheron1", "fromPort": "internal1", "val":-1, "life" : 1, "errorMap": []},
 				{"id" : "internal2", "type": "input", "angle": 10, "fromId": "inputSpheron2", "fromPort": "internal2", "val":-1, "life" : 1, "errorMap": []},
 				{"id" : "bias3", "type": "bias", "angle": 20, "val":-1, "errorMap": []},
 				{"id" : "mainOutput", "type": "extOutput", "angle": -60, "toId": "ext", "toPort": "ext", "val":-1, "errorMap": []}
@@ -92,7 +79,9 @@
 			"variants" : {
 				"inputs" : [],
 				"biases" : [], 
-				"outputs" : []
+				"outputs" : [
+					{"original" : "internal1","variants" : ["internal1a", "none"],"startTick" : -1}
+				]
 			},
 			"bpQueue": [
 				{"signalPath":"input1;input2;input3;bias1;internal2;", "bpSignalDepth":0, "error":0.82635,"lessonId":"whatIsAnd","sigId":"1000","lessonIdx":0}
@@ -127,7 +116,7 @@
 					},
 					{
 						"function" : "setupTestDataByFileName", 
-						"parameters" : "tests/dataForSpheronNG/5_3-take_action_on_complete_MV_tests.json",
+						"parameters" : "tests/dataForSpheronNG/5_4_8-end2end_no_input_won.json",
 						"returnType" : null,
 						"containsJSONArray" : false,
 						"atLeastTheseFields": true,
@@ -135,10 +124,8 @@
 						"results":[] 
 					},
 					{
-						"note" : "This is a success function for multivariant test resolution where external output is the lesson itself... testing a part of one piece...",
-						"noteA" : "We still need to test that this spheron is updated as well as an end to end functional.",
-						"function" : "updateUpstreamSpheron", 
-						"parameters" : ["internal1","myNewConnection"],
+						"function" : "handleNoInputWon", 
+						"parameters" : [{"original" : "internal1","variants" : ["internal1a", "none"],"startTick" : -1}],
 						"unpackInput" : true,  
 						"returnType" : null,
 						"containsJSONArray" : false,
@@ -147,30 +134,59 @@
 						"results": null 
 					},
 					{
+						"function" : "persistSpheron", 
+						"parameters" : null,
+						"returnType" : null,
+						"containsJSONArray" : false,
+						"atLeastTheseFields": true,
+						"ordered": true, 
+						"results":[] 
+					},
+					{
 						"function" : "getConnectionsBySpheronId", 
-						"parameters" : ["inputSpheron1"],  
+						"parameters" : ["outputSpheron1"], 
+						"unpackInput" : true,
+						"returnType" : "object",
+						"containsJSONArray" : false,
+						"atLeastTheseFields": true,
+						"ordered": true, 
+						"results": [ 
+							{"id" : "internal2", "type": "input", "angle": 10, "fromId": "inputSpheron2", "fromPort": "internal2", "val":-1, "life" : 1, "errorMap": []},
+							{"id" : "bias3", "type": "bias", "angle": 20, "val":-1, "errorMap": []},
+							{"id" : "mainOutput", "type": "extOutput", "angle": -60, "toId": "ext", "toPort": "ext", "val":-1, "errorMap": []}
+						] 
+					},
+					{
+						"function" : "getVariantsBySpheronId", 
+						"parameters" : ["outputSpheron1"],
+						"unpackInput" : true,
+						"returnType" : "object",
+						"containsJSONArray" : false,
+						"atLeastTheseFields": true,
+						"ordered": true,
+						"results": {
+							"inputs" : [],
+							"biases" : [], 
+							"outputs" : []
+						}
+					}, 
+					{
+						"Note" : "TODO: If the upstream spheron is multivariating a connnection then all instances of it - and its test data should be deleted",
+						"function" : "getConnectionsBySpheronId", 
+						"parameters" : ["inputSpheron1"], 
 						"unpackInput" : true,
 						"returnType" : "object",
 						"containsJSONArray" : false,
 						"atLeastTheseFields": true,
 						"ordered": true, 
 						"results": [
-							{"id" : "input1", "type": "extInput", "angle": 0, "fromId": "ext", "fromPort": "ext", "val":-1, "life" : 1, "errorMap": [
-								{"signalPath":"input1;input2;input3;bias1;internal1;","bpSignalDepth":1,"errorMap":{"0":0.82635,"1":0.12635,"2":0.32635,"3":0.22635}}
-							]},
-							{"id" : "input1a", "type": "extInput", "angle": 10, "fromId": "ext", "fromPort": "ext", "val":-1, "life" : 1, "errorMap": [
-								{"signalPath":"input1a;input2;input3;bias1;internal1;","bpSignalDepth":1,"errorMap":{"0":0.12635,"1":0.02635,"2":0.02635,"3":0.02635}}
-							]},
-							{"id" : "input1b", "type": "extInput", "angle": 10, "fromId": "ext", "fromPort": "ext", "val":-1, "life" : 1, "errorMap": [
-								{"signalPath":"input1b;input2;input3;bias1;internal1;","bpSignalDepth":1,"errorMap":{"0":0.00635,"1":0.00635,"2":0.00635,"3":0.00635}}
-							]},
-							{"id" : "bias1", "type": "bias", "angle": 20, "val":-1, "errorMap": []},
-							{"id" : "myNewConnection", "type": "output", "angle": -60, "toId": "outputSpheron1", "toPort": "myNewConnection", "val":-1, "errorMap": []}
-						]
+							{"id" : "input1", "type": "extInput", "angle": 0, "fromId": "ext", "fromPort": "ext", "val":-1, "life" : 1, "errorMap": []},
+							{"id" : "bias1", "type": "bias", "angle": 20, "val":-1, "errorMap": []}
+						] 
 					}
 				]
 			}
 		],
-		"nextTestFile": "./tests/dataForSpheronNG/5_4-take_action_on_complete_MV_tests.json"
+		"nextTestFile": "./tests/dataForSpheronNG/5_4_9-end2end_no_bias_won.json"
 	}
 }

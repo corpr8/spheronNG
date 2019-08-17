@@ -85,7 +85,7 @@ var multivariateTestProcessor = {
 	mvTestIterator: function(testPhase, testIdx, callback){
 		//iterate variants of inputs, biases and outputs and call resolveIfMVTestCompleteFromMVObject for each one...
 		var that = this
-		that.logger.log(moduleName, 2, 'running test iterator - BackProp MV test resolution.') 
+		that.logger.log(moduleName, 2, 'running test iterator - MV test resolution.') 
 		if(testPhase < 3){
 			if(testPhase == 0){
 				//input tests
@@ -101,7 +101,7 @@ var multivariateTestProcessor = {
 			} else if(testPhase == 1){
 				//bias tests
 				if(that.spheron.variants.biases[testIdx]){
-					that.resolveIfMVTestCompleteFromMVObject(that.spheron.variants.biases[testIdx], that.spheron.lessonId, function(){
+					that.resolveIfMVTestCompleteFromMVObject(that.spheron.variants.biases[testIdx], that.spheron.lessonId, function(result){
 						that.handleCompleteMVTest(result, that.spheron.variants.biases[testIdx], function(){
 							that.mvTestIterator(testPhase, testIdx+1, callback)
 						})
@@ -112,7 +112,7 @@ var multivariateTestProcessor = {
 			} else {
 				//output tests
 				if(that.spheron.variants.outputs[testIdx]){
-					that.resolveIfMVTestCompleteFromMVObject(that.spheron.variants.outputs[testIdx], that.spheron.lessonId, function(){
+					that.resolveIfMVTestCompleteFromMVObject(that.spheron.variants.outputs[testIdx], that.spheron.lessonId, function(result){
 						that.handleCompleteMVTest(result, that.spheron.variants.outputs[testIdx], function(){
 							that.mvTestIterator(testPhase, testIdx+1, callback)
 						})
@@ -368,6 +368,25 @@ var multivariateTestProcessor = {
 			callback()
 		}
 	},
+	getDownstreamSpheronByConnectionId: function(connectionId, callback){
+		var that = this
+		that.getDownstreamSpheronByConnectionIdIterator(0, connectionId, function(connectionType){ 
+			callback(connectionType)
+		})
+	},
+	getDownstreamSpheronByConnectionIdIterator: function(idx, connectionId, callback){
+		var that = this
+		if(that.spheron.io[idx]){
+			that.logger.log(moduleName, 2, 'connectionId: ' + connectionId + ' toPort:' + that.spheron.io[idx].toPort)
+			if(that.spheron.io[idx].toPort == connectionId){
+				callback(that.spheron.io[idx].toId)
+			} else {
+				that.getDownstreamSpheronByConnectionIdIterator(idx+1, connectionId, callback)
+			}
+		} else {
+			callback()
+		}
+	},
 	getUpstreamSpheronByConnectionId: function(connectionId, callback){
 		var that = this
 		that.getUpstreamSpheronByConnectionIdIterator(0, connectionId, function(connectionType){ 
@@ -377,7 +396,8 @@ var multivariateTestProcessor = {
 	getUpstreamSpheronByConnectionIdIterator: function(idx, connectionId, callback){
 		var that = this
 		if(that.spheron.io[idx]){
-			if(that.spheron.io[idx].id == connectionId){
+			that.logger.log(moduleName, 2, 'connectionId: ' + connectionId + ' fromPort:' + that.spheron.io[idx].fromPort)
+			if(that.spheron.io[idx].fromPort == connectionId){
 				callback(that.spheron.io[idx].fromId)
 			} else {
 				that.getUpstreamSpheronByConnectionIdIterator(idx+1, connectionId, callback)
@@ -415,7 +435,7 @@ var multivariateTestProcessor = {
 					* > Delete all test data in this spheron
 					* > Delete the test object
 					*/
-					that.resetToOriginal(variants, mvTestObject, function(){
+					that.resetToOriginal(mvTestObject, function(){
 						callback()
 					})
 				} else {
@@ -427,7 +447,6 @@ var multivariateTestProcessor = {
 					* > delete all test data
 					* > delete test object
 					*/
-
 					that.handleVariantExtInputWins(mvTestObject, result, function(){
 						callback()
 					})
@@ -442,8 +461,7 @@ var multivariateTestProcessor = {
 					* > Delete the test object
 					* 
 					*/
-
-					that.resetToOriginal(variants, mvTestObject, function(){
+					that.resetToOriginal(mvTestObject, function(){
 						callback()
 					})
 				} else {
@@ -455,36 +473,9 @@ var multivariateTestProcessor = {
 					* > delete all test data
 					* > delete test object
 					*/
-
-					/*
-					* IN PROGRESS
-					*/
-
-
-					var arrayToDelete = []
-					arrayToDelete.push(mvTestObject.original)
-					for(var v=0;v<mvTestObject.variants.length;v++){
-						if(mvTestObject.variants[v] != result.winner){
-							arrayToDelete.push(mvTestObject.variants[v])
-						}
-					}
-
-					//todo: - including deleteing A/B test data
-					that.updateUpstreamSpheron(mvTestObject.original, result.winner, function(){
-						//todo:
-						that.updateThisSpheronFromId(mvTestObject.original, result.winner, function(){
-							
-							that.deleteConnectionsArrayById(arrayToDelete, function(){
-								that.spheron.deleteAllTestData(function(){
-									that.spheron.deleteTestObject(mvTestObject, function(){
-										callback()
-									})
-								})
-							})
-						})
+					that.handleVariantInputWins(mvTestObject, result, function(){
+						callback()
 					})
-
-
 				}
 			} else if(connectionType == "bias"){
 				that.logger.log(moduleName, 2, 'concluding MV Test, a bias won.')
@@ -493,7 +484,7 @@ var multivariateTestProcessor = {
 				* > Delete all test data in this speheron
 				* > Delete the test object
 				*/
-				handleBiasWon(mvTestObject, result, function(){
+				that.handleBiasWon(mvTestObject, result, function(){
 					callback()
 				})
 			} else if(connectionType == "output"){
@@ -505,7 +496,7 @@ var multivariateTestProcessor = {
 					* > Delete all test data in this speheron
 					* > Delete the test object
 					*/
-					that.resetToOriginal(variants, mvTestObject, function(){
+					that.resetToOriginal(mvTestObject, function(){
 						callback()
 					})
 				} else {
@@ -517,6 +508,9 @@ var multivariateTestProcessor = {
 					* > delete all test data
 					* > delete test object
 					*/
+					that.handleVariantOutputWins(mvTestObject, result, function(){
+						callback()
+					})
 				}
 			} else if(connectionType == "extOutput"){
 				if(result.winner == mvTestObject.original){
@@ -527,7 +521,7 @@ var multivariateTestProcessor = {
 					* > Delete all test data in this speheron
 					* > Delete the test object
 					*/
-					that.resetToOriginal(variants, mvTestObject, function(){
+					that.resetToOriginal(mvTestObject, function(){
 						callback()
 					})
 				} else {
@@ -539,7 +533,6 @@ var multivariateTestProcessor = {
 					* > delete all test data
 					* > delete test object
 					*/
-
 					that.handleVariantExtOutputWins(mvTestObject, result, function(){
 						callback()
 					})
@@ -554,22 +547,181 @@ var multivariateTestProcessor = {
 				* > delete all test data for whole spheron
 				* > delete test object
 				*/
+				that.getConnectionTypeById(mvTestObject.original, function(originalConnectionType){
+					if(originalConnectionType == "input"){
+						/*
+						* Delete the original upstream
+						* then delete all instances of it in this spheron.
+						* + data etc
+						*/
+						that.handleNoInputWon(mvTestObject, function(){
+							callback()
+						})
+					} else if(originalConnectionType == "bias"){
+						/*
+						* Simply delete bias obejcts and test data.
+						*/
+						that.handleNoBiasWon(mvTestObject, function(){
+							callback()
+						})
+					} else if(originalConnectionType == "output"){
+						/*
+						* Delete the original downstream
+						* then delete all instances of it in this spheron.
+						* + data etc
+						*/
+						that.handleNoOutputWon(mvTestObject, function(){
+							callback()
+						})
+
+					} else {
+						/*
+						* The original connection type was external something.
+						* Disconnecting this is just NOT a sane thing to do so lets delete the test.
+						* delete the test and never mention this again :)
+						*/
+						that.spheron.deleteAllTestData(function(){
+							that.spheron.deleteTestObject(mvTestObject, function(){
+								callback()
+							})
+						})
+					}
+				})
 			}
 		})
 	},
+	handleNoOutputWon: function(mvTestObject, callback){
+		var that = this
+		var arrayToDelete = []
+		arrayToDelete.push(mvTestObject.original)
+		for(var v=0;v<mvTestObject.variants.length;v++){
+			if(mvTestObject.variants[v] != "none"){
+				arrayToDelete.push(mvTestObject.variants[v])	
+			}
+		}
+		that.updateDownstreamSpheron(mvTestObject.original, "none", function(){
+			that.deleteConnectionsArrayById(arrayToDelete, function(){
+				that.spheron.deleteAllTestData(function(){
+					that.spheron.deleteTestObject(mvTestObject, function(){
+						callback()
+					})
+				})
+			})
+		})
+	},
+	handleNoInputWon: function(mvTestObject, callback){
+		var that = this
+		var arrayToDelete = []
+		arrayToDelete.push(mvTestObject.original)
+		for(var v=0;v<mvTestObject.variants.length;v++){
+			if(mvTestObject.variants[v] != "none"){
+				arrayToDelete.push(mvTestObject.variants[v])	
+			}
+		}
+		that.updateUpstreamSpheron(mvTestObject.original, "none", function(){
+			that.deleteConnectionsArrayById(arrayToDelete, function(){
+				that.spheron.deleteAllTestData(function(){
+					that.spheron.deleteTestObject(mvTestObject, function(){
+						callback()
+					})
+				})
+			})
+		})
+	},
+	handleNoBiasWon: function(mvTestObject, callback){
+		var that = this
+		var arrayToDelete = []
+		arrayToDelete.push(mvTestObject.original)
+		for(var v=0;v<mvTestObject.variants.length;v++){
+			if(mvTestObject.variants[v] != "none"){
+				arrayToDelete.push(mvTestObject.variants[v])	
+			}
+		}
+
+		that.deleteConnectionsArrayById(arrayToDelete, function(){
+			that.spheron.deleteAllTestData(function(){
+				that.spheron.deleteTestObject(mvTestObject, function(){
+					callback()
+				})
+			})
+		})
+	},
+	handleVariantOutputWins: function(mvTestObject, result, callback){
+		var arrayToDelete = []
+		arrayToDelete.push(mvTestObject.original)
+		for(var v=0;v<mvTestObject.variants.length;v++){
+			if(mvTestObject.variants[v] != result.winner){
+				arrayToDelete.push(mvTestObject.variants[v])
+			}
+		}
+
+		that.updateDownstreamSpheron(mvTestObject.original, result.winner, function(){
+			that.updateThisSpheronToId(mvTestObject.original, result.winner, function(){
+				that.deleteConnectionsArrayById(arrayToDelete, function(){
+					that.spheron.deleteAllTestData(function(){
+						that.spheron.deleteTestObject(mvTestObject, function(){
+							callback()
+						})
+					})
+				})
+			})
+		})
+	},
+	handleVariantInputWins: function(mvTestObject, result, callback){
+		var arrayToDelete = []
+		arrayToDelete.push(mvTestObject.original)
+		for(var v=0;v<mvTestObject.variants.length;v++){
+			if(mvTestObject.variants[v] != result.winner){
+				arrayToDelete.push(mvTestObject.variants[v])
+			}
+		}
+
+		that.updateUpstreamSpheron(mvTestObject.original, result.winner, function(){
+			that.updateThisSpheronFromId(mvTestObject.original, result.winner, function(){
+				that.deleteConnectionsArrayById(arrayToDelete, function(){
+					that.spheron.deleteAllTestData(function(){
+						that.spheron.deleteTestObject(mvTestObject, function(){
+							callback()
+						})
+					})
+				})
+			})
+		})
+	},
+	updateThisSpheronFromId: function(originalId, newId, callback){
+		var that=this
+		that.spheron.updateThisSpheronFromId(originalId, newId, function(){
+			callback()
+		})
+	},
+	updateThisSpheronToId: function(originalId, newId, callback){
+		var that=this
+		that.spheron.updateThisSpheronToId(originalId, newId, function(){
+			callback()
+		})
+	},
+	updateDownstreamSpheron: function(originalConnectionId, newConnectionId, callback){
+		var that = this
+		that.logger.log(moduleName, 2, 'running update downstream spheron')
+		//find inputs upstream spheron
+		that.getDownstreamSpheronByConnectionId(originalConnectionId, function(downstreamSpheronId){
+			that.logger.log(moduleName, 2, 'downstream spheron is: ' + downstreamSpheronId)
+			that.mongoUtils.updateSpheronInputConnectionBySpheronId(downstreamSpheronId, originalConnectionId, newConnectionId, function(){
+				that.logger.log(moduleName, 2, 'downstream spheron updated. ')
+				callback()
+			})
+		})
+	},
 	updateUpstreamSpheron: function(originalConnectionId, newConnectionId, callback){
-		/*
-		* TODO: Write test cases against this.
-		*/
 		var that = this
 		that.logger.log(moduleName, 2, 'running update upstream spheron')
 		//find inputs upstream spheron
 		that.getUpstreamSpheronByConnectionId(originalConnectionId, function(upstreamSpheronId){
 			that.logger.log(moduleName, 2, 'upstream spheron is: ' + upstreamSpheronId)
 			//update the input to point at the winner
-			that.mongoUtils.updateSpheronConnectionBySpheronId(upstreamSpheronId, originalConnectionId, newConnectionId, function(){
+			that.mongoUtils.updateSpheronOutputConnectionBySpheronId(upstreamSpheronId, originalConnectionId, newConnectionId, function(){
 				that.logger.log(moduleName, 2, 'upstream spheron updated. ')
-				callback()
+				callback() 
 			})
 		})
 	},
@@ -624,6 +776,13 @@ var multivariateTestProcessor = {
 			}
 		}
 
+		that.logger.log(moduleName, 2, 'handling variant external input wins')
+		that.logger.log(moduleName, 2, 'lessonId:' + that.spheron.lessonId)
+		that.logger.log(moduleName, 2, 'spheronId:' + that.spheron.spheronId)
+		that.logger.log(moduleName, 2, 'original connection:'+ mvTestObject.original)
+		that.logger.log(moduleName, 2, 'winner:' + result.winner)
+
+		//setTimeout(function(){
 		that.updateLessonInputs(that.spheron.lessonId, that.spheron.spheronId, mvTestObject.original, result.winner, function(){
 			that.deleteConnectionsArrayById(arrayToDelete, function(){
 				that.spheron.deleteAllTestData(function(){
@@ -632,11 +791,17 @@ var multivariateTestProcessor = {
 					})
 				})
 			})	
-		})
+		})	
+		//}, 1000) s 
+
 	},
-	resetToOriginal: function(variants, mvTestObject, callback){
+	resetToOriginal: function(mvTestObject, callback){
+		var that = this
+		that.logger.log(moduleName, 2, 'running reset to original.')
+		that.logger.log(moduleName, 2, 'about to delete:' + mvTestObject.variants.join(','))
 		that.deleteConnectionsArrayById(mvTestObject.variants, function(){
 			that.spheron.deleteAllTestData(function(){
+				that.logger.log(moduleName, 2, 'about to delete mvTestObject:' +JSON.stringify(mvTestObject))
 				that.spheron.deleteTestObject(mvTestObject, function(){
 					callback()
 				})
@@ -672,8 +837,9 @@ var multivariateTestProcessor = {
 	deleteConnectionsArrayByIdIterator: function(connectionsArray, idx, callback){
 		var that = this
 		if(connectionsArray[idx]){
+			that.logger.log(moduleName, 2, 'about to delete:' + connectionsArray[idx])
 			that.spheron.deleteConnectionById(connectionsArray[idx], function(){
-				that.deleteConnectionsArrayById(connectionsArray, idx+1, callback)
+				that.deleteConnectionsArrayByIdIterator(connectionsArray, idx+1, callback)
 			})
 		} else {
 			callback()
@@ -682,7 +848,20 @@ var multivariateTestProcessor = {
 	getConnectionsBySpheronId: function(spheronId, callback){
 		var that = this
 		that.mongoUtils.getConnectionsBySpheronId(spheronId, function(connections){
+			that.logger.log(moduleName, 2, 'connections by spheron id returns:' + JSON.stringify(connections))
 			callback(connections)
+		})
+	}, 
+	getVariantsBySpheronId: function(spheronId, callback){
+		var that = this
+		that.mongoUtils.getVariantsBySpheronId(spheronId, function(variants){
+			callback(variants)
+		})
+	},
+	persistSpheron: function(callback){ 
+		that = this
+		that.mongoUtils.persistSpheron(that.spheron.spheronId, that.spheron, function(){
+			callback()
 		})
 	}
 }
