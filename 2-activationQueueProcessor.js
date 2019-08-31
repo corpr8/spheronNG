@@ -3,6 +3,7 @@ var path = require('path');
 var appDir = path.dirname(require.main.filename);
 var settings = require(appDir +'/settings.json')
 var multivariator = require(appDir +'/multivariator.js')
+var asyncRequire = require('async-require');
 
 /*
 * Module to handle activations
@@ -11,25 +12,36 @@ var multivariator = require(appDir +'/multivariator.js')
 var activationQueueProcessor = {
 	spheron: null,
 	logger: null,
+	commonFunctions: null,
+	mongoUtils: null,
 	init: function(thisSpheron, logger, callback){
 		var that = this
 		that.logger = logger
 		that.spheron = thisSpheron
 		that.logger.log(moduleName, 2,'init')
 		
-		multivariator.init(that.logger, function(){
-			
-				if(!that.spheron.tdd){
-					that.logger.log(moduleName, 2, 'Module running in Production mode')
-					that.processPhases(function(){
-						callback(that.spheron)
-					}) 
-				} else {
-					that.spheron.init(that.logger, function(){  //is this really needed???
-						that.logger.log(moduleName, 2, 'Module running in TDD mode')
-				 		callback() 
-			 		}) 
-				}	
+		multivariator.init(that.logger, function(){	
+			if(!that.spheron.tdd){
+				asyncRequire('./commonFunctions').then(function(thisCommonFunctions){
+					that.commonFunctions = thisCommonFunctions
+					that.commonFunctions.init(that.logger, that.mongoUtils, that.spheron, function(){
+						that.logger.log(moduleName, 2, 'Module running in Production mode')
+						that.processPhases(function(){
+							callback(that.spheron)
+						}) 
+					})
+				})
+			} else {
+				that.spheron.init(that.logger, function(){  //is this really needed???
+					asyncRequire('./commonFunctions').then(function(thisCommonFunctions){
+						that.commonFunctions = thisCommonFunctions
+						that.commonFunctions.init(that.logger, that.mongoUtils, that.spheron, function(){
+							that.logger.log(moduleName, 2, 'Module running in TDD mode')
+					 		callback() 
+					 	})
+					})
+				}) 
+			}	
 		})
 	},
 	processPhases: function(callback){
@@ -271,13 +283,13 @@ var activationQueueProcessor = {
 			//done iterating
 			callback()
 		}
-	},
+	}/*,
 	getPropogationMessageQueue: function(callback){
 		var that = this
 		that.spheron.getPropagationMessageQueue(function(propagationMessageQueue){
 			that.logger.log(moduleName, 2, 'propagationMessageQueue is: ' + JSON.stringify(propagationMessageQueue))
 			callback(propagationMessageQueue)
 		})
-	}
+	}*/
 }
 module.exports = activationQueueProcessor;

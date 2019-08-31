@@ -279,7 +279,7 @@
 						"results": null
 					},
 					{
-						"function" : "getPropogationMessageQueue",
+						"function" : "commonFunctions.getPropogationMessageQueue",
 						"parameters" : null,
 						"notes" : "gets the post activation or output queue.",
 						"returnType" : "object",

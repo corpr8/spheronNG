@@ -17,6 +17,7 @@ var networkMaintenanceProcessor = {
 	spheron: null,
 	logger: null, 
 	mongoUtils: null,
+	commonFunctions: null,
 	init: function(thisSpheron, logger, mongoUtils, callback){
 
 		var that = this
@@ -26,9 +27,15 @@ var networkMaintenanceProcessor = {
 			
 		if(!that.spheron.tdd){
 			that.mongoUtils = mongoUtils
-			that.logger.log(moduleName, 2, 'Module running in Production mode')
-			that.processPhases(function(){
-				callback(that.spheron)
+			asyncRequire('./commonFunctions').then(function(thisCommonFunctions){
+				that.commonFunctions = thisCommonFunctions
+				that.commonFunctions.init(that.logger, that.mongoUtils, that.spheron, function(){
+
+					that.logger.log(moduleName, 2, 'Module running in Production mode')
+					that.processPhases(function(){
+						callback(that.spheron)
+					})
+				})
 			}) 
 		} else {  	
 			asyncRequire('./mongoUtils').then(function(thisModule){
@@ -36,9 +43,15 @@ var networkMaintenanceProcessor = {
 				that.logger.log(moduleName, 2, 'Module running in TDD mode')  
 				that.mongoUtils.init(that.logger, function(){
 					that.logger.log(moduleName, 2, 'Mongo Initialised')
-					that.spheron.init(that.logger, function(){ //not sure if we need to run init in this mode either?!?!
-						that.logger.log(moduleName, 2, 'Spheron initialised')
-						callback()
+					asyncRequire('./commonFunctions').then(function(thisCommonFunctions){
+						that.commonFunctions = thisCommonFunctions
+						that.commonFunctions.init(that.logger, that.mongoUtils, that.spheron, function(){
+
+							that.spheron.init(that.logger, function(){ //not sure if we need to run init in this mode either?!?!
+								that.logger.log(moduleName, 2, 'Spheron initialised')
+								callback()
+							})
+						})
 					})
 				})
 			})
@@ -67,20 +80,6 @@ var networkMaintenanceProcessor = {
 			break;
 		}
 	},
-	nukeTestData: function(callback){
-		var that = this
-		that.mongoUtils.dropDb(function(){
-			callback() 
-		})
-	},
-	setupTestDataByFileName: function(testDataFileName, callback){
-		var that = this
-		that.logger.log(moduleName, 2, 'calling setup test data') 
-		that.mongoUtils.setupDemoDataFromFile(testDataFileName, function(){
-			that.logger.log(moduleName, 2, 'test data loaded into mongo')
-			callback() 
-		})
-	},
 	getLessonPetrificationThreshold: function(lessonId, callback){
 		var that = this
 		that.logger.log(moduleName, 2,'getting lesson petrification threshold')
@@ -97,22 +96,32 @@ var networkMaintenanceProcessor = {
 		})
 	},
 	petrificationIterator: function(petrificationThreshold, idx, callback){
-		//any connections whose life values are less than the petrification threshold should be converted to biases.
-		//we should disconnect any up/downstream connections (if they exist)
-		//we should also get rid of any A/B tests (involving this connection both here and up/downstream)
+		//any input connections whose life values are less than the petrification threshold should be converted to biases.
+		//we should disconnect any upstream connections (if they exist)
+		//we should also get rid of any A/B tests (involving this connection both here and upstream)
 		var that = this
 		if(that.spheron.io[idx]){
 			if(that.spheron.io[idx].life){
 				if(that.spheron.io[idx].life <= petrificationThreshold){
 					that.logger.log(moduleName, 2,'we found a connection to petrify: ' + that.spheron.io[idx].id)
-					//ok lets petrify this connection
+					//ok lets petrify this connection - TODO: Tests...
+					that.mongoUtils.deleteConnectionFromUpstreamSpheronBySpheronId(that.spheron.io[idx].fromId, that.spheron.io[idx].fromPort, function(){
+						that.logger.log(moduleName, 2,'called back from sorting out upstream spheron: ' + that.spheron.io[idx].fromPort)
+						/*
+						* TODO: 
+						* Delete A/B tests containing this connection
+						* Delete test Data containing this connection
+						* Convert this connection to a bias...
+						*/
 
-
-					/*
-					* TODO:
-					*/
-
-
+						that.spheron.findTestsContainingConnectionIdAndRemove(that.spheron.io[idx].id, function(){
+							that.spheron.deleteAllTestData(function(){
+								that.spheron.convertConnectionToBiasById(that.spheron.io[idx].id, function(){
+									that.petrificationIterator(petrificationThreshold, idx+1, callback)	
+								})
+							})
+						})
+					})
 				} else {
 					that.petrificationIterator(petrificationThreshold, idx+1, callback)	
 				}
@@ -122,6 +131,12 @@ var networkMaintenanceProcessor = {
 		} else {
 			callback()
 		}
+	},	
+	persistSpheron: function(callback){ 
+		that = this
+		that.mongoUtils.persistSpheron(that.spheron.spheronId, that.spheron, function(){
+			callback()
+		})
 	}
 }
 module.exports = networkMaintenanceProcessor;

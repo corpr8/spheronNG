@@ -2,6 +2,7 @@
 	"note" : "A network to test propagation",
 	"lessonId" : "whatIsAnd",
 	"type" : "lesson",
+	"state" : "idle",
 	"options":{
 		"timeout": 10,
 		"mode":"autoTrain",
@@ -153,7 +154,7 @@
 						]
 					},
 					{
-						"function" : "setupTestDataByFileName", 
+						"function" : "commonFunctions.setupTestDataByFileName", 
 						"parameters" : "tests/dataForSpheronNG/3_0-process_propagation_queue.json",
 						"returnType" : null,
 						"containsJSONArray" : false,
@@ -163,7 +164,7 @@
 					},
 					{
 						"function" : "iteratePropagationQueue", 
-						"parameters" : null,
+						"parameters" : [0],
 						"returnType" : null,
 						"containsJSONArray" : false,
 						"atLeastTheseFields": true,
@@ -171,7 +172,7 @@
 						"results":[]
 					},
 					{
-						"function" : "getInputQueueBySpheronId", 
+						"function" : "commonFunctions.getInputQueueBySpheronId", 
 						"parameters" : "outputSpheron1",
 						"returnType" : "object",
 						"containsJSONArray" : false,
@@ -185,6 +186,6 @@
 				]
 			}
 		],
-		"nextTestFile": "./tests/dataForSpheronNG/4_0-process_backprop_queue.json"
+		"nextTestFile": "./tests/dataForSpheronNG/3_1-process_propagation_queue-extOutput.json"
 	}
 }

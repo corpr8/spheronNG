@@ -121,7 +121,7 @@
 				},
 				"expectedResults" : [
 					{
-						"function" : "nukeTestData", 
+						"function" : "commonFunctions.nukeTestData", 
 						"parameters" : null,
 						"returnType" : null,
 						"containsJSONArray" : false,
@@ -130,7 +130,7 @@
 						"results":[] 
 					},
 					{
-						"function" : "setupTestDataByFileName", 
+						"function" : "commonFunctions.setupTestDataByFileName", 
 						"parameters" : "tests/dataForSpheronNG/5_2-take_action_on_complete_MV_tests.json",
 						"returnType" : null,
 						"containsJSONArray" : false,

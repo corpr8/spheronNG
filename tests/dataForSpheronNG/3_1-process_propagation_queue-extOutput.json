@@ -2,6 +2,7 @@
 	"note" : "A network to test propagation",
 	"lessonId" : "whatIsAnd",
 	"type" : "lesson",
+	"state" : "idle",
 	"options":{
 		"timeout": 10,
 		"mode":"autoTrain",
@@ -17,9 +18,8 @@
 			"activationHistory" : ["998","999"],
 			"nextTick" : 1,
 			"io": [
-				{"id" : "input1", "type": "extInput", "angle": 0, "fromId": "ext", "fromPort": "ext", "val":-1, "life" : 1, "errorMap": []},
-				{"id" : "bias1", "type": "bias", "angle": 20, "val":-1, "errorMap": []},
-				{"id" : "internal1", "type": "output", "angle": -60, "toId": "outputSpheron1", "toPort": "internal1", "val":-1, "errorMap": []}
+				{"id" : "input1", "type": "extInput", "angle": 0, "fromId": "ext", "fromPort": "ext", "val":-1, "life" : 1},
+				{"id" : "internal1", "type": "output", "angle": -60, "toId": "outputSpheron1", "toPort": "internal1", "val":-1}
 			],
 			"inputMessageQueue": [],
 			"activationQueue": [],
@@ -28,8 +28,7 @@
 				"inputs" : [],
 				"biases" : [], 
 				"outputs" : []
-			},
-			"bpQueue": []
+			}
 		},
 		{"spheronId": "inputSpheron2",
 			"type" : "spheron",
@@ -40,9 +39,8 @@
 			"activationHistory" : ["998","999"],
 			"nextTick" : 1,
 			"io": [
-				{"id" : "input2", "type": "extInput", "angle": 0, "fromId": "ext", "fromPort": "ext", "val":-1, "life" : 1, "errorMap": []},
-				{"id" : "bias2", "type": "bias", "angle": 20, "val":-1, "errorMap": []},
-				{"id" : "internal2", "type": "output", "angle": -60, "toId": "outputSpheron1", "toPort": "internal1", "val":-1, "errorMap": []}
+				{"id" : "input2", "type": "extInput", "angle": 0, "fromId": "ext", "fromPort": "ext", "val":-1, "life" : 1},
+				{"id" : "internal2", "type": "output", "angle": -60, "toId": "outputSpheron1", "toPort": "internal1", "val":-1}
 			],
 			"inputMessageQueue": [],
 			"activationQueue": [],
@@ -51,8 +49,7 @@
 				"inputs" : [],
 				"biases" : [], 
 				"outputs" : []
-			},
-			"bpQueue": []
+			}
 		},
 		{"spheronId": "outputSpheron1",
 			"type" : "spheron",
@@ -63,28 +60,27 @@
 			"activationHistory" : ["998","999"],
 			"nextTick" : 1,
 			"io": [
-				{"id" : "internal1", "type": "input", "angle": 0, "fromId": "inputSpheron1", "fromPort": "internal1", "val":-1, "life" : 1, "errorMap": []},
-				{"id" : "internal2", "type": "input", "angle": 10, "fromId": "inputSpheron2", "fromPort": "internal2", "val":-1, "life" : 1, "errorMap": []},
-				{"id" : "bias3", "type": "bias", "angle": 20, "val":-1, "errorMap": []},
-				{"id" : "mainOutput", "type": "extOutput", "angle": -60, "toId": "ext", "toPort": "ext", "val":-1, "errorMap": []}
+				{"id" : "internal1", "type": "input", "angle": 0, "fromId": "inputSpheron1", "fromPort": "internal1", "val":-1, "life" : 1},
+				{"id" : "internal2", "type": "input", "angle": 10, "fromId": "inputSpheron2", "fromPort": "internal2", "val":-1, "life" : 1},
+				{"id" : "mainOutput", "type": "extOutput", "angle": -60, "toId": "outputSpheron1", "toPort": "ANDout", "val":-1}
 			],
 			"inputMessageQueue": [],
 			"activationQueue": [],
-			"propagationMessageQueue": [],
+			"propagationMessageQueue": [
+							{
+								"lessonId":"whatIsAnd",
+								"lessonIdx":0,
+								"signalId":"1000",
+								"io":[
+									{"signalPath":"input1;input2;input3;bias1;ANDout;","output":"ANDout","type" : "extOutput", "val":15.82635}
+								]
+							}
+						],
 			"variants" : {
-				"inputs" : [
-					{
-						"original" : "internal1",
-						"variants" : ["internal1a", "none"],
-						"startTick" : -1
-					}
-				],
+				"inputs" : [],
 				"biases" : [], 
 				"outputs" : []
-			},
-			"bpQueue": [
-				{"signalPath":"input1;input2;input3;bias1;internal2;", "bpSignalDepth":0, "error":0.82635,"lessonId":"whatIsAnd","sigId":"1000","lessonIdx":0}
-			]
+			}
 		}
 	],
 	"lesson" : [
@@ -96,7 +92,7 @@
 	"tdd" : {
 		"tddTests": [
 			{
-				"module": "./4-backpropQueueProcessor",
+				"module": "./3-propagationQueueProcessor",
 				"input": {
 					"hasInitMethod" : true,
 					"hasMongo" : true,
@@ -115,7 +111,7 @@
 					},
 					{
 						"function" : "commonFunctions.setupTestDataByFileName", 
-						"parameters" : "tests/dataForSpheronNG/4_1-process_backprop_queue.json",
+						"parameters" : "tests/dataForSpheronNG/3_1-process_propagation_queue-extOutput.json",
 						"returnType" : null,
 						"containsJSONArray" : false,
 						"atLeastTheseFields": true,
@@ -123,42 +119,39 @@
 						"results":[] 
 					},
 					{
-						"function" : "bpQueueIterator", 
-						"parameters" : null,
+						"function" : "iteratePropagationQueue", 
+						"parameters" : [0],
 						"returnType" : null,
 						"containsJSONArray" : false,
 						"atLeastTheseFields": true,
 						"ordered": true, 
-						"results":[] 
+						"results":[]
 					},
 					{
-						"function" : "getSpheronIO", 
+						"function" : "commonFunctions.getLessonState", 
+						"parameters" : "whatIsAnd",
+						"returnType" : "string",
+						"containsJSONArray" : false,
+						"atLeastTheseFields": true,
+						"ordered": true, 
+						"results": "pending"
+					},
+					{
+						"function" : "commonFunctions.getPropogationMessageQueue",
 						"parameters" : null,
+						"notes" : "gets the post activation or output queue.",
 						"returnType" : "object",
-						"containsJSONArray" : false,
+						"containsJSONArray" : true,
 						"atLeastTheseFields": true,
 						"ordered": true, 
-						"results": [
-							{"id":"internal1","type":"input","angle":0,"fromId":"inputSpheron1","fromPort":"internal1","val":-1,"life":1,"errorMap":[]},
-							{"id":"internal2","type":"input","angle":10,"fromId":"inputSpheron2","fromPort":"internal2","val":-1,"life":1,"errorMap":[
-								{"signalPath":"input1;input2;input3;bias1;internal2;","bpSignalDepth":1,"errorMap":{"0":0.82635}}
-								]},
-							{"id":"bias3","type":"bias","angle":20,"val":-1,"errorMap":[]},
-							{"id":"mainOutput","type":"extOutput","angle":-60,"toId":"ext","toPort":"ext","val":-1,"errorMap":[]}
+						"results":[
+							{"lessonId":"whatIsAnd","lessonIdx":0,"signalId":"1000","io":[{"signalPath":"input1;input2;input3;bias1;ANDout;","output":"ANDout","type":"extOutput","val":15.82635}]}							
 						]
-					},
-					{
-						"function" : "getBpQueue",
-						"parameters" : null,
-						"returnType" : "object",
-						"containsJSONArray" : false,
-						"atLeastTheseFields": true,
-						"ordered": true, 
-						"results": []
 					}
+
 				]
 			}
 		],
-		"nextTestFile": "./tests/dataForSpheronNG/5_0-resolve_mv_tests.json"
+		"nextTestFile": "./tests/dataForSpheronNG/4_0-process_backprop_queue.json"
 	}
 }

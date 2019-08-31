@@ -162,7 +162,64 @@ var mongoUtils = {
 	    	}
 		});
 	},
+	getLessonState: function(lessonId, callback){
+		var that = this
+		that.logger.log(moduleName, 2, 'Getting lesson state')  
+		
+		mongoNet.findOne({
+			type: "lesson",
+			lessonId: lessonId
+		}, function(err, results) {
+	    	if (err){
+
+	    		that.logger.log(moduleName, 2, 'mongo error: ' + err)
+	    		callback();
+	    	} else {	
+	    		that.logger.log(moduleName, 2, 'lesson dump: ' + JSON.stringify(results))
+				that.logger.log(moduleName, 2, 'lesson state: ' + results.state)
+	    		callback(results.state)
+	    		//process.exitCode = 1
+	    	}
+		});
+	},
+	getPendingLesson(callback){
+		var that = this
+		mongoNet.findOneAndUpdate({
+			type: "lesson",
+			state : "pending"
+		},{
+			$set: {state: "evaluating"}
+		}, 
+		{}, 
+		function(err,doc){
+			if(err){
+				callback()
+			} else { 
+				callback(doc)
+			}	
+		})
+	},
+	setLessonAsPending(lessonId, callback){
+		var that = this
+		mongoNet.findOneAndUpdate({
+			type: "lesson",
+			lessonId : lessonId
+		},{
+			$set: {state: "pending"}
+		}, 
+		{}, 
+		function(err,doc){
+			if(err){
+				callback()
+			} else { 
+				callback(doc)
+			}	
+		})
+	},
 	assessIfLessonPassed(problemId, lowestFound, callback){
+		/*
+		*  Very very probably a legacy function... INfact definitely
+		*/
 		mongoNet.findOne({
 			type: "lesson",
 			problemId: problemId
@@ -428,6 +485,117 @@ var mongoUtils = {
 			}
 		}
 	},
+	deleteConnectionFromUpstreamSpheronBySpheronId: function(spheronId, connectionId, callback){
+		var that = this
+		that.logger.log(moduleName, 2, 'updating spherons connections: ' + spheronId)
+		that.getSpheron(spheronId, function(targetSpheron){
+			that.deleteConnectionFromUpstreamSpheronBySpheronIdIterator(targetSpheron, 0, connectionId, function(targetSpheron){
+				that.persistSpheron(spheronId, targetSpheron, function(){ 
+					that.logger.log(moduleName, 2, 'updated spheron: ' + spheronId + ' io is now: ' + JSON.stringify(targetSpheron.io))
+					callback() 
+				})
+			})
+		})
+	},
+	deleteConnectionFromUpstreamSpheronBySpheronIdIterator: function(targetSpheron, spheronIdx, connectionId, callback){
+		var that = this
+		if(targetSpheron.io[spheronIdx]){
+			if(targetSpheron.io[spheronIdx].id == connectionId){
+				targetSpheron.io.splice(spheronIdx,1)
+				that.cleanupTargetSpheronWhilstDeletingTests(targetSpheron, 0, 0, function(targetSpheron){
+					that.deleteTargetSpheronsABTestDataIterator(targetSpheron, 0, function(targetSpheron){
+						that.deleteConnectionFromUpstreamSpheronBySpheronIdIterator(targetSpheron, spheronIdx, connectionId, callback)	
+					})
+				})
+			} else {
+				that.deleteConnectionFromUpstreamSpheronBySpheronIdIterator(targetSpheron, spheronIdx+1, connectionId, callback)
+			}
+		} else {
+			callback(targetSpheron)
+		}
+	},
+	cleanupTargetSpheronWhilstDeletingTests: function(targetSpheron, testPhaseIdx, testIdx, callback){
+		var connectionArray = []
+		var that = this
+		if(testPhaseIdx == 0){
+			//handling input tests
+			if(targetSpheron.variants.inputs[testIdx]){
+				connectionArray = []
+				for(var v=0;v<targetSpheron.variants.inputs[testIdx].variants.length;v++){
+					connectionArray.push(targetSpheron.variants.inputs[testIdx].variants[v])
+				}
+				
+				that.deleteVariantConnectionsFromTargetSpheronByArray(targetSpheron, connectionArray, 0, 0, function(){
+					that.cleanupTargetSpheronWhilstDeletingTests(targetSpheron, testPhaseIdx, testIdx+1, callback)
+				})
+			} else {
+				targetSpheron.variants.inputs = []
+				that.cleanupTargetSpheronWhilstDeletingTests(targetSpheron, testPhaseIdx+1, 0, callback)
+			}
+		} else if(testPhaseIdx == 1){
+			//handling bias tests
+			if(targetSpheron.variants.biases[testIdx]){
+				connectionArray = []
+				for(var v=0;v<targetSpheron.variants.biases[testIdx].variants.length;v++){
+					connectionArray.push(targetSpheron.variants.biases[testIdx].variants[v])
+				}
+				
+				that.deleteVariantConnectionsFromTargetSpheronByArray(targetSpheron, connectionArray, 0, 0, function(){
+					that.cleanupTargetSpheronWhilstDeletingTests(targetSpheron, testPhaseIdx, testIdx+1, callback)
+				})
+			} else {
+				targetSpheron.variants.biases = []
+				that.cleanupTargetSpheronWhilstDeletingTests(targetSpheron, testPhaseIdx+1, 0, callback)
+
+			}
+		} else if(testPhaseIdx == 2){
+			//handling output tests
+			if(targetSpheron.variants.outputs[testIdx]){
+				connectionArray = []
+				for(var v=0;v<targetSpheron.variants.outputs[testIdx].variants.length;v++){
+					connectionArray.push(targetSpheron.variants.outputs[testIdx].variants[v])
+				}
+				
+				that.deleteVariantConnectionsFromTargetSpheronByArray(targetSpheron, connectionArray, 0, 0, function(){
+					that.cleanupTargetSpheronWhilstDeletingTests(targetSpheron, testPhaseIdx, testIdx+1, callback)
+				})
+			} else {
+				targetSpheron.variants.outputs = []
+				that.cleanupTargetSpheronWhilstDeletingTests(targetSpheron, testPhaseIdx+1, 0, callback)
+
+			}
+		} else {
+			callback(targetSpheron)
+		}
+	},
+	deleteVariantConnectionsFromTargetSpheronByArray: function(targetSpheron, connectionArray, idx, connectionIdx, callback){
+		var that = this
+		if(connectionArray[idx]){
+			if(targetSpheron.io[connectionIdx]){
+				if(targetSpheron.io[connectionIdx].id == connectionArray[idx]){
+					targetSpheron.io.splice(connectionIdx,1)
+					that.deleteVariantConnectionsFromTargetSpheronByArray(targetSpheron, connectionArray, idx+1, 0, callback)
+				} else {
+					that.deleteVariantConnectionsFromTargetSpheronByArray(targetSpheron, connectionArray, idx, connectionIdx+1, callback)
+				}
+			} else {
+				that.deleteVariantConnectionsFromTargetSpheronByArray(targetSpheron, connectionArray, idx+1, 0, callback)
+			}
+			
+		} else {
+			callback(targetSpheron)
+		}
+	},
+	deleteTargetSpheronsABTestDataIterator: function(targetSpheron, idx, callback){
+		var that = this;
+		if(targetSpheron.io[idx]){
+			targetSpheron.io[idx].errorMap = []
+			that.deleteTargetSpheronsABTestDataIterator(targetSpheron, idx+1, callback)
+		} else {
+			callback(targetSpheron)
+		}
+	},
+
 	pushToUpstreamSpheronBPQueueBySpheronId: function(spheronId, bpErrorMessage, callback){
 		var that = this
 		that.logger.log(moduleName, 2, 'updating spherons bpQueue: ' + spheronId)
@@ -447,6 +615,17 @@ var mongoUtils = {
 		}, function(err, result) {
 	    	if (err) throw err;
 	    	callback(result)
+		});
+	},
+	getPropagationMessageQueueBySpheronId: function(spheronId, callback){
+		var that = this
+		mongoNet.findOne({
+			type: "spheron",
+			spheronId: spheronId
+		}, function(err, result) {
+	    	if (err) throw err;
+	    	that.logger.log(moduleName, 2, 'propogationMessageQueueIs: ' + JSON.stringify(result.propagationMessageQueue))
+	    	callback(result.propagationMessageQueue)
 		});
 	},
 	updateLessonInputs: function(lessonId, spheronId, oldInput, newInput, callback){

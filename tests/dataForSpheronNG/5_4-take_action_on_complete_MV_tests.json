@@ -117,7 +117,7 @@
 				},
 				"expectedResults" : [
 					{
-						"function" : "nukeTestData", 
+						"function" : "commonFunctions.nukeTestData", 
 						"parameters" : null,
 						"returnType" : null,
 						"containsJSONArray" : false,
@@ -126,7 +126,7 @@
 						"results":[] 
 					},
 					{
-						"function" : "setupTestDataByFileName", 
+						"function" : "commonFunctions.setupTestDataByFileName", 
 						"parameters" : "tests/dataForSpheronNG/5_4-take_action_on_complete_MV_tests.json",
 						"returnType" : null,
 						"containsJSONArray" : false,
@@ -148,7 +148,7 @@
 					},
 					{
 						"note" : "todo - delete the errormap data from myNewConnection as the connection has changed!",
-						"function" : "getConnectionsBySpheronId", 
+						"function" : "commonFunctions.getConnectionsBySpheronId", 
 						"parameters" : ["outputSpheron1"],  
 						"unpackInput" : true,
 						"returnType" : "object",

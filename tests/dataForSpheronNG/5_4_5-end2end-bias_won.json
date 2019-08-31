@@ -114,7 +114,7 @@
 				},
 				"expectedResults" : [
 					{
-						"function" : "nukeTestData", 
+						"function" : "commonFunctions.nukeTestData", 
 						"parameters" : null,
 						"returnType" : null,
 						"containsJSONArray" : false,
@@ -123,7 +123,7 @@
 						"results":[] 
 					},
 					{
-						"function" : "setupTestDataByFileName", 
+						"function" : "commonFunctions.setupTestDataByFileName", 
 						"parameters" : "tests/dataForSpheronNG/5_4_5-end2end-bias_won.json",
 						"returnType" : null,
 						"containsJSONArray" : false,
@@ -151,7 +151,7 @@
 						"results":[] 
 					},
 					{
-						"function" : "getConnectionsBySpheronId", 
+						"function" : "commonFunctions.getConnectionsBySpheronId", 
 						"parameters" : ["outputSpheron1"], 
 						"unpackInput" : true,
 						"returnType" : "object",
@@ -166,7 +166,7 @@
 						] 
 					},
 					{
-						"function" : "getVariantsBySpheronId", 
+						"function" : "commonFunctions.getVariantsBySpheronId", 
 						"parameters" : ["outputSpheron1"],
 						"unpackInput" : true,
 						"returnType" : "object",

@@ -115,7 +115,7 @@
 				},
 				"expectedResults" : [
 					{
-						"function" : "nukeTestData", 
+						"function" : "commonFunctions.nukeTestData", 
 						"parameters" : null,
 						"returnType" : null,
 						"containsJSONArray" : false,
@@ -124,7 +124,7 @@
 						"results":[] 
 					},
 					{
-						"function" : "setupTestDataByFileName", 
+						"function" : "commonFunctions.setupTestDataByFileName", 
 						"parameters" : "tests/dataForSpheronNG/5_4_4-end2end_variant_input_won.json",
 						"returnType" : null,
 						"containsJSONArray" : false,
@@ -152,7 +152,7 @@
 						"results":[] 
 					},
 					{
-						"function" : "getConnectionsBySpheronId", 
+						"function" : "commonFunctions.getConnectionsBySpheronId", 
 						"parameters" : ["outputSpheron1"], 
 						"unpackInput" : true,
 						"returnType" : "object",
@@ -167,7 +167,7 @@
 						] 
 					},
 					{
-						"function" : "getVariantsBySpheronId", 
+						"function" : "commonFunctions.getVariantsBySpheronId", 
 						"parameters" : ["outputSpheron1"],
 						"unpackInput" : true,
 						"returnType" : "object",
@@ -181,7 +181,7 @@
 						}
 					},
 					{
-						"function" : "getConnectionsBySpheronId", 
+						"function" : "commonFunctions.getConnectionsBySpheronId", 
 						"parameters" : ["inputSpheron1"], 
 						"unpackInput" : true,
 						"returnType" : "object",

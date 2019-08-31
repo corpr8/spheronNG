@@ -357,10 +357,37 @@ Spheron.prototype.getToSpheronIdAndPortFromPortIterator =function(portId, idx, c
 	}
 }
 
+Spheron.prototype.getspheronPortTypeIterator =function(portId, idx, callback){
+	console.log(moduleName, 2, 'portId: ' + portId)
+	var that = this
+	if(that.io[idx]){
+		if(that.io[idx].id == portId){
+			callback(that.io[idx].type)
+		} else {
+			that.getspheronPortTypeIterator(portId,idx +1, callback)
+		}
+	} else {
+		callback(null)
+	}
+}
+
+
 Spheron.prototype.removebpQueueItemByIdx = function(thisIdx, callback){
 	var that = this;
 	that.bpQueue.splice(thisIdx,1)
 	callback()
+}
+
+Spheron.prototype.deleteConnectionByIdArray = function(connectionsIdArray, callback){
+	var that = this
+	if(connectionsIdArray.length > 0){
+		that.deleteConnectionById(connectionsIdArray[0], function(){
+			connectionsIdArray.splice(0,1)
+			deleteConnectionByIdArray(connectionsIdArray, callback)
+		})
+	} else {
+		callback()
+	}
 }
 
 Spheron.prototype.deleteConnectionById = function(thisId, callback){
@@ -384,6 +411,48 @@ Spheron.prototype.deleteConnectionByIdIterator = function(thisId, idx, callback)
 		callback()
 	}
 }
+
+Spheron.prototype.convertConnectionToBiasById = function(thisId, callback){
+	var that = this
+	that.convertConnectionToBiasByIdIterator(thisId, 0, function(){
+		callback()
+	})
+}
+
+Spheron.prototype.convertConnectionToBiasByIdIterator = function(thisId, idx, callback){
+	var that = this
+	if(that.io[idx]){
+		if(that.io[idx].id == thisId){
+			that.logger.log(moduleName, 2, "petrifying connection - transforming:" + thisId) 
+			
+			that.io[idx].type = "bias"
+			that.io[idx].errorMap = []
+			delete that.io[idx].fromId
+			delete that.io[idx].fromPort
+			delete that.io[idx].life
+
+			callback()
+		} else {
+			that.convertConnectionToBiasByIdIterator(thisId, idx +1, callback)
+		}
+	} else {
+		callback()
+	}
+}
+
+
+
+Spheron.prototype.deleteConnectionByIdx = function(idx, callback){
+	var that = this
+	if(that.io[idx]){
+		that.logger.log(moduleName, 2, "deleting:" + that.io[idx].idx)
+		that.io.splice(idx,1)
+		callback()
+	} else {
+		callback()
+	}
+}
+
 
 Spheron.prototype.deleteAllTestData = function(callback){
 	var that = this
@@ -499,6 +568,60 @@ Spheron.prototype.updateThisSpheronToIdIterator = function(idx, originalId, newI
 			that.updateThisSpheronToIdIterator(idx+1, originalId, newId, callback)
 		} else{
 			that.updateThisSpheronToIdIterator(idx+1, originalId, newId, callback)
+		}
+	} else {
+		callback()
+	}
+}
+
+Spheron.prototype.findTestsContainingConnectionIdAndRemove = function(connectionId, callback){
+ var that = this
+ that.findTestsContainingConnectionIdAndRemoveThemIterator(connectionId, 0, 0, function(){
+ 	callback()
+ })
+}
+
+Spheron.prototype.findTestsContainingConnectionIdAndRemoveThemIterator = function(connectionId, idx, testPhase, callback){
+	var that = this
+	var deleteArray = []
+	if(testPhase == 0){
+		//inputs
+		if(that.variants.inputs[idx]){
+			if(that.variants.inputs[idx].original == connectionId || that.variants.inputs[idx].variants.indexOf(connectionId != -1)){
+				//delete the variants
+				that.variants.inputs.splice(idx,1)
+				that.findTestsContainingConnectionIdAndRemoveThemIterator(connectionId, idx, testPhase, callback)				
+			} else {
+				that.findTestsContainingConnectionIdAndRemoveThemIterator(connectionId, idx+1, testPhase, callback)
+			}
+		} else {
+			that.findTestsContainingConnectionIdAndRemoveThemIterator(connectionId, 0, testPhase+1, callback)
+		}
+	} else if(testPhase == 1){
+		//biases
+		if(that.variants.biases[idx]){
+			if(that.variants.biases[idx].original == connectionId || that.variants.biases[idx].variants.indexOf(connectionId != -1)){
+				//delete the variants
+				that.variants.biases.splice(idx,1)
+				that.findTestsContainingConnectionIdAndRemoveThemIterator(connectionId, idx, testPhase, callback)				
+			} else {
+				that.findTestsContainingConnectionIdAndRemoveThemIterator(connectionId, idx+1, testPhase, callback)
+			}
+		} else {
+			that.findTestsContainingConnectionIdAndRemoveThemIterator(connectionId, 0, testPhase+1, callback)
+		}
+	} else if(testPhase == 2){
+		//outputs
+		if(that.variants.outputs[idx]){
+			if(that.variants.outputs[idx].original == connectionId || that.variants.outputs[idx].variants.indexOf(connectionId != -1)){
+				//delete the variants
+				that.variants.outputs.splice(idx,1)
+				that.findTestsContainingConnectionIdAndRemoveThemIterator(connectionId, idx, testPhase, callback)				
+			} else {
+				that.findTestsContainingConnectionIdAndRemoveThemIterator(connectionId, idx+1, testPhase, callback)
+			}
+		} else {
+			that.findTestsContainingConnectionIdAndRemoveThemIterator(connectionId, 0, testPhase+1, callback)
 		}
 	} else {
 		callback()

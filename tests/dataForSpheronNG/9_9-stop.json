@@ -107,7 +107,7 @@
 	"tdd" : {
 		"tddTests": [
 			{
-				"module": "./5-multivariateTestProcessor",
+				"module": "./lessonManager_1_lessonMaintenanceProcessor",
 				"input": {
 					"hasInitMethod" : true,
 					"hasMongo" : true,

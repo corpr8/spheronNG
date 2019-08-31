@@ -384,6 +384,21 @@ var tdd = {
 							that.logger.log(moduleName, 2, 'called back from init')
 							that.testIterator(testIdx, 0, failureCount, callback)
 						})
+					} else if(that.config.tdd.tddTests[testIdx].input.type == "module"){
+						that.logger.log(moduleName, 2, 'calling init on a normal module')
+						var thisSettings = {tdd:true}
+						if(that.config.tdd.tddTests[testIdx].input.hasMongo){
+							//the normal call to this library would pass a ref to mongo - but we are just going to pass null.
+							that.currentTestModule.init(thisSettings, that.logger, null, function(){
+							that.logger.log(moduleName, 2, 'called back from init (with mongo placeholder)')
+								that.testIterator(testIdx, 0, failureCount, callback)
+							})
+						} else {
+							that.currentTestModule.init(thisSettings, that.logger, function(){
+								that.logger.log(moduleName, 2, 'called back from init')
+								that.testIterator(testIdx, 0, failureCount, callback)
+							})
+						}
 					} else {
 						that.testIterator(testIdx, 0, failureCount, callback)
 					}
@@ -404,39 +419,85 @@ var tdd = {
 				that.logger.log(moduleName, 2, 'testIdx: ' + testIdx + ' resultIdx:' + resultIdx)
 				var thisTest = that.config.tdd.tddTests[testIdx].expectedResults[resultIdx]
 				that.logger.log(moduleName, 2, 'test function: ' + thisTest.function)
-				if(that.currentTestModule[thisTest.function]){
-					if(thisTest.parameters){
-						//build and apply an array of parameters to the function
-						var theseParameters = thisTest.parameters
-						that.logger.log(moduleName, 2, 'parameters: ' + theseParameters)
-						that.logger.log(moduleName, 2, 'parameter length: ' + theseParameters.length)
+				var thisTestFunctionPath = (thisTest.function).split('.')
+				if(thisTestFunctionPath.length == 1){
+					if(that.currentTestModule[thisTest.function]){
+						if(thisTest.parameters){
+							//build and apply an array of parameters to the function
+							var theseParameters = thisTest.parameters
+							that.logger.log(moduleName, 2, 'parameters: ' + theseParameters)
+							that.logger.log(moduleName, 2, 'parameter length: ' + theseParameters.length)
+							that.logger.log(moduleName, 2, 'function path: ' + thisTestFunctionPath)
+							
 
-						var thisCallback = function(result){
-							that.handleTestResult(thisTest, result, resultIdx, testIdx, failureCount, callback)
-						}
+							var thisCallback = function(result){
+								that.handleTestResult(thisTest, result, resultIdx, testIdx, failureCount, callback)
+							}
 
-						/*
-						* Note: The ... below means that we wrap parameters in an extra [] as they are unpacked by the ... in the test here!!!
-						*/
-						if(thisTest.unpackInput){
-							that.logger.log(moduleName, 2, 'unpacking input')
-							theseParameters.push(thisCallback)
-							that.currentTestModule[thisTest.function](...theseParameters)
+							/*
+							* Note: The ... below means that we wrap parameters in an extra [] as they are unpacked by the ... in the test here!!!
+							*/
+							if(thisTest.unpackInput){
+								that.logger.log(moduleName, 2, 'unpacking input')
+								theseParameters.push(thisCallback)
+								that.currentTestModule[thisTest.function](...theseParameters)
+							} else {
+								that.logger.log(moduleName, 2, 'not unpacking input.')
+								that.currentTestModule[thisTest.function](theseParameters, thisCallback)
+							} 
+							
+
 						} else {
-							that.logger.log(moduleName, 2, 'not unpacking input.')
-							that.currentTestModule[thisTest.function](theseParameters, thisCallback)
-						} 
-						
-
+							// no parameters so just have a callback
+							that.logger.log(moduleName, 2, 'no parameters!!!')
+							that.currentTestModule[thisTest.function](function(result){
+								that.handleTestResult(thisTest, result, resultIdx, testIdx, failureCount, callback)	
+							})
+						}
 					} else {
-						// no parameters so just have a callback
-						that.logger.log(moduleName, 2, 'no parameters!!!')
-						that.currentTestModule[thisTest.function](function(result){
-							that.handleTestResult(thisTest, result, resultIdx, testIdx, failureCount, callback)	
-						})
+						that.logger.log(moduleName, 2, 'Function: ' + thisTest.function + ' does not exist. Test failed.')
+						process.exitCode = 1
+					}
+				} else if(thisTestFunctionPath.length == 2){
+					if(that.currentTestModule[thisTestFunctionPath[0]][thisTestFunctionPath[1]]){
+						if(thisTest.parameters){
+							//build and apply an array of parameters to the function
+							var theseParameters = thisTest.parameters
+							that.logger.log(moduleName, 2, 'parameters: ' + theseParameters)
+							that.logger.log(moduleName, 2, 'parameter length: ' + theseParameters.length)
+							that.logger.log(moduleName, 2, 'function path: ' + thisTestFunctionPath)
+							
+
+							var thisCallback = function(result){
+								that.handleTestResult(thisTest, result, resultIdx, testIdx, failureCount, callback)
+							}
+
+							/*
+							* Note: The ... below means that we wrap parameters in an extra [] as they are unpacked by the ... in the test here!!!
+							*/
+							if(thisTest.unpackInput){
+								that.logger.log(moduleName, 2, 'unpacking input')
+								theseParameters.push(thisCallback)
+								that.currentTestModule[thisTestFunctionPath[0]][thisTestFunctionPath[1]](...theseParameters)
+							} else {
+								that.logger.log(moduleName, 2, 'not unpacking input.')
+								that.currentTestModule[thisTestFunctionPath[0]][thisTestFunctionPath[1]](theseParameters, thisCallback)
+							} 
+							
+
+						} else {
+							// no parameters so just have a callback
+							that.logger.log(moduleName, 2, 'no parameters!!!')
+							that.currentTestModule[thisTestFunctionPath[0]][thisTestFunctionPath[1]](function(result){
+								that.handleTestResult(thisTest, result, resultIdx, testIdx, failureCount, callback)	
+							})
+						}
+					} else {
+						that.logger.log(moduleName, 2, 'Function: ' + thisTest.function + ' does not exist. Test failed.')
+						process.exitCode = 1
 					}
 				} else {
-					that.logger.log(moduleName, 2, 'Function: ' + thisTest.function + ' does not exist. Test failed.')
+					that.logger.log(moduleName, 2, 'TODO: Have not implemented 3 deep dotted paths yet. fail.')
 					process.exitCode = 1
 				}
 			} else {

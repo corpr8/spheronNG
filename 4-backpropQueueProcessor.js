@@ -12,6 +12,7 @@ var backpropQueueProcessor = {
 	spheron: null,
 	logger: null,
 	mongoUtils: null,
+	commonFunctions: null,
 	init: function(thisSpheron, logger, mongoUtils, callback){
 		var that = this
 		that.logger = logger
@@ -21,18 +22,28 @@ var backpropQueueProcessor = {
 		if(!that.spheron.tdd){
 			that.mongoUtils = mongoUtils
 			that.logger.log(moduleName, 2, 'Module running in Production mode')
-			that.processPhases(function(){
-				callback(that.spheron)
-			}) 
+			asyncRequire('./commonFunctions').then(function(thisCommonFunctions){
+				that.commonFunctions = thisCommonFunctions
+				that.commonFunctions.init(that.logger, that.mongoUtils, that.spheron, function(){
+					that.processPhases(function(){
+						callback(that.spheron)
+					})
+				})
+			})
 		} else {  	
 			asyncRequire('./mongoUtils').then(function(thisModule){
 				that.mongoUtils = thisModule
 				that.logger.log(moduleName, 2, 'Module running in TDD mode')  
 				that.mongoUtils.init(that.logger, function(){
 					that.logger.log(moduleName, 2, 'Mongo Initialised')
-					that.spheron.init(that.logger, function(){ //not sure if we need to run init in this mode either?!?!
-						that.logger.log(moduleName, 2, 'Spheron initialised')
-						callback()
+					asyncRequire('./commonFunctions').then(function(thisCommonFunctions){
+						that.commonFunctions = thisCommonFunctions
+						that.commonFunctions.init(that.logger, that.mongoUtils, that.spheron, function(){
+							that.spheron.init(that.logger, function(){ //not sure if we need to run init in this mode either?!?!
+								that.logger.log(moduleName, 2, 'Spheron initialised')
+								callback()
+							})
+						})
 					})
 				})
 			})
@@ -61,20 +72,6 @@ var backpropQueueProcessor = {
 			break;
 		}
 	},
-	nukeTestData: function(callback){
-		var that = this
-		that.mongoUtils.dropDb(function(){
-			callback() 
-		})
-	},
-	setupTestDataByFileName: function(testDataFileName, callback){
-		var that = this
-		that.logger.log(moduleName, 2, 'calling setup test data') 
-		that.mongoUtils.setupDemoDataFromFile(testDataFileName, function(){
-			that.logger.log(moduleName, 2, 'test data loaded into mongo')
-			callback() 
-		})
-	}, 
 	bpQueueIterator: function(callback){
 		var that = this
 		that.logger.log(moduleName, 2, 'running bpQueue iterator')

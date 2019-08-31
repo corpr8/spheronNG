@@ -16,7 +16,8 @@
 	"logOptions": {
 		"logLevel": 2,
 		"logExtOutputEvents": true,
-		"logPath": "./out.txt"
+		"logPath": "./out.txt",
+		"lessonMaintenanceLogPath" : "./out-lm.txt"
 	},
 	"dev":{
 		"fileWatch": ["./","./tests/dataForSpheronNG/"],

@@ -39,7 +39,7 @@ var spheron_runner = {
 		that.propagationQueueProcessor = require('./3-propagationQueueProcessor.js')
 		that.backpropQueueProcessor = require('./4-backpropQueueProcessor.js')
 		that.multivariateTestProcessor = require('./5-multivariateTestProcessor.js')
-		that.lessonMaintenanceProcessor = require('./6-networkMaintenanceProcessor.js')
+		that.lessonMaintenanceProcessor = require('./6-spheronMaintenanceProcessor.js')
 
 		//disable UDP if as we are offline...
 		if(settings.loadUDP){

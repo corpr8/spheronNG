@@ -12,6 +12,7 @@ var propagationQueueProcessor = {
 	spheron: null,
 	logger: null,
 	mongoUtils: null,
+	commonFunctions: null,
 	init: function(thisSpheron, logger, mongoUtils, callback){
 		var that = this
 		that.logger = logger
@@ -20,9 +21,14 @@ var propagationQueueProcessor = {
 			
 		if(!that.spheron.tdd){
 			that.mongoUtils = mongoUtils
-			that.logger.log(moduleName, 2, 'Module running in Production mode')
-			that.processPhases(function(){
-				callback(that.spheron)
+			asyncRequire('./commonFunctions').then(function(thisCommonFunctions){
+				that.commonFunctions = thisCommonFunctions
+				that.commonFunctions.init(that.logger, that.mongoUtils, that.spheron, function(){
+					that.logger.log(moduleName, 2, 'Module running in Production mode')
+					that.processPhases(function(){
+						callback(that.spheron)
+					})
+				})
 			}) 
 		} else {  	
 			asyncRequire('./mongoUtils').then(function(thisModule){
@@ -30,9 +36,14 @@ var propagationQueueProcessor = {
 				that.logger.log(moduleName, 2, 'Module running in TDD mode')
 				that.mongoUtils.init(that.logger, function(){
 					that.logger.log(moduleName, 2, 'Mongo Initialised')
-					that.spheron.init(that.logger, function(){ //not sure if we need to run init in this mode either?!?!
-						that.logger.log(moduleName, 2, 'Spheron initialised')
-						callback()
+					asyncRequire('./commonFunctions').then(function(thisCommonFunctions){
+						that.commonFunctions = thisCommonFunctions
+						that.commonFunctions.init(that.logger, that.mongoUtils, that.spheron, function(){
+							that.spheron.init(that.logger, function(){ //not sure if we need to run init in this mode either?!?!
+								that.logger.log(moduleName, 2, 'Spheron initialised')
+								callback()
+							})
+						})
 					})
 				})
 			})
@@ -59,7 +70,7 @@ var propagationQueueProcessor = {
 
 				/*handle straight out single signal matches in the input queue */
 				that.logger.log(moduleName, 2, 'Running Phase 0: iterating the propogationQueue')
-				that.iteratePropagationQueue(function(){
+				that.iteratePropagationQueue(0, function(){
 					that.processorPhaseIterator(phaseIdx +1, callback)
 				})
 			break;
@@ -70,24 +81,21 @@ var propagationQueueProcessor = {
 			break;
 		}
 	},
-	setupTestDataByFileName: function(testDataFileName, callback){
-		var that = this
-		that.logger.log(moduleName, 2, 'calling setup test data') 
-		that.mongoUtils.setupDemoDataFromFile(testDataFileName, function(){
-			that.logger.log(moduleName, 2, 'test data loaded into mongo')
-			callback()
-		})
-	},
-	iteratePropagationQueue: function(callback){
+	iteratePropagationQueue: function(foundExternalCount, callback){
 		var that = this 
-		if(that.spheron.propagationMessageQueue.length > 0){ 
+		if(that.spheron.propagationMessageQueue.length > foundExternalCount){ 
 			//Handle iterating to other 
 			that.logger.log(moduleName, 2, 'queue item is: ' + JSON.stringify(that.spheron.propagationMessageQueue[0]))
 			that.transformPropagationToInputMessages(that.spheron.propagationMessageQueue[0], function(resultantMessages){
-				that.iterateSignalsWithinAPropagationQueueItem(resultantMessages, 0, function(){
-					that.spheron.removeItemFromPropagationQueueByIdx(0, function(){
-						that.iteratePropagationQueue(callback)
-					})	
+				that.iterateSignalsWithinAPropagationQueueItem(resultantMessages, 0, false, function(hadExternalSignal){
+					if(!hadExternalSignal){
+						that.spheron.removeItemFromPropagationQueueByIdx(0, function(){
+							that.iteratePropagationQueue(foundExternalCount, callback)
+						})	
+					} else {
+						foundExternalCount += 1
+						that.iteratePropagationQueue(foundExternalCount, callback)
+					}
 				})
 			})
 		} else {
@@ -119,29 +127,43 @@ var propagationQueueProcessor = {
 			callback(null)
 		}
 	},
-	/*
-	*TODO: Refactor - we are now passing an array of individual port signals in and should handle those rather than the propagation message object.
-	*/
-	iterateSignalsWithinAPropagationQueueItem: function(propagationQueueItemMessagesAsInputArray, idx, callback){
+	iterateSignalsWithinAPropagationQueueItem: function(propagationQueueItemMessagesAsInputArray, idx, hadExternalSignal, callback){
 		var that = this
+		hadExternalSignal = (hadExternalSignal) ? hadExternalSignal : hadExternalSignal
 		if(propagationQueueItemMessagesAsInputArray){
 			if(propagationQueueItemMessagesAsInputArray[idx]){
 				that.getLastPortFromPath(propagationQueueItemMessagesAsInputArray[idx].signalPath, function(thisIoPort){
 					that.logger.log(moduleName, 2, 'last port is: ' + thisIoPort)
-					that.getToSpheronIdAndPortFromPort(thisIoPort, function(thisDestinationSpheronAndInputPort){
-						that.logger.log(moduleName, 2, 'to id and port is: ' + JSON.stringify(thisDestinationSpheronAndInputPort))
-						that.pushMessageToInputQueueBySpheronIdAndPort(thisDestinationSpheronAndInputPort, propagationQueueItemMessagesAsInputArray[idx], function(){
-							that.logger.log(moduleName, 2, 'finished pushing message to inputqueue - iterating to next part of message...')
-							//process.exitCode = 1
-							that.iterateSignalsWithinAPropagationQueueItem(propagationQueueItemMessagesAsInputArray, idx+1, callback)
-						})
+					/*
+					* WE need to check if this is to ext and set the lesson to pending if it is...
+					* {"toId":"outputSpheron1","toPort":"internal1"}
+					*
+					* TODO: Write tests to support this usecase...
+					*/
+					//that.getSpheronPortTypeFromPort(thisIoPort, function(spheronPortType){
+						that.logger.log(moduleName, 2, 'message port type is: ' + propagationQueueItemMessagesAsInputArray[idx].type)
+						if(propagationQueueItemMessagesAsInputArray[idx].type == "extOutput"){
+							hadExternalSignal = true
+							that.mongoUtils.setLessonAsPending(propagationQueueItemMessagesAsInputArray[idx].lessonId, function(){
+								that.logger.log(moduleName, 2, 'we have a message for an extOutput so we have set the lesson as pending:' + propagationQueueItemMessagesAsInputArray[idx].lessonId)
+								that.iterateSignalsWithinAPropagationQueueItem(propagationQueueItemMessagesAsInputArray, idx+1, hadExternalSignal, callback)
+							})
+						} else {
+							that.getToSpheronIdAndPortFromPort(thisIoPort, function(thisDestinationSpheronAndInputPort){
+								that.logger.log(moduleName, 2, 'to id and port is: ' + JSON.stringify(thisDestinationSpheronAndInputPort))
+								that.pushMessageToInputQueueBySpheronIdAndPort(thisDestinationSpheronAndInputPort, propagationQueueItemMessagesAsInputArray[idx], function(){
+									that.logger.log(moduleName, 2, 'finished pushing message to inputqueue - iterating to next part of message...')
+									that.iterateSignalsWithinAPropagationQueueItem(propagationQueueItemMessagesAsInputArray, idx+1, hadExternalSignal, callback)
+								})
+							})
+						}
 					})
-				})
+				//})
 			} else {
-				callback()
+				callback(hadExternalSignal)
 			}
 		} else {
-			callback()
+			callback(hadExternalSignal)
 		}
 	},  
 	pushMessageToInputQueueBySpheronIdAndPort: function(spheronIdAndPort, thisMessage, callback){
@@ -175,12 +197,12 @@ var propagationQueueProcessor = {
 			callback(thisResult)
 		})
 	},
-	getInputQueueBySpheronId: function(spheronId, callback){
+	getSpheronPortTypeFromPort: function(portId, callback){
 		var that = this
-		that.mongoUtils.getSpheron(spheronId, function(thisSpheron){
-			that.logger.log(moduleName, 2, 'running getInputQueueBySpheronId')
-			callback(thisSpheron.inputMessageQueue)
-		})
+		that.logger.log(moduleName, 2, 'running getToSpheronIdAndPortFromPort')
+		that.spheron.getspheronPortTypeIterator(portId, 0, function(thisResult){
+			callback(thisResult)
+		})	
 	}
 }
 

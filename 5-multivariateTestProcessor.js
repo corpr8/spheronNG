@@ -18,6 +18,7 @@ var multivariateTestProcessor = {
 	spheron: null,
 	logger: null, 
 	mongoUtils: null,
+	commonFunctions: null,
 	init: function(thisSpheron, logger, mongoUtils, callback){
 
 		var that = this
@@ -27,19 +28,31 @@ var multivariateTestProcessor = {
 			
 		if(!that.spheron.tdd){
 			that.mongoUtils = mongoUtils
-			that.logger.log(moduleName, 2, 'Module running in Production mode')
-			that.processPhases(function(){
-				callback(that.spheron)
-			}) 
+			asyncRequire('./commonFunctions').then(function(thisCommonFunctions){
+				that.commonFunctions = thisCommonFunctions
+				that.commonFunctions.init(that.logger, that.mongoUtils, that.spheron, function(){
+
+					that.logger.log(moduleName, 2, 'Module running in Production mode')
+					that.processPhases(function(){
+						callback(that.spheron)
+					}) 
+				})
+			})
 		} else {  	
 			asyncRequire('./mongoUtils').then(function(thisModule){
 				that.mongoUtils = thisModule
 				that.logger.log(moduleName, 2, 'Module running in TDD mode')  
 				that.mongoUtils.init(that.logger, function(){
 					that.logger.log(moduleName, 2, 'Mongo Initialised')
-					that.spheron.init(that.logger, function(){ //not sure if we need to run init in this mode either?!?!
-						that.logger.log(moduleName, 2, 'Spheron initialised')
-						callback()
+					asyncRequire('./commonFunctions').then(function(thisCommonFunctions){
+						that.commonFunctions = thisCommonFunctions
+						that.commonFunctions.init(that.logger, that.mongoUtils, that.spheron, function(){
+
+							that.spheron.init(that.logger, function(){ //not sure if we need to run init in this mode either?!?!
+								that.logger.log(moduleName, 2, 'Spheron initialised')
+								callback()
+							})
+						})
 					})
 				})
 			})
@@ -67,20 +80,6 @@ var multivariateTestProcessor = {
 				callback()
 			break;
 		}
-	},
-	nukeTestData: function(callback){
-		var that = this
-		that.mongoUtils.dropDb(function(){
-			callback() 
-		})
-	},
-	setupTestDataByFileName: function(testDataFileName, callback){
-		var that = this
-		that.logger.log(moduleName, 2, 'calling setup test data') 
-		that.mongoUtils.setupDemoDataFromFile(testDataFileName, function(){
-			that.logger.log(moduleName, 2, 'test data loaded into mongo')
-			callback() 
-		})
 	},
 	mvTestIterator: function(testPhase, testIdx, callback){
 		//iterate variants of inputs, biases and outputs and call resolveIfMVTestCompleteFromMVObject for each one...
@@ -844,19 +843,6 @@ var multivariateTestProcessor = {
 		} else {
 			callback()
 		}
-	},
-	getConnectionsBySpheronId: function(spheronId, callback){
-		var that = this
-		that.mongoUtils.getConnectionsBySpheronId(spheronId, function(connections){
-			that.logger.log(moduleName, 2, 'connections by spheron id returns:' + JSON.stringify(connections))
-			callback(connections)
-		})
-	}, 
-	getVariantsBySpheronId: function(spheronId, callback){
-		var that = this
-		that.mongoUtils.getVariantsBySpheronId(spheronId, function(variants){
-			callback(variants)
-		})
 	},
 	persistSpheron: function(callback){ 
 		that = this
