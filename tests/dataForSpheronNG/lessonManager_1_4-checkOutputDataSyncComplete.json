@@ -192,7 +192,7 @@
 					},
 					{
 						"function" : "commonFunctions.setupTestDataByFileName", 
-						"parameters" : "tests/dataForSpheronNG/lessonManager_1_3.json",
+						"parameters" : "tests/dataForSpheronNG/lessonManager_1_4-checkOutputDataSyncComplete.json",
 						"returnType" : null,
 						"containsJSONArray" : false,
 						"atLeastTheseFields": true,
@@ -200,9 +200,23 @@
 						"results":[] 
 					},
 					{
-						"function" : "getPendingLesson", 
-						"parameters" : null,
+						"function" : "checkOutputDataSyncComplete", 
+						"note" : "when we have retrieved output data grouped by sigId, we need to check by OutputGroup if the data is complete for an individual signalId",
+						"parameters" : [0, {
+								"1000":{
+								"lessonId":"whatIsAnd","lessonIdx":0,"signalId":"1000","io":[
+									{"signalPath":"input1;input2;input3;bias1;internal1;ANDout","output":"ANDout","val":15.82635},
+									{"signalPath":"input1;input2;input3;bias1;internal3;NOTANDout","output":"NOTANDout","val":5.82635}
+								]},
+								"1001":{
+								"lessonId":"whatIsAnd","lessonIdx":1,"signalId":"1001","io":[
+									{"signalPath":"input1;input2;input3;bias1;internal1;ANDout","output":"ANDout","val":14.82635},
+									{"signalPath":"input1;input2;input3;bias1;internal3;NOTANDout","output":"NOTANDout","val":1.82635}
+								]}
+							}
+						],
 						"returnType" : null,
+						"unpackInput" : true,
 						"containsJSONArray" : false,
 						"atLeastTheseFields": true,
 						"ordered": true, 
@@ -215,35 +229,30 @@
 						"containsJSONArray" : false,
 						"atLeastTheseFields": true,
 						"ordered": true, 
-						"results": [
-							{"lessonId":"whatIsAnd","lessonIdx":0,"signalId":"1000","io":[{"signalPath":"input1;input2;input3;bias1;internal1;ANDout","output":"ANDout","val":15.82635}]},
-							{"lessonId":"whatIsAnd","lessonIdx":1,"signalId":"1001","io":[{"signalPath":"input1;input2;input3;bias1;internal1;ANDout","output":"ANDout","val":14.82635}]}
-						]
+						"results": []
 					},
 					{
-					"function" : "getOutputDataBySigIdForOutputConfigIdx", 
-						"parameters" : [0],
-						"unpackInput" : true,
+						"function" : "commonFunctions.getPropogationMessageQueueBySpheronId", 
+						"parameters" : "outputSpheron2",
 						"returnType" : "object",
 						"containsJSONArray" : false,
 						"atLeastTheseFields": true,
 						"ordered": true, 
-						"results": {
-							"1000":{
-							"lessonId":"whatIsAnd","lessonIdx":0,"signalId":"1000","io":[
-								{"signalPath":"input1;input2;input3;bias1;internal1;ANDout","output":"ANDout","val":15.82635},
-								{"signalPath":"input1;input2;input3;bias1;internal3;NOTANDout","output":"NOTANDout","val":5.82635}
-							]},
-							"1001":{
-							"lessonId":"whatIsAnd","lessonIdx":1,"signalId":"1001","io":[
-								{"signalPath":"input1;input2;input3;bias1;internal1;ANDout","output":"ANDout","val":14.82635},
-								{"signalPath":"input1;input2;input3;bias1;internal3;NOTANDout","output":"NOTANDout","val":1.82635}
-							]}
-						}
+						"results": []
+					},
+					{
+						"function" : "lessonOutputGroupIterator", 
+						"parameters" : [0,0],
+						"unpackInput" : true,
+						"returnType" : null,
+						"containsJSONArray" : false,
+						"atLeastTheseFields": true,
+						"ordered": true, 
+						"results": null
 					}
 				]
 			}
 		],
-		"nextTestFile": "./tests/dataForSpheronNG/lessonManager_1_4-checkOutputDataSyncComplete.json"
+		"nextTestFile": "./tests/dataForSpheronNG/9_9-stop.json"
 	}
 }

@@ -26,6 +26,7 @@ var lessonMaintenanceProcessor = {
 	lesson: null,
 	isRunning: false,
 	runTimer: null,
+	thisActivationModule: null,
 	init: function(mode, logger, mongoUtils, callback){
 		var that = this
 			
@@ -97,8 +98,23 @@ var lessonMaintenanceProcessor = {
 				break;
 			case 1: 
 
-				that.logger.log(moduleName, 2, 'Running Phase 0: processing lesson')
+				that.logger.log(moduleName, 2, 'Running Phase 1: processing lesson')
 				that.processLesson(function(){
+					that.processorPhaseIterator(phaseIdx +1, callback)
+				})
+			break;
+			case 2: 
+
+				that.logger.log(moduleName, 2, 'Running Phase 2: testing if lesson complete.')
+				that.logger.log(moduleName, 2, '****TODO****')
+				
+				that.processorPhaseIterator(phaseIdx +1, callback)
+				
+			break;
+			case 3: 
+
+				that.logger.log(moduleName, 2, 'Running Phase 3: setting lesson state to idle.')
+				that.setLessonToIdle(function(){
 					that.processorPhaseIterator(phaseIdx +1, callback)
 				})
 			break;
@@ -140,28 +156,26 @@ var lessonMaintenanceProcessor = {
 				if(that.lesson.outputConfigurations[outputConfigIdx].type == "sync"){
 					//iterate the outputs and gather data from corresponding Spherons.
 					that.getOutputDataBySigIdForOutputConfigIdx(outputConfigIdx, function(gatheredData){
+
 						//ok so now gathered data should contain anything from these spherons outputs for this output.
 						//we should now look for sync groups - i.e. signalId's filled with all of the outputs
 						//if we find them, we should call the output function
 						//then delete these signal ids from the spherons
 						that.logger.log(moduleName, 2, 'done gathering data for a lesson sync output group')
 						that.logger.log(moduleName, 2, 'data is:' + JSON.stringify(gatheredData))
-
-						/*
-						*
-						*/
-
-						process.exitCode = 1
-
-						/*
-						*
-						*/
-
+						that.checkOutputDataSyncComplete(outputConfigIdx, gatheredData, function(){
+							that.logger.log(moduleName, 2, 'done checking if the data is complete by sigId and calling the relevant activation function')
+							callback()
+						})
 					})
 				} else if(that.lesson.outputConfigurations[outputConfigIdx].type == "async"){
 					//not supported yet
+					that.logger.log(moduleName, 2, 'async groups not supported yet. Write support.')
+					process.exitCode = 1
 				} else {
 					//not supported yet
+					that.logger.log(moduleName, 2, 'other groups not supported yet. Write support.')
+					process.exitCode = 1
 				}
 			} else {
 				that.lessonOutputGroupIterator(outputConfigIdx +1,0, callback)
@@ -230,6 +244,100 @@ var lessonMaintenanceProcessor = {
 		} else {
 			callback(gatheredData)
 		}
+	},
+	checkOutputDataSyncComplete: function(outputConfigIdx, gatheredData, callback){
+		var that = this
+		that.checkOutputDataSyncCompleteIterator(outputConfigIdx, gatheredData, 0, 0, 0, function(){
+			callback()
+		})
+	},
+	checkOutputDataSyncCompleteIterator: function(outputConfigIdx, gatheredData, gatheredDataSigIdIdx, outputConfigPortIdx, gatheredDataSigIdIoIdx, callback){
+		var that = this
+		that.logger.log(moduleName, 2, 'in checkOutputDataSyncCompleteIterator')
+		if(Object.keys(gatheredData)[gatheredDataSigIdIdx]){
+			var thisSigId = Object.keys(gatheredData)[gatheredDataSigIdIdx]
+			if(that.lesson.outputConfigurations[outputConfigIdx].outputs[outputConfigPortIdx]){
+				if(gatheredData[thisSigId].io[gatheredDataSigIdIoIdx]){
+					/*
+					*Iterate the io in this gathereData[gatheredDataSigIdIdx].io[gatheredDataSigIdIoIdx]
+					*/
+					if(gatheredData[thisSigId].io[gatheredDataSigIdIoIdx].output == that.lesson.outputConfigurations[outputConfigIdx].outputs[outputConfigPortIdx].port){
+						//we found a match - iterate to the next output port
+						that.checkOutputDataSyncCompleteIterator(outputConfigIdx, gatheredData, gatheredDataSigIdIdx, outputConfigPortIdx+1, 0, callback)
+					} else {
+						that.checkOutputDataSyncCompleteIterator(outputConfigIdx, gatheredData, gatheredDataSigIdIdx, outputConfigPortIdx, gatheredDataSigIdIoIdx+1, callback)
+					}
+				} else {
+					//we did not find this port in the gather data io so its missing and we don't have a sync signal...
+					//iterate to the next sigId
+					that.checkOutputDataSyncCompleteIterator(outputConfigIdx, gatheredData, gatheredDataSigIdIdx+1, 0, 0, callback)
+				}
+			} else {
+				/*
+				* TODO:
+				* we have iterated to the end of the outputs in the lesson, which means we found them all so we should take action!!!!
+				* call the output function
+				* delete this sigId from the relative output queues
+				* if the output function causes back prop then good.
+				* and iterate to the next gatheredDataSigIdIdx
+				*/
+				that.logger.log(moduleName, 2, 'we found a full sync output group with sigId: ' + thisSigId + '. - lets call the output function')
+
+				asyncRequire(that.lesson.outputConfigurations[outputConfigIdx].activationModule).then(function(thisActivationModule){
+					that.thisActivationModule = thisActivationModule
+					that.logger.log(moduleName, 2, 'activationModule: ' + that.lesson.outputConfigurations[outputConfigIdx].activationModule + ' - loaded.')
+					that.thisActivationModule.init('TDD', that.logger, that.mongoUtils, function(){
+						that.logger.log(moduleName, 2, 'calling back from activationModule initialisation function')
+						that.thisActivationModule[that.lesson.outputConfigurations[outputConfigIdx].activationFunction](gatheredData[thisSigId], function(){
+							that.deletePropagationDataByOutputConfigIdxAndSigId(outputConfigIdx, thisSigId, function(){
+								that.checkOutputDataSyncCompleteIterator(outputConfigIdx, gatheredData, gatheredDataSigIdIdx+1, 0, 0, callback)	
+							})
+						})
+					})
+				})
+			}
+		} else {
+			callback()
+		}
+	},
+	deletePropagationDataByOutputConfigIdxAndSigId: function(outputConfigIdx, sigId, callback){
+		var that = this
+		that.logger.log(moduleName, 2, 'running deleteDataByOutputConfigIdxAndSigId')
+		that.getSpheronIdsByOutputConfigIdxIterator(outputConfigIdx, 0, [], function(spheronIds){
+			/*
+			* TODO: update each spherons propagation queue
+			* Delete each row where the sigId corresponds to sigId
+			*/
+			that.deleteSigIdsFromSpheronPropagationQueue(spheronIds, sigId, 0, function(){
+				//eventually 
+				callback()
+			})
+		})
+	},
+	getSpheronIdsByOutputConfigIdxIterator: function(outputConfigIdx, idx, spherons, callback){
+		var that = this
+		if(that.lesson.outputConfigurations[outputConfigIdx].outputs[idx]){
+			spherons.push(that.lesson.outputConfigurations[outputConfigIdx].outputs[idx].spheronId)
+			that.getSpheronIdsByOutputConfigIdxIterator(outputConfigIdx, idx+1, spherons, callback)
+		} else {
+			callback(spherons)
+		}
+	},
+	deleteSigIdsFromSpheronPropagationQueue: function(spheronIds, targetSigId, idx, callback){
+		var that = this
+		if(spheronIds[idx]){
+			that.mongoUtils.deleteSigIdFromSpheronPropagationQueue(spheronIds[idx], targetSigId, function(){
+				that.deleteSigIdsFromSpheronPropagationQueue(spheronIds, targetSigId, idx+1, callback)
+			})
+		} else {
+			callback()
+		}
+	},
+	setLessonToIdle: function(callback){
+		var that = this
+		that.mongoUtils.setLessonAsIdle(that.lesson.lessonId, function(){
+			callback()
+		})
 	}
 }
 

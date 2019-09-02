@@ -25,9 +25,9 @@ var whatIsAnd = {
 			that.mongoUtils = mongoUtils
 			asyncRequire('./commonFunctions').then(function(thisCommonFunctions){
 				that.commonFunctions = thisCommonFunctions
-				that.commonFunctions.init(that.logger, that.mongoUtils, function(){
+				that.commonFunctions.init(that.logger, that.mongoUtils, null, function(){
 					that.logger.log(moduleName, 2, 'Module running in Production mode')
-					callback(that.spheron)
+					callback()
 				})
 			})
 		} else {  	
@@ -38,7 +38,7 @@ var whatIsAnd = {
 					that.logger.log(moduleName, 2, 'Mongo Initialised')
 					asyncRequire('./commonFunctions').then(function(thisCommonFunctions){
 						that.commonFunctions = thisCommonFunctions
-						that.commonFunctions.init(that.logger, that.mongoUtils, function(){
+						that.commonFunctions.init(that.logger, that.mongoUtils, null, function(){
 							callback()
 						})
 					})
@@ -51,10 +51,13 @@ var whatIsAnd = {
 		* TODO
 		*/
 	},
-	whatIsAndOutputFunction: function(){
+	whatIsAndOutputFunction: function(syncDataObject, callback){
+		var that = this
 		/*
 		* TODO
 		*/
+		that.logger.log(moduleName, 2, 'whatIsAndOutputFunction called with:' + JSON.stringify(syncDataObject))
+		callback()
 	}
 }
 module.exports = whatIsAnd;

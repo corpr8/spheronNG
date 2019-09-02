@@ -216,6 +216,23 @@ var mongoUtils = {
 			}	
 		})
 	},
+	setLessonAsIdle(lessonId, callback){
+		var that = this
+		mongoNet.findOneAndUpdate({
+			type: "lesson",
+			lessonId : lessonId
+		},{
+			$set: {state: "idle"}
+		}, 
+		{}, 
+		function(err,doc){
+			if(err){
+				callback()
+			} else { 
+				callback(doc)
+			}	
+		})
+	},
 	assessIfLessonPassed(problemId, lowestFound, callback){
 		/*
 		*  Very very probably a legacy function... INfact definitely
@@ -823,6 +840,40 @@ var mongoUtils = {
 			}
 		} else {
 			callback(lessonData)
+		}
+	},
+	deleteSigIdFromSpheronPropagationQueue(spheronId, targetSigId, callback){
+		var that = this
+		mongoNet.findOne({
+			type: "spheron",
+			spheronId: spheronId
+		}, function(err, result) {
+	    	if (err) throw err;
+	    	that.deleteSigIdFromSpheronPropagationQueueIterator(result, targetSigId, 0, function(updatedSpheron){
+				mongoNet.findOneAndUpdate({
+					type: "spheron",
+					spheronId : spheronId
+				},{
+					$set: {propagationMessageQueue: updatedSpheron.propagationMessageQueue}
+				}, 
+				{}, 
+				function(err,doc){
+					if(err) throw err
+					//eventually
+		    		callback(result)
+				})	    		
+	    	})
+		});
+	},
+	deleteSigIdFromSpheronPropagationQueueIterator(thisSpheron, targetSigId, idx, callback){
+		var that = this
+		if(thisSpheron.propagationMessageQueue[idx]){
+			if(thisSpheron.propagationMessageQueue[idx].signalId == targetSigId){
+				thisSpheron.propagationMessageQueue.splice(idx, 1)
+			}
+			that.deleteSigIdFromSpheronPropagationQueueIterator(thisSpheron, targetSigId, idx+1, callback)
+		} else {
+			callback(thisSpheron)
 		}
 	}
 }
