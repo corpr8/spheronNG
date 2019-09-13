@@ -286,7 +286,9 @@ var lessonMaintenanceProcessor = {
 				asyncRequire(that.lesson.outputConfigurations[outputConfigIdx].activationModule).then(function(thisActivationModule){
 					that.thisActivationModule = thisActivationModule
 					that.logger.log(moduleName, 2, 'activationModule: ' + that.lesson.outputConfigurations[outputConfigIdx].activationModule + ' - loaded.')
-					that.thisActivationModule.init('TDD', that.logger, that.mongoUtils, function(){
+					that.logger.log(moduleName, 2, 'passing the following lesson data: ' + JSON.stringify(that.lesson))
+
+					that.thisActivationModule.init('TDD', that.lesson, that.logger, that.mongoUtils, function(){
 						that.logger.log(moduleName, 2, 'calling back from activationModule initialisation function')
 						that.thisActivationModule[that.lesson.outputConfigurations[outputConfigIdx].activationFunction](gatheredData[thisSigId], function(){
 							that.deletePropagationDataByOutputConfigIdxAndSigId(outputConfigIdx, thisSigId, function(){

@@ -8,6 +8,7 @@ var thisApp ={
 	tddChild: null,
 	logAnalyserChild: null,
 	mainProgChild: null,
+	processArguments: [],
 	deleteLogfile: function(callback){
  		fs.unlink(settings.logOptions.logPath, function(){
  			callback()
@@ -116,26 +117,33 @@ var thisApp ={
 		var that = this
 		that.deleteLogfile(function(){
 			that.killOtherProcesses(function(){
-				that.runTdd(function(tddTestResult){
-					console.log('waiting for .5 second so log buffer clears :-/')
-					setTimeout(function(){ 
-						that.runLogAnalysis(function(logAnalysisResult){
-						
-							//console.log('TDD test result: ' + testResult)
-							if(tddTestResult == 'passed' && logAnalysisResult == 'passed'){
-								console.log('running code in production mode') 
-								that.runMainProg(function(){
-									callback('finished running main program...')
-							  	})
-							} else {
-								console.log('killing any running processes (TDD or Main Program).')
+				if(that.processArguments.indexOf('NOTDD') == -1){
+					that.runTdd(function(tddTestResult){
+						console.log('waiting for .5 second so log buffer clears :-/')
+						setTimeout(function(){ 
+							that.runLogAnalysis(function(logAnalysisResult){
+							
+								//console.log('TDD test result: ' + testResult)
+								if(tddTestResult == 'passed' && logAnalysisResult == 'passed'){
+									console.log('running code in production mode') 
+									that.runMainProg(function(){
+										callback('finished running main program...')
+								  	})
+								} else {
+									console.log('killing any running processes (TDD or Main Program).')
 
-								that.killOtherProcesses(function(){}) 
-							}
-						})	
-					}, 1000)   
-				
-				})
+									that.killOtherProcesses(function(){}) 
+								}
+							})	
+						}, 1000)   
+					
+					})
+				} else {
+					console.log('running code in production mode') 
+					that.runMainProg(function(){
+						callback('finished running main program...')
+					})
+				}
 			})	
 		})
 	},
@@ -169,21 +177,28 @@ var thisApp ={
 		console.log('______________________________________________________')
 		console.log('___________________Running Init_______________________')
 		var that = this
-		//setupFileWatcher and call safeRestart on each change...
 
-		process.on('SIGINT', function() {
-			that.killOtherProcesses(function(){
-				process.exitCode = 0
-				process.exit()
-			})
+
+		process.argv.forEach(function (val, index, array) {
+			that.processArguments.push(val)
 		});
 
+		//setupFileWatcher and call safeRestart on each change...
+		if(that.processArguments.indexOf('NOTDD') == -1){
+			process.on('SIGINT', function() {
+				that.killOtherProcesses(function(){
+					process.exitCode = 0
+					process.exit()
+				})
+			});
 
-		for(var v=0;v< settings.dev.fileWatch.length;v++){
-			var thisWatcher = fs.watch(settings.dev.fileWatch[v], that.watchHandler)
-			that.watcherArray.push(thisWatcher)
+
+			for(var v=0;v< settings.dev.fileWatch.length;v++){
+				var thisWatcher = fs.watch(settings.dev.fileWatch[v], that.watchHandler)
+				that.watcherArray.push(thisWatcher)
+			}	
 		}
-
+		
 		that.safeRestart(function(exitCode){
 			console.log('calling back from safeRestart with: ' + exitCode)
 		})

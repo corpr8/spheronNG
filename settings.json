@@ -20,7 +20,7 @@
 		"lessonMaintenanceLogPath" : "./out-lm.txt"
 	},
 	"dev":{
-		"fileWatch": ["./","./tests/dataForSpheronNG/"],
+		"fileWatch": ["./","./tests/dataForSpheronNG/","./activationModules"],
 		"excludedTypes" :[".tmp","out.txt","package.json","package-lock.json","useful.txt", ".gitignore"]
 	}
 }

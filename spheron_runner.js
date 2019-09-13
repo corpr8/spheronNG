@@ -23,7 +23,7 @@ var spheron_runner = {
 	backpropQueueProcessor: null,
 	multivariateTestProcessor: null,
 	lessonMaintenanceProcessor: null,
-	networkMaintenanceProcessor: null,
+	spheronMaintenanceProcessor: null,
 	spheron: null,
 	systemTickTimer: null,
 	systemTick: null,
@@ -39,7 +39,7 @@ var spheron_runner = {
 		that.propagationQueueProcessor = require('./3-propagationQueueProcessor.js')
 		that.backpropQueueProcessor = require('./4-backpropQueueProcessor.js')
 		that.multivariateTestProcessor = require('./5-multivariateTestProcessor.js')
-		that.lessonMaintenanceProcessor = require('./6-spheronMaintenanceProcessor.js')
+		that.spheronMaintenanceProcessor = require('./6-spheronMaintenanceProcessor.js')
 
 		//disable UDP if as we are offline...
 		if(settings.loadUDP){
@@ -199,7 +199,7 @@ var spheron_runner = {
 				})
 				break;
 			case 6:
-		        that.logger.log(moduleName, 2,'Phase6: network maintenance')
+		        that.logger.log(moduleName, 2,'Phase6: spheron maintenance')
 				/*
 				* If the life of any of the connections to the spheron has decayed below a certain threshold then it is effctively static.
 				* So convert it to a bias and 'vector add' that bias with the existent bias?
@@ -209,8 +209,8 @@ var spheron_runner = {
 				*/
 
 		        that.logger.log(moduleName, 2,'Phase7: networkMaintenanceProcessor')
-				that.networkMaintenanceProcessor.init(that.spheron, that.logger, function(){
-					that.logger.log(moduleName, 4,'finished Phase 7 - networkMaintenanceProcessor')
+				that.spheronMaintenanceProcessor.init(that.spheron, that.logger, mongoUtils, function(){
+					that.logger.log(moduleName, 4,'finished Phase 7 - spheronMaintenanceProcessor')
 					that.postPhaseHandler(phaseIdx, callback)
 				})
 				break;

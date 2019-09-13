@@ -79,6 +79,13 @@ var commonFunctions = {
 			that.logger.log(moduleName, 2, 'propagationMessageQueue is: ' + JSON.stringify(propagationMessageQueue))
 			callback(propagationMessageQueue)
 		})
+	},
+	getBackPropogationMessageQueueBySpheronId: function(spheronId, callback){
+		var that = this
+		that.mongoUtils.getBackPropagationMessageQueueBySpheronId(spheronId, function(bpMessageQueue){
+			that.logger.log(moduleName, 2, 'bpQueue is: ' + JSON.stringify(bpMessageQueue))
+			callback(bpMessageQueue)
+		})
 	}
 }
 module.exports = commonFunctions;

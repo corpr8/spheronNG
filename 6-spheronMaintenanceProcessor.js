@@ -69,7 +69,7 @@ var networkMaintenanceProcessor = {
 			case 0: 
 
 				that.logger.log(moduleName, 2, 'Running Phase 0: running petrifier')
-				that.petrifier(function(){
+				that.petrifier(0.0001, function(){
 					that.processorPhaseIterator(phaseIdx +1, callback)
 				})
 			break;

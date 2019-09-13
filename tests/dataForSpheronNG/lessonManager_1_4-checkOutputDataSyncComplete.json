@@ -4,6 +4,7 @@
 	"type" : "lesson",
 	"state" : "pending",
 	"lastProcessed" : 0,
+	"lastLessonIdxProcessed" : 1,
 	"options":{
 		"timeout": 10,
 		"mode":"autoTrain",
@@ -48,7 +49,7 @@
 			"io": [
 				{"id" : "input2", "type": "extInput", "angle": 0, "fromId": "ext", "fromPort": "ext", "val":-1, "life" : 1, "errorMap": []},
 				{"id" : "bias2", "type": "bias", "angle": 20, "val":-1, "errorMap": []},
-				{"id" : "internal2", "type": "output", "angle": -60, "toId": "outputSpheron1", "toPort": "internal1", "val":-1, "errorMap": []},
+				{"id" : "internal2", "type": "output", "angle": -60, "toId": "outputSpheron1", "toPort": "internal2", "val":-1, "errorMap": []},
 				{"id" : "internal4", "type": "output", "angle": 60, "toId": "outputSpheron2", "toPort": "internal4", "val":-1, "errorMap": []}
 			],
 			"inputMessageQueue": [],
@@ -102,9 +103,7 @@
 				"biases" : [], 
 				"outputs" : []
 			},
-			"bpQueue": [
-				{"signalPath":"input1;input2;input3;bias1;internal2;", "bpSignalDepth":0, "error":0.82635,"lessonId":"whatIsAnd","sigId":"1000","lessonIdx":0}
-			]
+			"bpQueue": []
 		},
 		{"spheronId": "outputSpheron2",
 			"type" : "spheron",
@@ -147,9 +146,7 @@
 				"biases" : [], 
 				"outputs" : []
 			},
-			"bpQueue": [
-				{"signalPath":"input1;input2;input3;bias1;internal2;", "bpSignalDepth":0, "error":0.82635,"lessonId":"whatIsAnd","sigId":"1000","lessonIdx":0}
-			]
+			"bpQueue": []
 		}
 	],
 	"outputConfigurations": [
@@ -165,10 +162,10 @@
 		}
 	],
 	"lesson" : [
-		{"inputs": {"inputSpheron1": {"input1": {"val": 0}}, "inputSpheron2": {"input2": {"val": 0}}}, "outputs": {"outputSpheron1": {"ANDout": {"val": 0}}}},
-		{"inputs": {"inputSpheron1": {"input1": {"val": 1}}, "inputSpheron2": {"input2": {"val": 0}}}, "outputs": {"outputSpheron1": {"ANDout": {"val": 0}}}},
-		{"inputs": {"inputSpheron1": {"input1": {"val": 0}}, "inputSpheron2": {"input2": {"val": 1}}}, "outputs": {"outputSpheron1": {"ANDout": {"val": 0}}}},
-		{"inputs": {"inputSpheron1": {"input1": {"val": 1}}, "inputSpheron2": {"input2": {"val": 1}}}, "outputs": {"outputSpheron1": {"ANDout": {"val": 1}}}}
+		{"inputs": {"inputSpheron1": {"input1": {"val": 0}}, "inputSpheron2": {"input2": {"val": 0}}}, "outputs": {"outputSpheron1": {"ANDout": {"val": 0}},"outputSpheron2": {"NOTANDout": {"val": 1}}}},
+		{"inputs": {"inputSpheron1": {"input1": {"val": 1}}, "inputSpheron2": {"input2": {"val": 0}}}, "outputs": {"outputSpheron1": {"ANDout": {"val": 0}},"outputSpheron2": {"NOTANDout": {"val": 1}}}},
+		{"inputs": {"inputSpheron1": {"input1": {"val": 0}}, "inputSpheron2": {"input2": {"val": 1}}}, "outputs": {"outputSpheron1": {"ANDout": {"val": 0}},"outputSpheron2": {"NOTANDout": {"val": 1}}}},
+		{"inputs": {"inputSpheron1": {"input1": {"val": 1}}, "inputSpheron2": {"input2": {"val": 1}}}, "outputs": {"outputSpheron1": {"ANDout": {"val": 1}},"outputSpheron2": {"NOTANDout": {"val": 0}}}}
 	],
 	"tdd" : {
 		"tddTests": [
@@ -249,6 +246,72 @@
 						"atLeastTheseFields": true,
 						"ordered": true, 
 						"results": null
+					},
+					{
+						"function" : "commonFunctions.getBackPropogationMessageQueueBySpheronId", 
+						"parameters" : "outputSpheron1",
+						"returnType" : "object",
+						"containsJSONArray" : false,
+						"atLeastTheseFields": true,
+						"ordered": true, 
+						"results": [
+							{"signalPath":"input1;input2;input3;bias1;internal1;ANDout","error":15.8263,"lessonId":"whatIsAnd","sigId":"1000","lessonIdx":0,"bpSignalDepth":0},
+							{"signalPath":"input1;input2;input3;bias1;internal1;ANDout","error":14.8263,"lessonId":"whatIsAnd","sigId":"1001","lessonIdx":1,"bpSignalDepth":0}
+						]
+					},
+					{
+						"function" : "commonFunctions.getBackPropogationMessageQueueBySpheronId", 
+						"note" : "If we got this far then we have successfully run the sync function for whatIsAnd and backpropped onto the queue",
+						"parameters" : "outputSpheron2",
+						"returnType" : "object",
+						"containsJSONArray" : false,
+						"atLeastTheseFields": true,
+						"ordered": true, 
+						"results": [
+							{"signalPath":"input1;input2;input3;bias1;internal3;NOTANDout","error":4.8263,"lessonId":"whatIsAnd","sigId":"1000","lessonIdx":0,"bpSignalDepth":0},
+							{"signalPath":"input1;input2;input3;bias1;internal3;NOTANDout","error":0.8263,"lessonId":"whatIsAnd","sigId":"1001","lessonIdx":1,"bpSignalDepth":0}
+						]
+					},
+					{
+						"function" : "mongoUtils.getLessonTestsById",
+						"note" : "now we have written errors back into the lesson so we can tell if we passed or not...",
+						"parameters" : "whatIsAnd",
+						"returnType" : "object",
+						"containsJSONArray" : false,
+						"atLeastTheseFields": true,
+						"ordered": true, 
+						"results":  [
+							{"inputs": {"inputSpheron1": {"input1": {"val": 0}}, "inputSpheron2": {"input2": {"val": 0}}}, "outputs": {"outputSpheron1": {"ANDout": {"val": 0, "error": 15.8263}},"outputSpheron2": {"NOTANDout": {"val": 1, "error": 4.8263}}}},
+							{"inputs": {"inputSpheron1": {"input1": {"val": 1}}, "inputSpheron2": {"input2": {"val": 0}}}, "outputs": {"outputSpheron1": {"ANDout": {"val": 0, "error": 14.8263}},"outputSpheron2": {"NOTANDout": {"val": 1, "error": 0.8263}}}},
+							{"inputs": {"inputSpheron1": {"input1": {"val": 0}}, "inputSpheron2": {"input2": {"val": 1}}}, "outputs": {"outputSpheron1": {"ANDout": {"val": 0}},"outputSpheron2": {"NOTANDout": {"val": 1}}}},
+							{"inputs": {"inputSpheron1": {"input1": {"val": 1}}, "inputSpheron2": {"input2": {"val": 1}}}, "outputs": {"outputSpheron1": {"ANDout": {"val": 1}},"outputSpheron2": {"NOTANDout": {"val": 0}}}}
+						]
+					},
+					{
+						"function" : "commonFunctions.getInputQueueBySpheronId",
+						"note" : "Have we propagated the new entries to the input queue?",
+						"parameters" : "inputSpheron1",
+						"returnType" : "object",
+						"containsJSONArray" : false,
+						"atLeastTheseFields": true,
+						"ordered": true, 
+						"results":  [
+							{"lessonId" : "whatIsAnd", "toPort" : "input1", "path" : "input1", "lessonIdx": 2, "val": 0, "sigId" : "TestSigGUID"},
+							{"lessonId" : "whatIsAnd", "toPort" : "input1", "path" : "input1", "lessonIdx": 3, "val": 1, "sigId" : "TestSigGUID"}
+						]
+					},
+					{
+						"function" : "commonFunctions.getInputQueueBySpheronId",
+						"note" : "Have we propagated the new entries to the input queue?",
+						"parameters" : "inputSpheron2",
+						"returnType" : "object",
+						"containsJSONArray" : false,
+						"atLeastTheseFields": true,
+						"ordered": true, 
+						"results":  [
+							{"lessonId" : "whatIsAnd", "toPort" : "input2", "path" : "input2", "lessonIdx": 2, "val": 1, "sigId" : "TestSigGUID"},
+							{"lessonId" : "whatIsAnd", "toPort" : "input2", "path" : "input2", "lessonIdx": 3, "val": 1, "sigId" : "TestSigGUID"}
+						]
 					}
 				]
 			}

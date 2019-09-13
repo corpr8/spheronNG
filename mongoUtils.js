@@ -109,6 +109,18 @@ var mongoUtils = {
 	    	}
 		});
 	},
+	getLessonTestsById: function(lessonId, callback){
+		mongoNet.findOne({
+			type: "lesson",
+			lessonId: lessonId
+		}, function(err, result) {
+	    	if (err){
+	    		callback();
+	    	} else {	
+	    		callback(result.lesson)
+	    	}
+		});
+	},
 	getLessonPetrificationThresholdById: function(lessonId, callback){
 		mongoNet.findOne({
 			type: "lesson",
@@ -301,16 +313,16 @@ var mongoUtils = {
 		/*
 		* Use this from the TDD framework to load a specific network - i.e. typically the current document (by file name)
 		*/
-
 		var that = this
-		//asyncRequire(appDir + fileName).then(function(thisData){
-		var thisData = require(appDir + '/' + fileName)	
-		that.logger.log(moduleName, 2, 'loaded testData: ' + thisData)
-			
-		that.setupDemoData(thisData, function(){
+		fs.readFile(appDir + '/' + fileName, function(err, thisData){
+		  if (err) throw err;
+		  that.logger.log(moduleName, 2, 'loaded testData: ')
+			thisData = JSON.parse(thisData)
+		  that.setupDemoData(thisData, function(){
 			that.logger.log(moduleName, 2, 'Test Data Loaded...')
 			callback()
-		}) 
+		  })
+		});
 	},
 	setupDemoData: function(demoData, callback){
 		var that = this
@@ -320,7 +332,7 @@ var mongoUtils = {
 			//now iterate the data and load it...
 			that.createProblemDefinition(demoData, function(){
 				that.createSpheronFromArrayIterator(0, demoData, function(){
-					that.logger.log(4,'sample spherons created.')
+					that.logger.log(moduleName, 4,'sample spherons created.')
 					callback()
 				})	
 			})
@@ -335,12 +347,15 @@ var mongoUtils = {
 		var that = this
 		that.createProblemDefinition(problemDefinition, function(){
 			that.createSpheronFromArrayIterator(0, problemDefinition, function(){
-				that.logger.log(4,'Problem imported, spheron array created.')
+				that.logger.log(moduleName, 4,'Problem imported, spheron array created.')
 				callback()
 			})
 		})
 	},
 	createProblemDefinition: function(demoData, callback){
+		var that = this
+		that.logger.log(moduleName, 2,'creating problem definition')
+		that.logger.log(moduleName, 2,'creating problem definition:' + JSON.stringify(demoData))
 		var thisProblemDefinition = JSON.parse(JSON.stringify(demoData))
 		delete thisProblemDefinition.network
 		delete thisProblemDefinition.tdd
@@ -370,7 +385,7 @@ var mongoUtils = {
 		var that = this
 		//The main function loop - pulls back spherons which are awaitng processing.
 		//TODO: Works but needs to return the one with the lowest pendAct + state == pending
-		that.logger.log(4,'getting next spheron for tick: ' + tickStamp)
+		that.logger.log(moduleName, 4,'getting next spheron for tick: ' + tickStamp)
 		//nextTick: { $lt: thisNextTick },
 					//
 		mongoNet.findOneAndUpdate({
@@ -387,7 +402,7 @@ var mongoUtils = {
 				that.logger.log(4,'no pending spherons: ' + err)
 				callback({})
 			} else if (doc.value != null){ 
-				that.logger.log(4,'spheron is: ' + JSON.stringify(doc.value))
+				that.logger.log(moduleName, 4,'spheron is: ' + JSON.stringify(doc.value))
 				callback(doc.value)
 			} else {
 				that.logger.log(4,'spheron was null: ' + JSON.stringify(doc))
@@ -634,6 +649,37 @@ var mongoUtils = {
 	    	callback(result)
 		});
 	},
+	getIncrementLessonIdx: function(lessonId, callback){
+		var that = this
+		that.getLessonDataByLessonId(lessonId, function(lessonData){
+			var lessonCount = lessonData.lesson.length
+			var currentIdx = lessonData.lastLessonIdxProcessed
+			var nextIdx = 0
+			if(currentIdx < (lessonCount-1)){
+				nextIdx = currentIdx +1
+			}
+
+			mongoNet.updateOne({
+					type: "lesson", 
+					lessonId: lessonId
+				},{
+					$set: {
+						lastLessonIdxProcessed: nextIdx
+					}
+				}, 
+				{}, 
+				function(err,doc){
+					if(err){
+						that.logger.log(moduleName, 2, 'updating lessonIdx error' + err)
+						callback(nextIdx)
+					} else { 
+						that.logger.log(moduleName, 2, 'updated lessonIdx: ')
+						callback(nextIdx)
+					}	
+				}
+			)
+		})
+	},
 	getPropagationMessageQueueBySpheronId: function(spheronId, callback){
 		var that = this
 		mongoNet.findOne({
@@ -643,6 +689,17 @@ var mongoUtils = {
 	    	if (err) throw err;
 	    	that.logger.log(moduleName, 2, 'propogationMessageQueueIs: ' + JSON.stringify(result.propagationMessageQueue))
 	    	callback(result.propagationMessageQueue)
+		});
+	},
+	getBackPropagationMessageQueueBySpheronId: function(spheronId, callback){
+		var that = this
+		mongoNet.findOne({
+			type: "spheron",
+			spheronId: spheronId
+		}, function(err, result) {
+	    	if (err) throw err;
+	    	that.logger.log(moduleName, 2, 'bpQueue: ' + JSON.stringify(result.bpQueue))
+	    	callback(result.bpQueue)
 		});
 	},
 	updateLessonInputs: function(lessonId, spheronId, oldInput, newInput, callback){
@@ -875,6 +932,33 @@ var mongoUtils = {
 		} else {
 			callback(thisSpheron)
 		}
+	},
+	updateLessonError(lessonId, lessonIdx, spheronId, portId, thisError, callback){
+		mongoNet.findOne({
+			type: "lesson",
+			lessonId: lessonId
+		}, function(err, result) {
+	    	if (err){
+	    		callback();
+	    	} else {	
+	    		//now update the object...
+	    		result.lesson[lessonIdx].outputs[spheronId][portId].error = thisError
+				mongoNet.findOneAndUpdate({
+					type: "lesson",
+					lessonId : lessonId
+				},{
+					$set: {lesson: result.lesson}
+				}, 
+				{}, 
+				function(err,doc){
+					if(err){
+						callback()
+					} else { 
+						callback(doc)
+					}	
+				})
+	    	}
+		});
 	}
 }
 

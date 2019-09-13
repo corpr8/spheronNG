@@ -165,10 +165,10 @@
 		}
 	],
 	"lesson" : [
-		{"inputs": {"inputSpheron1": {"input1": {"val": 0}}, "inputSpheron2": {"input2": {"val": 0}}}, "outputs": {"outputSpheron1": {"ANDout": {"val": 0}}}},
-		{"inputs": {"inputSpheron1": {"input1": {"val": 1}}, "inputSpheron2": {"input2": {"val": 0}}}, "outputs": {"outputSpheron1": {"ANDout": {"val": 0}}}},
-		{"inputs": {"inputSpheron1": {"input1": {"val": 0}}, "inputSpheron2": {"input2": {"val": 1}}}, "outputs": {"outputSpheron1": {"ANDout": {"val": 0}}}},
-		{"inputs": {"inputSpheron1": {"input1": {"val": 1}}, "inputSpheron2": {"input2": {"val": 1}}}, "outputs": {"outputSpheron1": {"ANDout": {"val": 1}}}}
+		{"inputs": {"inputSpheron1": {"input1": {"val": 0}}, "inputSpheron2": {"input2": {"val": 0}}}, "outputs": {"outputSpheron1": {"ANDout": {"val": 0}},"outputSpheron2": {"NOTANDout": {"val": 1}}}},
+		{"inputs": {"inputSpheron1": {"input1": {"val": 1}}, "inputSpheron2": {"input2": {"val": 0}}}, "outputs": {"outputSpheron1": {"ANDout": {"val": 0}},"outputSpheron2": {"NOTANDout": {"val": 1}}}},
+		{"inputs": {"inputSpheron1": {"input1": {"val": 0}}, "inputSpheron2": {"input2": {"val": 1}}}, "outputs": {"outputSpheron1": {"ANDout": {"val": 0}},"outputSpheron2": {"NOTANDout": {"val": 1}}}},
+		{"inputs": {"inputSpheron1": {"input1": {"val": 1}}, "inputSpheron2": {"input2": {"val": 1}}}, "outputs": {"outputSpheron1": {"ANDout": {"val": 1}},"outputSpheron2": {"NOTANDout": {"val": 0}}}}
 	],
 	"tdd" : {
 		"tddTests": [
