@@ -14,6 +14,7 @@ var url = "mongodb://192.168.61.1:27017/"; //if running locally on macbook with 
 var db = [];
 var dbo = [];
 var mongoNet = [];
+var averagingAnalyticModule = require(appDir + '/averagingAnalyticModule.js')
 
 /*
 * A way to persist Spherons and connections out to mongo
@@ -190,7 +191,76 @@ var mongoUtils = {
 	    		that.logger.log(moduleName, 2, 'lesson dump: ' + JSON.stringify(results))
 				that.logger.log(moduleName, 2, 'lesson state: ' + results.state)
 	    		callback(results.state)
-	    		//process.exitCode = 1
+	    	}
+		});
+	},
+	getLessons: function(callback){
+		var that = this
+		that.logger.log(moduleName, 2, 'Getting lessons')  
+		mongoNet.find({
+			type: "lesson"
+		}).toArray(function(err, result) {
+		    if (err) throw err;
+		    callback(result)
+		});
+	},
+	getAllLessonNames: function(callback){
+		var that = this
+		that.logger.log(moduleName, 2, 'Getting all lesson names')  		
+		mongoNet.aggregate(
+		  [{
+		    $group: {
+		      _id: '$lessonId',
+		    }
+		  }]
+		).toArray(function(err, result) {
+		    if (err) throw err;
+		    var lessonArray = []
+		    result.forEach(function(thisLessonName){
+		    	if(thisLessonName._id){
+		    		lessonArray.push(thisLessonName._id)
+		    	}
+		    })
+		    callback(lessonArray)
+		});
+	},
+	countSpheronsGroupedByLesson: function(callback){
+		var that = this
+		that.logger.log(moduleName, 2, 'Counting spherons grouped by lessonId')  
+		mongoNet.aggregate(
+		  [{
+		    $group: {
+		      _id: '$lessonId',
+		      count: { $sum: 1}
+		    }
+		  }]
+		).toArray(function(err, result) {
+		    if (err) throw err;
+		    callback(result)
+		});
+	},
+	getLessonFitnessByLessonId(lessonId, callback){
+		var that = this
+		that.logger.log(moduleName, 2, 'Getting lesson analytical data')  
+		
+		mongoNet.findOne({
+			type: "lesson",
+			lessonId: lessonId
+		}, function(err, result) {
+	    	if (err){
+	    		that.logger.log(moduleName, 2, 'mongo error: ' + err)
+	    		callback();
+	    	} else {
+	    		if(result.lessonAnalyticalData){
+	    			if(result.lessonAnalyticalData.fitness){
+						that.logger.log(moduleName, 2, 'lesson fitness: ' + result.lessonAnalyticalData.fitness)
+			    		callback(result.lessonAnalyticalData.fitness)
+	    			} else {
+	    				callback()
+	    			}
+	    		} else {
+	    			callback()
+	    		}
 	    	}
 		});
 	},
@@ -934,6 +1004,7 @@ var mongoUtils = {
 		}
 	},
 	updateLessonError(lessonId, lessonIdx, spheronId, portId, thisError, callback){
+		var that = this
 		mongoNet.findOne({
 			type: "lesson",
 			lessonId: lessonId
@@ -943,22 +1014,133 @@ var mongoUtils = {
 	    	} else {	
 	    		//now update the object...
 	    		result.lesson[lessonIdx].outputs[spheronId][portId].error = thisError
-				mongoNet.findOneAndUpdate({
-					type: "lesson",
-					lessonId : lessonId
-				},{
-					$set: {lesson: result.lesson}
-				}, 
-				{}, 
-				function(err,doc){
-					if(err){
-						callback()
-					} else { 
-						callback(doc)
-					}	
-				})
+	    		that.calculateLessonAggregateError(result.lesson, function(aggregateErrorObject){
+					that.pushDataToLessonAnalyticsIterator(aggregateErrorObject, result.lessonAnalyticalData, 0, function(updatedAnalytics){
+						//eventually
+						mongoNet.findOneAndUpdate({
+							type: "lesson",
+							lessonId : lessonId
+						},{
+							$set: {
+								lesson: result.lesson,
+								lessonAnalyticalData: updatedAnalytics
+							}
+						}, 
+						{}, 
+						function(err,doc){
+							if(err){
+								callback()
+							} else { 
+								callback(doc)
+							}	
+						})
+					})
+	    		})
 	    	}
 		});
+	},
+	pushDataToLessonAnalyticsIterator(aggregateErrorObject, lessonAnalyticalData, dataIdx, callback){
+		var that = this
+		console.log('aggregateErrorObject: ' + JSON.stringify(aggregateErrorObject))
+		if(Object.keys(aggregateErrorObject)[dataIdx]){
+			var thisKey = Object.keys(aggregateErrorObject)[dataIdx]
+			that.logger.log(moduleName, 2, 'pushing analytical data to:' + thisKey)
+			that.logger.log(moduleName, 2, 'aggregateErrorObject[thisKey]: ' + aggregateErrorObject[thisKey])
+			that.logger.log(moduleName, 2, 'lessonAnalyticalData[thisKey]: ' + lessonAnalyticalData[thisKey])
+			that.logger.log(moduleName, 2, 'typeOf lessonAnalyticalData[thisKey] != null: ' + (lessonAnalyticalData[thisKey] === null))
+
+			averagingAnalyticModule.pushDataToStore(aggregateErrorObject[thisKey], lessonAnalyticalData[thisKey], function(updatedAnalytics){
+				that.logger.log(moduleName, 2, 'we got updated analytics: ' + JSON.stringify(updatedAnalytics))
+				lessonAnalyticalData[thisKey] = updatedAnalytics
+				that.logger.log(moduleName, 2, 'updated analytics object: ' + JSON.stringify(lessonAnalyticalData))
+				that.pushDataToLessonAnalyticsIterator(aggregateErrorObject, lessonAnalyticalData, dataIdx+1, callback)	
+		    })		    
+		} else {
+			callback(lessonAnalyticalData)
+		}
+	},
+	calculateLessonAggregateError(lesson, callback){
+		var that = this
+		that.calculateLessonAggregateErrorIterator(lesson, 0, 0, 0, 0, 0, 0, 0, null, null, function(aggregateErrorObject){
+			that.logger.log(moduleName, 2, 'aggregateErrorObject is:' + JSON.stringify(aggregateErrorObject))
+			callback(aggregateErrorObject)
+		})
+	},
+	calculateLessonAggregateErrorIterator(lesson, lessonRowIdx, outputSpheronIdx, outputPortIdx, emptyResultCount, fullResultCount, totalResultCount, absSumFullResults, highestError, lowestError, callback){
+		/*
+		* lesson is a normal lesson object
+		* row is which row of the lesson
+		* outputSpheronIdx - is output spheron on that row
+		* outputPortIdx - port within that spheron
+		* countEmptyResults.- how many have no data
+		* countFullResults - how many have data
+		* countTotalResults = sum[all ports across all outputSpherons for all lesson rows] 
+		* highestError - the largest error encountered
+		* lowestError - the lowest error encountered
+		* absSumFullResults - the absolute sum of errors
+		*
+		* once we finish iterating, return.
+		* lessons are in the form:
+		*
+		* [{"inputs": {"inputSpheron1": {"input1": {"val": 0}}, "inputSpheron2": {"input2": {"val": 0}}}, "outputs": {"outputSpheron1": {"ANDout": {"val": 0, "error": 15.8263}},"outputSpheron2": {"NOTANDout": {"val": 1, "error": 4.8263}}}},
+		* {"inputs": {"inputSpheron1": {"input1": {"val": 1}}, "inputSpheron2": {"input2": {"val": 0}}}, "outputs": {"outputSpheron1": {"ANDout": {"val": 0, "error": 14.8263}},"outputSpheron2": {"NOTANDout": {"val": 1, "error": 0.8263}}}},
+		* {"inputs": {"inputSpheron1": {"input1": {"val": 0}}, "inputSpheron2": {"input2": {"val": 1}}}, "outputs": {"outputSpheron1": {"ANDout": {"val": 0}},"outputSpheron2": {"NOTANDout": {"val": 1}}}},
+		* {"inputs": {"inputSpheron1": {"input1": {"val": 1}}, "inputSpheron2": {"input2": {"val": 1}}}, "outputs": {"outputSpheron1": {"ANDout": {"val": 1}},"outputSpheron2": {"NOTANDout": {"val": 0}}}}]
+		*
+		*/
+		var that = this
+		if(lesson[lessonRowIdx]){
+			if(Object.keys(lesson[lessonRowIdx].outputs)[outputSpheronIdx]){
+				//outputSpheronExists
+				var thisOutputSpheron = Object.keys(lesson[lessonRowIdx].outputs)[outputSpheronIdx]
+
+				if(Object.keys(lesson[lessonRowIdx].outputs[thisOutputSpheron])[outputPortIdx]){
+					//outputPort Exists
+					totalResultCount += 1
+					var thisOutputPort = Object.keys(lesson[lessonRowIdx].outputs[thisOutputSpheron])[outputPortIdx]
+					if(lesson[lessonRowIdx].outputs[thisOutputSpheron][thisOutputPort].error){
+						//error is already here
+						fullResultCount +=1
+						var thisError = lesson[lessonRowIdx].outputs[thisOutputSpheron][thisOutputPort].error
+						absSumFullResults += Math.abs(thisError)
+						if(lowestError){
+							if(thisError < lowestError){
+								lowestError = thisError	
+							}
+						} else {
+							lowestError = thisError
+						}
+
+						if(highestError){
+							if(thisError > highestError){
+								highestError = thisError
+							}
+						} else {
+							highestError = thisError
+						}
+
+					} else {
+						//no error yet
+						emptyResultCount +=1
+					}
+					that.calculateLessonAggregateErrorIterator(lesson, lessonRowIdx, outputSpheronIdx, outputPortIdx+1, emptyResultCount, fullResultCount, totalResultCount, absSumFullResults, highestError, lowestError, callback)	
+				} else {
+					that.calculateLessonAggregateErrorIterator(lesson, lessonRowIdx, outputSpheronIdx+1, 0, emptyResultCount, fullResultCount, totalResultCount, absSumFullResults, highestError, lowestError, callback)	
+				}
+			} else {
+				//iterate to next row
+				that.calculateLessonAggregateErrorIterator(lesson, lessonRowIdx+1, 0, 0, emptyResultCount, fullResultCount, totalResultCount, absSumFullResults, highestError, lowestError, callback)
+			}
+		} else {
+			callback({
+		 	"emptyResultCount": emptyResultCount,
+			"fullResultCount": fullResultCount,
+			"totalResultCount": totalResultCount,
+			"highestError": highestError,
+			"lowestError":  lowestError,
+			"absError": (Math.floor((absSumFullResults / fullResultCount) * 10000)) / 10000
+		})
+		}
 	}
 }
 

@@ -22,5 +22,8 @@
 	"dev":{
 		"fileWatch": ["./","./tests/dataForSpheronNG/","./activationModules"],
 		"excludedTypes" :[".tmp","out.txt","package.json","package-lock.json","useful.txt", ".gitignore"]
+	},
+	"webserver":{
+		"port" : 3030
 	}
 }

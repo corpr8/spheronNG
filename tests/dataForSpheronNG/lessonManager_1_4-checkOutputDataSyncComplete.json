@@ -167,6 +167,14 @@
 		{"inputs": {"inputSpheron1": {"input1": {"val": 0}}, "inputSpheron2": {"input2": {"val": 1}}}, "outputs": {"outputSpheron1": {"ANDout": {"val": 0}},"outputSpheron2": {"NOTANDout": {"val": 1}}}},
 		{"inputs": {"inputSpheron1": {"input1": {"val": 1}}, "inputSpheron2": {"input2": {"val": 1}}}, "outputs": {"outputSpheron1": {"ANDout": {"val": 1}},"outputSpheron2": {"NOTANDout": {"val": 0}}}}
 	],
+	"lessonAnalyticalData" : {
+		"absError": {"lastDataEvent":1568746028,"store":[[360,360,388,388,318,318,952,952,253],[151.5]]},
+		"emptyResultCount": null,
+		"fullResultCount": null,
+		"totalResultCount": null,
+		"highestError": null,
+		"lowestError":  null
+	},
 	"tdd" : {
 		"tddTests": [
 			{
@@ -312,7 +320,30 @@
 							{"lessonId" : "whatIsAnd", "toPort" : "input2", "path" : "input2", "lessonIdx": 2, "val": 1, "sigId" : "TestSigGUID"},
 							{"lessonId" : "whatIsAnd", "toPort" : "input2", "path" : "input2", "lessonIdx": 3, "val": 1, "sigId" : "TestSigGUID"}
 						]
+					},
+					{
+						"function" : "mongoUtils.calculateLessonAggregateError",
+						"note" : "Doing analytics based on a lesson object",
+						"parameters" : [
+							{"inputs": {"inputSpheron1": {"input1": {"val": 0}}, "inputSpheron2": {"input2": {"val": 0}}}, "outputs": {"outputSpheron1": {"ANDout": {"val": 0, "error": 15.8263}},"outputSpheron2": {"NOTANDout": {"val": 1, "error": 4.8263}}}},
+							{"inputs": {"inputSpheron1": {"input1": {"val": 1}}, "inputSpheron2": {"input2": {"val": 0}}}, "outputs": {"outputSpheron1": {"ANDout": {"val": 0, "error": 14.8263}},"outputSpheron2": {"NOTANDout": {"val": 1, "error": 0.8263}}}},
+							{"inputs": {"inputSpheron1": {"input1": {"val": 0}}, "inputSpheron2": {"input2": {"val": 1}}}, "outputs": {"outputSpheron1": {"ANDout": {"val": 0}},"outputSpheron2": {"NOTANDout": {"val": 1}}}},
+							{"inputs": {"inputSpheron1": {"input1": {"val": 1}}, "inputSpheron2": {"input2": {"val": 1}}}, "outputs": {"outputSpheron1": {"ANDout": {"val": 1}},"outputSpheron2": {"NOTANDout": {"val": 0}}}}
+						],
+						"returnType" : "object",
+						"containsJSONArray" : false,
+						"atLeastTheseFields": true,
+						"ordered": true, 
+						"results":  {
+							"emptyResultCount": 4,
+							"fullResultCount": 4,
+							"totalResultCount": 8,
+							"highestError": 15.8263,
+							"lowestError":  0.8263,
+							"absError": 9.0763
+						}
 					}
+					
 				]
 			}
 		],
