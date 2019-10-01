@@ -144,6 +144,7 @@ var propagationQueueProcessor = {
 						that.logger.log(moduleName, 2, 'message port type is: ' + propagationQueueItemMessagesAsInputArray[idx].type)
 						if(propagationQueueItemMessagesAsInputArray[idx].type == "extOutput"){
 							hadExternalSignal = true
+							that.logger.log(moduleName, 2, 'setting a lesson as pending: ' + propagationQueueItemMessagesAsInputArray[idx].lessonId)
 							that.mongoUtils.setLessonAsPending(propagationQueueItemMessagesAsInputArray[idx].lessonId, function(){
 								that.logger.log(moduleName, 2, 'we have a message for an extOutput so we have set the lesson as pending:' + propagationQueueItemMessagesAsInputArray[idx].lessonId)
 								that.iterateSignalsWithinAPropagationQueueItem(propagationQueueItemMessagesAsInputArray, idx+1, hadExternalSignal, callback)

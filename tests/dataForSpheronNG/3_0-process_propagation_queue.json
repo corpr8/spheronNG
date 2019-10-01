@@ -179,7 +179,7 @@
 						"atLeastTheseFields": true,
 						"ordered": true, 
 						"results":[
-							{"signalPath":"input1;input2;input3;bias1;internal1;","output":"internal1","val":15.82635,"lessonId":"whatIsAnd","sigId":"1000","lessonIdx":0}
+							{"signalPath":"input1;input2;input3;bias1;internal1;","toPort":"internal1","val":15.82635,"lessonId":"whatIsAnd","sigId":"1000","lessonIdx":0}
 						]
 					}
 

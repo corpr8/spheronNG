@@ -5,7 +5,7 @@ var thisApp = {
 		that._getGraphData(lessonId, function(graphData){
 			console.log('graph data is: ' + graphData)
 			graphData = JSON.parse(graphData)
-			that._addGraphPanel(lessonId, function(){
+			that._addLessonPanel(lessonId, function(){
 				that._createGraph(lessonId, graphData, function(){
 					callback()
 				})
@@ -13,19 +13,16 @@ var thisApp = {
 			})
 		})
 	},
-	_addGraphPanel(lessonId, callback){
+	_addLessonPanel(lessonId, callback){
 		var that = this
 		if($('#' + lessonId).length == 0){	
 			var newPanel =""
 			newPanel +='<div class="row">'
 			newPanel +='<div class="col-xl-12 col-md-12">'
-			newPanel +='<!-- Sales Graph -->'
-			newPanel +='<div class="card card-default" data-scroll-height="675">'
+			newPanel +='<!-- lesson panel -->'
+			newPanel +='<div id="' + lessonId + '" class="card card-default" data-scroll-height="675">'
 			newPanel +='<div class="card-header">'
 			newPanel +='<h2>' + lessonId + '</h2>'
-			newPanel +='</div>'
-			newPanel +='<div class="card-body">'
-			newPanel +='<canvas id="' + lessonId + '" class="chartjs"></canvas>'
 			newPanel +='</div>'
 			newPanel +='<div class="card-footer d-flex flex-wrap bg-white p-0">'
 			newPanel +='</div>'
@@ -33,7 +30,7 @@ var thisApp = {
 			newPanel +='</div>'
 			newPanel +='</div>'
 			var $panel = $(newPanel)
-			$('.content').append($panel)
+			$('.content').prepend($panel)
 			callback()	
 		} else {
 			console.log('panel already in UX')
@@ -47,22 +44,33 @@ var thisApp = {
 			callback(graphData)
 		})
 	},
-	_createGraph(lessonId, graphData, callback){
+	_createUpdateGraph(lessonId, chartType, graphData, callback){
+		console.log('inserting graph')
 	  /*======== 3. LINE CHART ========*/
 	  var that = this
-	  if(that.theseCharts[lessonId]){
+	  if(!that.theseCharts[lessonId]){
+	  	that.theseCharts[lessonId] = {}
+	  }
+
+	  if(that.theseCharts[lessonId][chartType]){
 	  	for(var v=0;v<graphData.data.length;v++){
-	  			that.theseCharts[lessonId].data.labels[v] = graphData.labels[v]
-	  		if(that.theseCharts[lessonId].data.datasets[0].data[v]){
-	  			that.theseCharts[lessonId].data.datasets[0].data[v] = graphData.data[v]
+	  			that.theseCharts[lessonId][chartType].data.labels[v] = graphData.labels[v]
+	  		if(that.theseCharts[lessonId][chartType].data.datasets[0].data[v]){
+	  			that.theseCharts[lessonId][chartType].data.datasets[0].data[v] = graphData.data[v]
 	  		} else {
-				that.theseCharts[lessonId].data.datasets[0].data.push()	  			
+				that.theseCharts[lessonId][chartType].data.datasets[0].data.push()	  			
 	  		}
 	  	}
 	  } else {
-		  var ctx = document.getElementById(lessonId);
+	  	  console.log('graph object didnt exist. adding it.')
+	  	  if($('#' + lessonId + chartType).length == 0){
+	  	  	console.log('ux element didnt exist. Inserting it')
+	  	  	//add the holder ux element.
+	  	  	$('#' + lessonId).append('<div id=' + lessonId + chartType + ' class="card-body"><canvas id="' + lessonId + chartType + '-grph" class="chartjs"></canvas></div')
+	  	  }
+		  var ctx = document.getElementById(lessonId + chartType +'-grph');
 		  if (ctx !== null) {
-		    that.theseCharts[lessonId] = new Chart(ctx, {
+		    that.theseCharts[lessonId][chartType] = new Chart(ctx, {
 		      // The type of chart we want to create
 		      type: "line",
 
@@ -71,7 +79,7 @@ var thisApp = {
 		        labels: graphData.labels,
 		        datasets: [
 		          {
-		            label: "",
+		            label: chartType,
 		            backgroundColor: "transparent",
 		            borderColor: "rgb(82, 136, 255)",
 		            data: graphData.data,
@@ -91,7 +99,7 @@ var thisApp = {
 		        responsive: true,
 		        maintainAspectRatio: false,
 		        legend: {
-		          display: false
+		          display: true
 		        },
 		        layout: {
 		          padding: {
@@ -141,7 +149,7 @@ var thisApp = {
 		              return data["labels"][tooltipItem[0]["index"]];
 		            },
 		            label: function (tooltipItem, data) {
-		              return "$" + data["datasets"][0]["data"][tooltipItem["index"]];
+		              return data["datasets"][0]["data"][tooltipItem["index"]];
 		            }
 		          },
 		          responsive: true,
@@ -166,40 +174,44 @@ var thisApp = {
 	  }
 	  callback()
 	},
-	_getAllLessons(callback){
-		var that = this
-		$.get("allLessonNames", function(allLessons){
-			console.log('got lessons:' + allLessons.join(','))
-			callback(allLessons)
-		})
+	appendToDiagnostics(thisMessage){
+		var thisItem = document.createElement("div");
+		thisItem.className = "well"
+		thisItem.appendChild( document.createTextNode(thisMessage) )
+		$('#diagnosticArea').prepend(thisItem)
 	},
-	_iterateLessons(allLessons, idx, callback){
+	addLessonsToUxIterator(idx, lessonList){
 		var that = this
-		if(allLessons[idx]){
-			if(allLessons[idx] != null){
-				console.log('painting: ' + allLessons[idx])
-				thisApp.getDataPaintGraph(allLessons[idx], function(){
-					that._iterateLessons(allLessons, idx+1, callback)
-				})
-			} else {
-				that._iterateLessons(allLessons, idx+1, callback)
-			}
-		} else{
-			callback()
+		if(lessonList[idx]){
+			that._addLessonPanel(lessonList[idx], function(){
+				that.addLessonsToUxIterator(idx+1, lessonList)
+			})
 		}
 	},
-	initUpdateUX(callback){
+	handleSocketMessage(message){
 		var that = this
-		console.log('updating ux')
-		that._getAllLessons(function(allLessons){
-			that._iterateLessons(allLessons, 0, function(){
-				callback()
-			})
-		})	
+		msgCount += 1
+		if(msgCount > 11){ $('#diagnosticArea').children().last().remove() }
+		thisApp.appendToDiagnostics(JSON.stringify(message))
+		if(message.type == 'lessonList'){
+			that.addLessonsToUxIterator(0,message.list)
+		} else if(message.type == 'graph'){
+			that._createUpdateGraph(message.lessonId, message.graphDimension, message.graphData, function(){})
+		} else {
+			console.log('use case not handled yet.')
+		}
 	}
 }
 
+var msgCount=0
+
 $( document ).ready(function(){
 	toastr.success("This is my fist toast", "isn't that cool");
-	setInterval(function(){thisApp.initUpdateUX(function(){})},2500)
+	var socket = io.connect();
+
+	socket.on('message', function(data){
+		thisApp.handleSocketMessage(data.message)
+    })
+
 })
+

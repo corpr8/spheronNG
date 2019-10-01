@@ -68,7 +68,7 @@ var activationQueueProcessor = {
 				})
 			break;
 			case 1:
-				that.logger.log(moduleName, 2, 'Running Phase 1 - activating the spheron and pushing to propogationQueue')
+				that.logger.log(moduleName, 2, 'Running Phase 1 - activating the spheron and pushing to propagationQueue')
 				that.iterateActivationQueueAndActivate(function(){
 					that.processorPhaseIterator(phaseIdx +1, callback)
 				})

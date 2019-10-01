@@ -248,9 +248,9 @@ var backpropQueueProcessor = {
 		//otherwise add a new errormapObject
 		var that = this
 		if(that.spheron.io[ioIdx].errorMap[errorMapIdx]){
-			if(that.spheron.io[ioIdx].errorMap[errorMapIdx].signalPath == bpErrorMessage.signalPath && that.spheron.io[ioIdx].errorMap[errorMapIdx].bpSignalDepth == bpErrorMessage.signalDepth){
-				that.spheron.io[ioIdx].errorMap[errorMapIdx].errorMap[lessonIdx] = bpErrorMessage.error
-				that.logger.log(moduleName, 2, 'setting error map item: ' + JSON.stringify(that.spheron.io[ioIdx].errorMap[errorMapIdx].errorMap[lessonIdx]))
+			if(that.spheron.io[ioIdx].errorMap[errorMapIdx].signalPath == bpErrorMessage.signalPath && that.spheron.io[ioIdx].errorMap[errorMapIdx].bpSignalDepth == bpErrorMessage.bpSignalDepth){
+				that.spheron.io[ioIdx].errorMap[errorMapIdx].errorMap[bpErrorMessage.lessonIdx] = bpErrorMessage.error
+				that.logger.log(moduleName, 2, 'setting error map item: ' + JSON.stringify(that.spheron.io[ioIdx].errorMap[errorMapIdx].errorMap[bpErrorMessage.lessonIdx]))
 				callback()
 			} else {
 				that.addAmendToErrorMap(bpErrorMessage, ioIdx, errorMapIdx+1, callback)

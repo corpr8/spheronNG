@@ -2,13 +2,13 @@
 	"maxTests": 3,
 	"maxTestItems": 4,
 	"loadTestData": true,
-	"testData": "./tests/dataForSpheronNG/0-basicProblemDefinitionNG.json",
+	"testData": "./tests/dataForSpheronNG/lessonManager_1_5-run.json",
 	"persistAfterPhase" : [true, true, true, true, true, true, true],
 	"ifPersistUpdateState" : [false, false, false, false, false, false, false],
 	"phaseSettings" :{
 		"disableMutation" : true
 	},
-	"haltAfterTick": true,
+	"haltAfterTick": false,
 	"haltAfterTickNo": 100,
 	"haltAfterProcessingSpheron": false,
 	"haltAfterProcessingSpheronId": "outputSpheron1",
@@ -21,7 +21,7 @@
 	},
 	"dev":{
 		"fileWatch": ["./","./tests/dataForSpheronNG/","./activationModules"],
-		"excludedTypes" :[".tmp","out.txt","package.json","package-lock.json","useful.txt", ".gitignore"]
+		"excludedTypes" :[".tmp","out.txt","package.json","package-lock.json","useful.txt", ".gitignore", "out-lm.txt"]
 	},
 	"webserver":{
 		"port" : 3030

@@ -264,6 +264,33 @@ var mongoUtils = {
 	    	}
 		});
 	},
+	getLessonAnalyticDataByLessonId(lessonId, callback){
+		var that = this
+		that.logger.log(moduleName, 2, 'Getting lesson analytical data')  
+		
+		mongoNet.findOne({
+			type: "lesson",
+			lessonId: lessonId
+		}, function(err, result) {
+	    	if (err){
+	    		that.logger.log(moduleName, 2, 'mongo error: ' + err)
+	    		callback();
+	    	} else {
+	    		if(result){
+		    		if(result.lessonAnalyticalData){
+							that.logger.log(moduleName, 2, 'lesson analyticData: ' + result.lessonAnalyticalData)
+				    		callback(result.lessonAnalyticalData)
+		    			
+		    		} else {
+		    			callback()
+		    		}	
+	    		} else {
+	    			callback()
+	    		}
+	    		
+	    	}
+		});
+	},
 	getPendingLesson(callback){
 		var that = this
 		mongoNet.findOneAndUpdate({
@@ -528,13 +555,30 @@ var mongoUtils = {
 					that.logger.log(moduleName, 2, 'inputQueue is currently: ' +  JSON.stringify(thisSpheron.inputMessageQueue))
 
 					thisSpheron.inputMessageQueue.push(thisMessage)
+
+					//change from propagation to input message
+
+					/*
+					* Needs testing.... 30/9/19
+					*/
+					if(thisMessage.output){
+						thisMessage.toPort = thisMessage.output
+						delete thisMessage.output
+					}
+					
 					that.logger.log(moduleName, 2, 'pushed to inputQueue')
 					that.logger.log(moduleName, 2, 'inputQueue is now: ' +  JSON.stringify(thisSpheron.inputMessageQueue))
+
+					/*
+					* TO be tested
+					*/
+					thisSpheron.lessonId = thisMessage.lessonId
+					thisSpheron.state = "pending"	
 				
-					that.pushVariants(thisSpheron, 0, -1, thisMessage, spheronIdAndPort.toPort, function(){
-						that.logger.log(moduleName, 2, 'about to persist spheron: ' + JSON.stringify(thisSpheron))
-						that.persistSpheron(thisSpheron.spheronId, thisSpheron, function(){
-							that.logger.log(moduleName, 2, 'Spheron updated') 
+					that.pushVariants(thisSpheron, 0, -1, thisMessage, spheronIdAndPort.toPort, function(updatedSpheron){
+						that.logger.log(moduleName, 2, 'about to persist spheron: ' + JSON.stringify(updatedSpheron))
+						that.persistSpheron(updatedSpheron.spheronId, updatedSpheron, function(){
+							that.logger.log(moduleName, 2, 'Spheron: ' + updatedSpheron.spheronId +' updated') 
 							callback()
 						})
 					})
@@ -553,7 +597,7 @@ var mongoUtils = {
 		that.logger.log(moduleName, 2, 'thisSpheron is: ' + JSON.stringify(thisSpheron))
 		if(thisSpheron.variants.inputs.length == 0){
 			that.logger.log(moduleName, 2, 'no inputs to variate')
-			callback()
+			callback(thisSpheron)
 		} else {
 
 			if(thisSpheron.variants.inputs[variantIdx]){
@@ -564,9 +608,17 @@ var mongoUtils = {
 						that.pushVariants(thisSpheron, variantIdx +1, -1, thisMessage, toPort, callback)
 					}
 				} else if(thisSpheron.variants.inputs[variantIdx].variants[variantItemIdx]){
-					var NewMessage = JSON.parse(JSON.stringify(thisMessage))
+					var newMessage = JSON.parse(JSON.stringify(thisMessage))
 					that.logger.log(moduleName, 2, '****** ')
-					that.logger.log(moduleName, 2, 'new message is: ' + JSON.stringify(NewMessage))
+					newMessage.signalPath = newMessage.signalPath.replace(toPort, thisSpheron.variants.inputs[variantIdx].variants[variantItemIdx])
+					
+					/*
+					newMessage.toPort = newMessage.output.replace(toPort, thisSpheron.variants.inputs[variantIdx].variants[variantItemIdx])
+					*/
+					newMessage.toPort = thisSpheron.variants.inputs[variantIdx].variants[variantItemIdx]
+					//delete newMessage.output
+
+					that.logger.log(moduleName, 2, 'new message is: ' + JSON.stringify(newMessage))
 
 
 
@@ -574,16 +626,23 @@ var mongoUtils = {
 					//TODO: ok - substitiute this one and push it onto the queue... - note we have to update the database...
 
 
-					that.logger.log(moduleName, 2, 'about to substitute, push and iterate')
-					process.exitCode = 1
-
+					//that.logger.log(moduleName, 2, 'about to substitute, push and iterate')
+					//process.exitCode = 1
+					/*
+					* Needs testing...
+					*/
+					thisSpheron.inputMessageQueue.push(newMessage)
+					that.pushVariants(thisSpheron, variantIdx, variantItemIdx+1, thisMessage, toPort, callback)
+					/*
+					* Massively...
+					*/
 
 				} else {
 					that.pushVariants(thisSpheron, variantIdx +1, -1, thisMessage, toPort, callback)
 				}
 			} else {
 				that.logger.log(moduleName, 2, 'calling back from push variants')
-				callback()
+				callback(thisSpheron)
 			}
 		}
 	},

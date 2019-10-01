@@ -37,23 +37,23 @@ var lessonMaintenanceProcessor = {
 				settings.logOptions.logPath = settings.logOptions.lessonMaintenanceLogPath
 				that.logger = new thisLogger(settings.logOptions)
 				that.logger.log(moduleName, 2,'init')
-				asyncRequire('./mongoUtils').then(function(thisModule){
-				that.mongoUtils = thisModule
-					asyncRequire('./commonFunctions').then(function(thisCommonFunctions){
-						that.commonFunctions = thisCommonFunctions
-						that.commonFunctions.init(that.logger, that.mongoUtils, null, function(){
-							that.logger.log(moduleName, 2, 'Module running in Production mode')
-							that.runTimer = setInterval(function(){
-								that.isRunning = true
-								that.processPhases(function(){
-									
-								})
-							},500)
+				asyncRequire('./mongoUtils').then(function(thisMongo){
+					that.mongoUtils = thisMongo
+					that.mongoUtils.init(that.logger, function(){
+						asyncRequire('./commonFunctions').then(function(thisCommonFunctions){
+							that.commonFunctions = thisCommonFunctions
+							that.commonFunctions.init(that.logger, that.mongoUtils, null, function(){
+								that.logger.log(moduleName, 2, 'Module running in Production mode')
+								that.runTimer = setInterval(function(){
+									that.processPhases(function(){
+										
+									})
+								},500)
+							})
 						})
 					})
 				})
 			})
-			
 		} else {  	
 			that.logger = logger
 			that.logger.log(moduleName, 2,'init')
@@ -78,7 +78,7 @@ var lessonMaintenanceProcessor = {
  		if(!that.isRunning){
  			that.logger.log(moduleName, 2, 'running lesson processor - checking for lessons in need...')
 	 		that.processorPhaseIterator(0, function(){
-				that.logger.log(moduleName, 2, 'Done running lesson processor')
+				that.logger.log(moduleName, 2, 'Done running lesson phase processor')
 	 		})	
  		}
 	},
@@ -86,10 +86,11 @@ var lessonMaintenanceProcessor = {
 		var that = this
 		switch(phaseIdx){
 			case 0: 
-
 				that.logger.log(moduleName, 2, 'Running Phase 0: getting a lesson which needs processing.')
 				that.getPendingLesson(function(){
-					if(that.thisLesson != null){
+					if(that.lesson != null){
+						that.isRunning = true
+						that.logger.log(moduleName, 2, 'we got lesson to process: ' + that.lesson.lessonId)
 						that.processorPhaseIterator(phaseIdx +1, callback)
 					} else {
 						callback()
@@ -119,6 +120,7 @@ var lessonMaintenanceProcessor = {
 				})
 			break;
 				default:
+				that.lesson = null
 				that.isRunning = false
 				callback()
 			break;
@@ -144,9 +146,15 @@ var lessonMaintenanceProcessor = {
 		//for each output associated with the lesson, get data from the spheron.
 		//
 		var that = this
-		that.lessonOutputGroupIterator(0, 0, function(){
+		that.logger.log(moduleName, 2, 'running processLesson')
+		if(that.lesson){
+			that.lessonOutputGroupIterator(0, 0, function(){
+				callback()
+			})
+		} else {
+			that.logger.log(moduleName, 2, 'no lesson to process')
 			callback()
-		})
+		}
 	},
 	lessonOutputGroupIterator: function(outputConfigIdx, outputIdx, callback){
 		var that = this

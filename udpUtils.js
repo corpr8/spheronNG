@@ -12,7 +12,7 @@ const socket = dgram.createSocket({ type: "udp4", reuseAddr: true })
 var udpUtils = function(){
     var that = this
     socket.on("message", function(message, rinfo) {
-      //console.log(message, rinfo)
+      console.log(message, rinfo)
       console.info(`Message from: ${rinfo.address}:${rinfo.port} - ${message}`)
       var rtnMsg = {
         address: rinfo.address,
@@ -24,6 +24,7 @@ var udpUtils = function(){
 
     this.sendMessage = function(thisMsg){
       //const message = Buffer.from(`Message from process ${process.pid}`);
+      thisMsg = JSON.stringify(thisMsg)
       const message = Buffer.from(thisMsg)
       socket.send(message, 0, message.length, PORT, MULTICAST_ADDR, function() {
         console.info(`Sending message "${message}"`)
