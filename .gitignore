@@ -12,6 +12,7 @@ yarn-error.log*
 .npm
 
 #diagnostic
-out.txt 
+out.txt
+out-lm.txt
 test.json
 test1.json

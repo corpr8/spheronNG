@@ -599,7 +599,6 @@ var mongoUtils = {
 			that.logger.log(moduleName, 2, 'no inputs to variate')
 			callback(thisSpheron)
 		} else {
-
 			if(thisSpheron.variants.inputs[variantIdx]){
 				if(variantItemIdx == -1){
 					if(thisSpheron.variants.inputs[variantIdx].original == toPort){
@@ -783,8 +782,17 @@ var mongoUtils = {
 		that.getLessonDataByLessonId(lessonId, function(lessonData){
 			var lessonCount = lessonData.lesson.length
 			var currentIdx = lessonData.lastLessonIdxProcessed
-			var nextIdx = 0
-			if(currentIdx < (lessonCount-1)){
+			var nextIdx = -1
+
+
+
+			/*
+			* TODO: 2/10/19 - test below as i removed lessonCount-1 - lessons should now be recorded as 1-4 rather than 0-3 which is a problem?????
+			*/
+
+
+
+			if(currentIdx < (lessonCount -1)){
 				nextIdx = currentIdx +1
 			}
 

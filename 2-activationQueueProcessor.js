@@ -100,6 +100,9 @@ var activationQueueProcessor = {
 	getInputVariantArray: function(callback){
 		var that = this
 		that.getInputVariantArrayIterator(0, 0, [], function(result){
+			for(var v=0;v<result.length;v++){
+				that.logger.log(moduleName, 2, 'input variant array is[' + v + ']: ' + result[v].join(','))	
+			}
 			callback(result)
 		})
 	},
@@ -108,7 +111,15 @@ var activationQueueProcessor = {
 		if(that.spheron.variants.inputs[idx]){
 			if(variantItemIdx == 0){
 				that.logger.log(moduleName, 4, 'pushing to resultantArray. ')
-				resultantArray.push([that.spheron.variants.inputs[idx].original])
+
+				/*
+				* 5/10/19
+				* note: changed the functioning of the belwo such that variantarrray isper experiment.
+				* before it was just resultantArray.push([that.spheron.variants.inputs[idx].original])
+				* with no preceeding test
+				*/
+				if(!resultantArray[idx]){resultantArray[idx] = []}
+				resultantArray[idx].push(that.spheron.variants.inputs[idx].original)
 			}
 
 			if(that.spheron.variants.inputs[idx].variants[variantItemIdx]){
@@ -227,6 +238,8 @@ var activationQueueProcessor = {
 	},
 	buildVariantItem: function(inclusionArray, originalSignalIoIdx, originalSignal, resultantSignal, callback){
 		var that = this
+
+		that.logger.log(moduleName, 2, 'running build variant items. Activation queue is: ' + JSON.stringify(that.spheron.activationQueue))
 		resultantSignal = (resultantSignal) ? resultantSignal : {
 			"signalId" :originalSignal.signalId,
 			"io":[], 
@@ -244,11 +257,16 @@ var activationQueueProcessor = {
 					if(inclusionArray.indexOf(originalSignal.io[originalSignalIoIdx].input) != -1){
 						resultantSignal.io.push(originalSignal.io[originalSignalIoIdx])
 					} else {
+
+						that.logger.log(moduleName, 2, 'we are excluding the signal: ' + JSON.stringify(originalSignal.io[originalSignalIoIdx]))
+						that.logger.log(moduleName, 2, 'inclusion array was: ' + inclusionArray.join(','))
+						that.logger.log(moduleName, 2, 'original signal input was: ' +originalSignal.io[originalSignalIoIdx].input )
 						var editedSignal = JSON.parse(JSON.stringify(originalSignal.io[originalSignalIoIdx]))
 						editedSignal.val = "excluded"
 						editedSignal.path = "excluded"
+						that.logger.log(moduleName, 2, 'we have converted it to: ' + JSON.stringify(editedSignal))
 						resultantSignal.io.push(editedSignal)
-						
+
 					}
 					that.buildVariantItem(inclusionArray, originalSignalIoIdx+1, originalSignal, resultantSignal, callback)
 				}

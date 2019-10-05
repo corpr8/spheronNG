@@ -1,0 +1,324 @@
+{
+	"note" : "A partial network definition for testing activation queue processing - multivariating...",
+	"lessonId" : "whatIsAnd",
+	"type" : "lesson",
+	"options":{
+		"timeout": 10,
+		"mode":"autoTrain",
+		"errorThreshold":0.001
+	},
+	"network" : [
+		{"spheronId": "multivariateActivationQueue",
+			"type" : "spheron",
+			"state" : "pending",
+			"settings" : {
+				"maxInputQueueDepth" : 10
+			}, 
+			"activationHistory" : ["998","999"],
+			"nextTick" : 1,
+			"io": [
+				{"id" : "input1", "type": "extInput", "angle": 0, "fromId": "ext", "fromPort": "ext", "val":-1, "life" : 1},
+				{"id" : "input1a", "type": "extInput", "angle": 10, "fromId": "ext", "fromPort": "ext", "val":-1, "life" : 1},
+				{"id" : "input2", "type": "extInput", "angle": 0, "fromId": "ext", "fromPort": "ext", "val":-1, "life" : 1},
+				{"id" : "input2a", "type": "extInput", "angle": -80, "fromId": "ext", "fromPort": "ext", "val":-1, "life" : 1},
+				{"id" : "input3", "type": "extInput", "angle": 0, "fromId": "ext", "fromPort": "ext", "val":-1, "life" : 1},
+				{"id" : "bias1", "type": "bias", "angle": 20, "val":-1},
+				{"id" : "internal1", "type": "output", "angle": -60, "toId": "outputSpheron1", "toPort": "internal1", "val":-1},
+				{"id" : "internal2", "type": "output", "angle": -50, "toId": "outputSpheron1", "toPort": "internal1", "val":-1}
+			],
+			"inputMessageQueue": [],
+			"activationQueue": [
+				{
+					"signalId" :"1000",
+					"io":[
+						{"input" : "input1", "val" : 1, "path" : "input1", "lessonId":"whatIsAnd","lessonIdx":0},
+						{"input" : "input1a", "val" : 1, "path" : "input1a", "lessonId":"whatIsAnd","lessonIdx":0},
+						{"input" : "input2", "val" : 1, "path" : "input2", "lessonId":"whatIsAnd","lessonIdx":0},
+						{"input" : "input2a", "val" : 1, "path" : "input2a", "lessonId":"whatIsAnd","lessonIdx":0},
+						{"input" : "input3", "val" : 30, "path" : "input3"}
+					]}
+			],
+			"propagationMessageQueue": [],
+			"variants" : {
+				"inputs" : [
+					{
+						"original" : "input1",
+						"variants" : ["input1a", "none"],
+						"startTick" : -1,
+						"errorMap" : []
+					},
+					{
+						"original" : "input2",
+						"variants" : ["input2a", "none"],
+						"startTick" : -1,
+						"errorMap" : []
+					}
+				],
+				"biases" : [], 
+				"outputs" : []
+			}
+		}
+	],
+	"lesson" : [
+		{"inputs": {"inputSpheron1": {"input1": {"val": 0}}, "inputSpheron2": {"input2": {"val": 0}}}, "outputs": {"ext": {"ANDout": {"val": 0}}}},
+		{"inputs": {"inputSpheron1": {"input1": {"val": 1}}, "inputSpheron2": {"input2": {"val": 0}}}, "outputs": {"ext": {"ANDout": {"val": 0}}}},
+		{"inputs": {"inputSpheron1": {"input1": {"val": 0}}, "inputSpheron2": {"input2": {"val": 1}}}, "outputs": {"ext": {"ANDout": {"val": 0}}}},
+		{"inputs": {"inputSpheron1": {"input1": {"val": 1}}, "inputSpheron2": {"input2": {"val": 1}}}, "outputs": {"ext": {"ANDout": {"val": 1}}}}
+	],
+	"tdd" : {
+		"tddTests": [
+			{
+				"module": "./2-activationQueueProcessor",
+				"input": {
+					"hasInitMethod" : true,
+					"type": "spheron",
+					"spheronId" : "multivariateActivationQueue"
+				},
+				"expectedResults" : [
+					{
+						"function" : "getInputVariantArray",
+						"parameters" : null,
+						"returnType" : "object",
+						"containsJSONArray" : false,
+						"atLeastTheseFields": true,
+						"ordered": true, 
+						"results":[
+							["input1","input1a","none"],["input2","input2a","none"]
+						] 
+					},
+					{
+						"function" : "findIfInputIsvariated",
+						"parameters" : "input1",
+						"returnType" : "boolean",
+						"containsJSONArray" : false,
+						"atLeastTheseFields": true,
+						"ordered": true, 
+						"results": true
+					},
+					{
+						"function" : "findIfInputIsvariated",
+						"parameters" : "input123456",
+						"returnType" : "boolean",
+						"containsJSONArray" : false,
+						"atLeastTheseFields": true,
+						"ordered": true, 
+						"results": false
+					}
+				]
+			},
+			{
+				"module": "./multivariator",
+				"input": {
+					"hasInitMethod" : true,
+					"type": "dumbModule",
+					"spheronId" : null
+				},
+				"expectedResults" : [
+					{
+						"function" : "multivariate",
+						"note" : "Passing variables gives an INCLUSION map...",
+						"parameters" : [["input1","input1a","none"],["input2","input2a","none"]],
+						"returnType" : "object",
+						"containsJSONArray" : false,
+						"atLeastTheseFields": true,
+						"ordered": true,
+						"results": [
+							["input1","input2"], 
+							["input1","input2a"],
+							["input1","none"], 
+							["input1a","input2"],
+							["input1a","input2a"], 
+							["input1a","none"],
+							["none","input2"], 
+							["none","input2a"],
+							["none","none"]
+						]
+					}
+				]
+			},
+			{
+				"module": "./2-activationQueueProcessor",
+				"input": {
+					"hasInitMethod" : true,
+					"type": "spheron",
+					"spheronId" : "multivariateActivationQueue"
+				},
+				"expectedResults" : [
+					{
+						"function" : "variateActivationQueue",
+						"note" : "Loop all entries and variate if required. Note: This does NOT expand a signal into all of its variants, that would be the job of the upstream spheron or activating external input function.",
+						"parameters" : null,
+						"returnType" : null,
+						"containsJSONArray" : false,
+						"atLeastTheseFields": true, 
+						"ordered": true,
+						"results": null
+					},
+					{
+						"function" : "getActivationQueue",
+						"parameters" : null,
+						"notes" : "contains all multivariants of the combinations of variated input above. rewrites the non-variated content.",
+						"returnType" : "object",
+						"containsJSONArray" : true,
+						"atLeastTheseFields": true,
+						"ordered": true, 
+						"results":[  
+							{
+								"signalId": "1000",
+								"io": [
+									{"input": "input1","val": 1,"path": "input1","lessonId": "whatIsAnd","lessonIdx": 0},
+									{"input": "input2","val": 1,"path": "input2","lessonId": "whatIsAnd","lessonIdx": 0},
+									{"input": "input3","val": 30,"path": "input3"}],
+								"variated": true
+							},
+							{
+								"signalId": "1000",
+								"io": [
+									{"input": "input1","val": 1,"path": "input1","lessonId": "whatIsAnd","lessonIdx": 0},
+									{"input": "input2a","val": 1,"path": "input2a","lessonId": "whatIsAnd","lessonIdx": 0},
+									{"input": "input3","val": 30,"path": "input3"}],
+								"variated": true
+							},
+							{
+								"signalId": "1000",
+								"io": [
+									{"input": "input1","val": 1,"path": "input1","lessonId": "whatIsAnd","lessonIdx": 0},
+									{"input": "input3","val": 30,"path": "input3"}],
+								"variated": true
+							},
+							{
+								"signalId": "1000",
+								"io": [
+									{"input": "input1a","val": 1,"path": "input1a","lessonId": "whatIsAnd","lessonIdx": 0},
+									{"input": "input2","val": 1,"path": "input2","lessonId": "whatIsAnd","lessonIdx": 0},
+									{"input": "input3","val": 30,"path": "input3"}],
+								"variated": true
+							},
+							{
+								"signalId": "1000",
+								"io": [
+									{"input": "input1a","val": 1,"path": "input1a","lessonId": "whatIsAnd","lessonIdx": 0},
+									{"input": "input2a","val": 1,"path": "input2a","lessonId": "whatIsAnd","lessonIdx": 0},
+									{"input": "input3","val": 30,"path": "input3"}],
+								"variated": true
+							},
+							{
+								"signalId": "1000",
+								"io": [
+									{"input": "input1a","val": 1,"path": "input1a","lessonId": "whatIsAnd","lessonIdx": 0},
+									{"input": "input3","val": 30,"path": "input3"}],
+								"variated": true
+							},
+							{
+								"signalId": "1000",
+								"io": [
+									{"input": "input2","val": 1,"path": "input2","lessonId": "whatIsAnd","lessonIdx": 0},
+									{"input": "input3","val": 30,"path": "input3"}],
+								"variated": true
+							},
+							{
+								"signalId": "1000",
+								"io": [
+									{"input": "input2a","val": 1,"path": "input2a","lessonId": "whatIsAnd","lessonIdx": 0},
+									{"input": "input3","val": 30,"path": "input3"}],
+								"variated": true
+							},
+							{
+								"signalId": "1000",
+								"io": [
+									{"input": "input3","val": 30,"path": "input3"}
+								],
+								"variated": true
+							}
+						]
+					},
+					{
+						"function" : "iterateActivationQueueAndActivate",
+						"note" : "Fire activation for each member of the activation queue.",
+						"parameters" : null,
+						"returnType" : null,
+						"containsJSONArray" : false,
+						"atLeastTheseFields": true, 
+						"ordered": true,
+						"results": null
+					},
+					{
+						"function" : "commonFunctions.getPropogationMessageQueue",
+						"parameters" : null,
+						"notes" : "gets the post activation or output queue.",
+						"returnType" : "object",
+						"containsJSONArray" : true,
+						"atLeastTheseFields": true,
+						"ordered": true, 
+						"results":[
+							{
+								"lessonId":"whatIsAnd",
+								"lessonIdx":0,
+								"signalId":"1000",
+								"io":[
+									{"signalPath":"input1;input2;input3;bias1;internal1;","output":"internal1","type":"output","val":15.82635},
+									{"signalPath":"input1;input2;input3;bias1;internal2;","output":"internal2","type":"output","val":20.22718}]},
+							{
+								"lessonId":"whatIsAnd",
+								"lessonIdx":0,
+								"signalId":"1000",
+								"io":[
+									{"signalPath":"input1;input2a;input3;bias1;internal1;","output":"internal1","type":"output","val":16.26604},
+									{"signalPath":"input1;input2a;input3;bias1;internal2;","output":"internal2","type":"output","val":20.45042}]},
+							{
+								"lessonId":"whatIsAnd",
+								"lessonIdx":0,
+								"signalId":"1000",
+								"io":[
+									{"signalPath":"input1;input3;bias1;internal1;","output":"internal1","type":"output","val":15.32635},
+									{"signalPath":"input1;input3;bias1;internal2;","output":"internal2","type":"output","val":19.58439}]},
+							{
+								"lessonId":"whatIsAnd",
+								"lessonIdx":0,
+								"signalId":"1000",
+								"io":[
+									{"signalPath":"input1a;input2;input3;bias1;internal1;","output":"internal1","type":"output","val":15.66838},
+									{"signalPath":"input1a;input2;input3;bias1;internal2;","output":"internal2","type":"output","val":20.08439}]},
+							{
+								"lessonId":"whatIsAnd",
+								"lessonIdx":0,
+								"signalId":"1000",
+								"io":[
+									{"signalPath":"input1a;input2a;input3;bias1;internal1;","output":"internal1","type":"output","val":16.10807},
+									{"signalPath":"input1a;input2a;input3;bias1;internal2;","output":"internal2","type":"output","val":20.30763}]},
+							{
+								"lessonId":"whatIsAnd",
+								"lessonIdx":0,
+								"signalId":"1000",
+								"io":[
+									{"signalPath":"input1a;input3;bias1;internal1;","output":"internal1","type":"output","val":15.16838},
+									{"signalPath":"input1a;input3;bias1;internal2;","output":"internal2","type":"output","val":19.44161}]},
+							{
+								"lessonId":"whatIsAnd",
+								"lessonIdx":0,
+								"signalId":"1000",
+								"io":[
+									{"signalPath":"input2;input3;bias1;internal1;","output":"internal1","type":"output","val":15.32635},
+									{"signalPath":"input2;input3;bias1;internal2;","output":"internal2","type":"output","val":19.58439}]},
+							{
+								"lessonId":"whatIsAnd",
+								"lessonIdx":0,
+								"signalId":"1000",
+								"io":[
+									{"signalPath":"input2a;input3;bias1;internal1;","output":"internal1","type":"output","val":15.76604},
+									{"signalPath":"input2a;input3;bias1;internal2;","output":"internal2","type":"output","val":19.80763}]},
+							{
+								"lessonId":"whatIsAnd",
+								"lessonIdx":0,
+								"signalId":"1000",
+								"io":[
+									{"signalPath":"input3;bias1;internal1;","output":"internal1","type":"output","val":14.82635},
+									{"signalPath":"input3;bias1;internal2;","output":"internal2","type":"output","val":18.94161}]}
+						]
+					}
+				]
+			}
+		],
+		"nextTestFile": "./tests/dataForSpheronNG/3_0-process_propagation_queue.json"
+	}
+}

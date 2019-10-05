@@ -130,12 +130,12 @@ var inputMessageQueueProcessor = {
 		var that = this
 		that.logger.log(moduleName, 4, 'called isVariatedInputIterator')
 		if(that.spheron.variants){
-			that.logger.log(moduleName, 4, 'isVariated we have variants')
+			that.logger.log(moduleName, 2, 'isVariated we have variants')
 			if(that.spheron.variants.inputs){
 				that.logger.log(moduleName, 4, 'isVariated we have variants.inputs')
 				if(that.spheron.variants.inputs[variantIdx]){
 					if(that.spheron.variants.inputs[variantIdx].variants[variantItemIdx]){
-						that.logger.log(moduleName, 4, 'isVariatedInputIterator: ' + that.spheron.variants.inputs[variantIdx].variants[variantItemIdx] + ' against: ' + thisInputName)
+						that.logger.log(moduleName, 2, 'isVariatedInputIterator: ' + that.spheron.variants.inputs[variantIdx].variants[variantItemIdx] + ' against: ' + thisInputName)
 						if(that.spheron.variants.inputs[variantIdx].variants[variantItemIdx] == thisInputName){
 							callback(true)
 						} else {
