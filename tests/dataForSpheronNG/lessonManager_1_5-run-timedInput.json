@@ -1,0 +1,147 @@
+{ 
+	"note" : "A signal has propagated all the way to the extOutput and the lessonState has been set to pending as a result. We must now see if we have a full syncOutput and fire the outputFunction",
+	"lessonId" : "whatIsAnd",
+	"type" : "lesson",
+	"state" : "pending",
+	"lastProcessed" : 0,
+	"lastLessonIdxProcessed" : 1,
+	"options":{
+		"timeout": 10,
+		"mode":"autoTrain",
+		"errorThreshold":0.001,
+		"petrificationThreshold" : 0.001,
+		"initModule" : "./activationModules/whatIsAndTimed",
+		"initFunction" : "lessonInit"
+	},
+	"network" : [
+		{"spheronId": "inputSpheron1",	
+			"type" : "spheron",
+			"state" : "pending",
+			"settings" : {
+				"maxInputQueueDepth" : 10
+			},
+			"activationHistory" : ["998","999"],
+			"nextTick" : 1,
+			"io": [
+				{"id" : "input1", "type": "extInput", "angle": 0, "fromId": "ext", "fromPort": "ext", "val":-1, "life" : 1, "errorMap": []},
+				{"id" : "bias1", "type": "bias", "angle": 20, "val":-1, "errorMap": []},
+				{"id" : "internal1", "type": "output", "angle": -60, "toId": "outputSpheron1", "toPort": "internal1", "val":-1, "errorMap": []},
+				{"id" : "internal3", "type": "output", "angle": 60, "toId": "outputSpheron2", "toPort": "internal3", "val":-1, "errorMap": []}
+			],
+			"inputMessageQueue": [
+				{"lessonId" : "whatIsAnd", "toPort" : "input1", "path" : "input1", "lessonIdx": 0, "val": 0, "sigId" : "1000" }
+			],
+			"activationQueue": [],
+			"propagationMessageQueue": [],
+			"variants" : {
+				"inputs" : [],
+				"biases" : [],
+				"outputs" : []
+			}, 
+			"bpQueue": []
+		},
+		{"spheronId": "inputSpheron2",
+			"type" : "spheron",
+			"state" : "pending",
+			"settings" : {
+				"maxInputQueueDepth" : 10
+			},
+			"activationHistory" : ["998","999"],
+			"nextTick" : 1,
+			"io": [
+				{"id" : "input2", "type": "extInput", "angle": 0, "fromId": "ext", "fromPort": "ext", "val":-1, "life" : 1, "errorMap": []},
+				{"id" : "bias2", "type": "bias", "angle": 20, "val":-1, "errorMap": []},
+				{"id" : "internal2", "type": "output", "angle": -60, "toId": "outputSpheron1", "toPort": "internal2", "val":-1, "errorMap": []},
+				{"id" : "internal4", "type": "output", "angle": 60, "toId": "outputSpheron2", "toPort": "internal4", "val":-1, "errorMap": []}
+			],
+			"inputMessageQueue": [
+				{"lessonId" : "whatIsAnd", "toPort" : "input2", "path" : "input2", "lessonIdx": 0, "val": 0, "sigId" : "1000" }
+			],
+			"activationQueue": [],
+			"propagationMessageQueue": [],
+			"variants" : {
+				"inputs" : [],
+				"biases" : [], 
+				"outputs" : []
+			},
+			"bpQueue": []
+		},
+		{"spheronId": "outputSpheron1",
+			"type" : "spheron",
+			"state" : "idle",
+			"settings" : {
+				"maxInputQueueDepth" : 10
+			},
+			"activationHistory" : ["998","999"],
+			"nextTick" : 1,
+			"io": [
+				{"id" : "internal1", "type": "input", "angle": 0, "fromId": "inputSpheron1", "fromPort": "internal1", "val":-1, "life" : 1, "errorMap": []},
+				{"id" : "internal2", "type": "input", "angle": 10, "fromId": "inputSpheron2", "fromPort": "internal2", "val":-1, "life" : 1, "errorMap": []},
+				{"id" : "bias3", "type": "bias", "angle": 20, "val":-1, "errorMap": []},
+				{"id" : "ANDout", "type": "extOutput", "angle": -60, "toId": "ext", "toPort": "ext", "val":-1, "errorMap": []}
+			],
+			"inputMessageQueue": [],
+			"activationQueue": [],
+			"propagationMessageQueue": [],
+			"variants" : {
+				"inputs" : [],
+				"biases" : [], 
+				"outputs" : []
+			},
+			"bpQueue": []
+		},
+		{"spheronId": "outputSpheron2",
+			"type" : "spheron",
+			"state" : "idle",
+			"settings" : {
+				"maxInputQueueDepth" : 10
+			},
+			"activationHistory" : ["998","999"],
+			"nextTick" : 1,
+			"io": [
+				{"id" : "internal3", "type": "input", "angle": 0, "fromId": "inputSpheron1", "fromPort": "internal3", "val":-1, "life" : 1, "errorMap": []},
+				{"id" : "internal4", "type": "input", "angle": 10, "fromId": "inputSpheron2", "fromPort": "internal4", "val":-1, "life" : 1, "errorMap": []},
+				{"id" : "bias4", "type": "bias", "angle": 20, "val":-1, "errorMap": []},
+				{"id" : "NOTANDout", "type": "extOutput", "angle": -60, "toId": "ext", "toPort": "ext", "val":-1, "errorMap": []}
+			],
+			"inputMessageQueue": [],
+			"activationQueue": [],
+			"propagationMessageQueue": [],
+			"variants" : {
+				"inputs" : [],
+				"biases" : [], 
+				"outputs" : []
+			},
+			"bpQueue": []
+		}
+	],
+	"outputConfigurations": [
+		{
+			"groupId" : "logicalOutput",
+			"type" : "sync",
+			"activationModule" : "./activationModules/whatIsAndTimed",
+			"activationFunction" : "whatIsAndOutputFunction",
+			"outputs" : [
+				{"spheronId" : "outputSpheron1","port" : "ANDout"},
+				{"spheronId" : "outputSpheron2","port" : "NOTANDout"}
+			]
+		}
+	],
+	"lesson" : [
+		{"inputs": {"inputSpheron1": {"input1": {"val": 0}}, "inputSpheron2": {"input2": {"val": 0}}}, "outputs": {"outputSpheron1": {"ANDout": {"val": 0}},"outputSpheron2": {"NOTANDout": {"val": 1}}}},
+		{"inputs": {"inputSpheron1": {"input1": {"val": 1}}, "inputSpheron2": {"input2": {"val": 0}}}, "outputs": {"outputSpheron1": {"ANDout": {"val": 0}},"outputSpheron2": {"NOTANDout": {"val": 1}}}},
+		{"inputs": {"inputSpheron1": {"input1": {"val": 0}}, "inputSpheron2": {"input2": {"val": 1}}}, "outputs": {"outputSpheron1": {"ANDout": {"val": 0}},"outputSpheron2": {"NOTANDout": {"val": 1}}}},
+		{"inputs": {"inputSpheron1": {"input1": {"val": 1}}, "inputSpheron2": {"input2": {"val": 1}}}, "outputs": {"outputSpheron1": {"ANDout": {"val": 1}},"outputSpheron2": {"NOTANDout": {"val": 0}}}}
+	],
+	"lessonAnalyticalData" : {
+		"absError": null,
+		"emptyResultCount": null,
+		"fullResultCount": null,
+		"totalResultCount": null,
+		"highestError": null,
+		"lowestError":  null
+	},
+	"tdd" : {
+		"tddTests": []
+	}
+}

@@ -173,7 +173,7 @@
 	"tdd" : {
 		"tddTests": [
 			{
-				"module": "./lessonManager_1_lessonMaintenanceProcessor",
+				"module": "./lessonManager_1",
 				"input": {
 					"hasInitMethod" : true,
 					"hasMongo" : true,

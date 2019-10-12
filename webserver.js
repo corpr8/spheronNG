@@ -217,6 +217,34 @@ app.get('/getFitnessGraphByLessonId', function(req, res) {
 	})
 });
 
+app.get('/deleteLesson', function(req, res) {
+	var thisLessonId = req.query.lessonId.toString()
+	console.log('running delete lesson: ' + thisLessonId)
+	
+	//TODO: Delete the lesson...
+	//Note: We should also broadcast delete via socketio so the UX's know to take the element out of current displays
+	//delete spheronsByLessonId
+	//delete lessonByLessonId
+	mongoUtils.deleteSpheronsByLessonId(thisLessonId, function(){
+		mongoUtils.deleteLessonByLessonId(thisLessonId, function(){
+			//now broadcast over socket so UX can update..
+			io.sockets.emit('message', {message: {'type' : 'lessonDeleted', 'lessonId' : thisLessonId}});
+			res.end('all done')
+		})	
+	})
+});
+
+app.post('/uploadLesson', function(req, res) {
+	console.log('running upload lesson')
+	
+	//TODO: Push the new lesson onto the stack
+	//TO Be Decided: We may also need to move a javascript file into the activationModules directory if one is uploaded...
+	//TODO: Call the lesson init function. Should that be done here or should it be done by the lessonManager???
+	//
+});
+
+
+
 wsFunctions.init(function(){
 	console.log('all fired up...')
 })

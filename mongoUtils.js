@@ -386,8 +386,34 @@ var mongoUtils = {
 			});
 			callback()
 		} catch (e) {
-			that.logger.log(4,'bad delete: ' + e)
+			that.logger.log(4, moduleName, 'bad delete: ' + e)
 			throw(e);
+		}
+	},
+	deleteSpheronsByLessonId: function(lessonId, callback){
+		var that = this
+		try {
+			mongoNet.deleteMany({
+				type: "spheron", 
+				lessonId : lessonId 
+			});
+			callback()
+		} catch (e) {
+			that.logger.log(2, moduleName, 'delete spheron by lessonId blew up')
+			callback()
+		}
+	},
+	deleteLessonByLessonId: function(lessonId, callback){
+		var that = this
+		try {
+			mongoNet.deleteMany({
+				type: "lesson", 
+				lessonId : lessonId 
+			});
+			callback()
+		} catch (e) {
+			that.logger.log(2, moduleName, 'delete lesson by lessonId blew up')
+			callback()
 		}
 	},
 	deleteConnection: function(connectionId, callback){

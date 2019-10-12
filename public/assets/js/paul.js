@@ -1,5 +1,6 @@
 var thisApp = {
 	theseCharts: [],
+	/*
 	getDataPaintGraph(lessonId, callback){
 		var that = this
 		that._getGraphData(lessonId, function(graphData){
@@ -12,7 +13,7 @@ var thisApp = {
 
 			})
 		})
-	},
+	},*/
 	_addLessonPanel(lessonId, callback){
 		var that = this
 		if($('#' + lessonId).length == 0){	
@@ -21,8 +22,9 @@ var thisApp = {
 			newPanel +='<div class="col-xl-12 col-md-12">'
 			newPanel +='<!-- lesson panel -->'
 			newPanel +='<div id="' + lessonId + '" class="card card-default" data-scroll-height="675">'
-			newPanel +='<div class="card-header">'
-			newPanel +='<h2>' + lessonId + '</h2>'
+			newPanel +=''
+			newPanel +='<div class="card-header col-xl-12">'
+			newPanel +='<button type="button" class="col-xl-12 mb-1 btn btn-sm btn-outline-danger" id="delete-' + lessonId + '"' + lessonId + ');" >' + lessonId + ' (Delete)</button>'
 			newPanel +='</div>'
 			newPanel +='<div class="card-footer d-flex flex-wrap bg-white p-0">'
 			newPanel +='</div>'
@@ -31,19 +33,26 @@ var thisApp = {
 			newPanel +='</div>'
 			var $panel = $(newPanel)
 			$('.content').prepend($panel)
+			$('#delete-' + lessonId).on('click', function(e){
+				var targetLesson = (e.target.id).replace('delete-','')
+				that.deleteLesson(targetLesson)
+			});
+
 			callback()	
 		} else {
 			console.log('panel already in UX')
+
+
 			callback()
 		}
 		
-	},
+	},/*
 	_getGraphData(lessonId, callback){
 		var that = this
 		$.get("getFitnessGraphByLessonId", {lessonId: lessonId}, function(graphData){
 			callback(graphData)
 		})
-	},
+	},*/
 	_createUpdateGraph(lessonId, chartType, graphData, callback){
 		console.log('inserting graph')
 	  /*======== 3. LINE CHART ========*/
@@ -197,9 +206,24 @@ var thisApp = {
 			that.addLessonsToUxIterator(0,message.list)
 		} else if(message.type == 'graph'){
 			that._createUpdateGraph(message.lessonId, message.graphDimension, message.graphData, function(){})
+		} else if(message.type == 'lessonDeleted'){
+			$('#' + message.lessonId).hide('slow', function(){
+				$('#' + message.lessonId).remove()
+			})
 		} else {
+			toastr.success("got message: " + JSON.stringify(message));
 			console.log('use case not handled yet.')
 		}
+	},
+	deleteLesson: function(lessonId){
+		console.log('about to delete: ' + lessonId)
+		toastr.success("Deleting lesson: " + lessonId);
+		$.get( "deleteLesson",{lessonId: lessonId}, function( data ) {
+		  toastr.success("Delete lesson result: " + data);
+		});
+	},
+	popUploadForm:function(){
+
 	}
 }
 
@@ -212,6 +236,9 @@ $( document ).ready(function(){
 	socket.on('message', function(data){
 		thisApp.handleSocketMessage(data.message)
     })
+
+
+
 
 })
 

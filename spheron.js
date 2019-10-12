@@ -156,6 +156,8 @@ Spheron.prototype.generateOutputObjectIterator = function(resultantObject, idx, 
 		if(idx == -1){
 			// recalculate the signal vector for this test of biasIdx
 			that.calculateSignalVectorIterator(biasIdx, 0, [0,0], function(resultantRV){
+				resultantRV[0] = Math.floor(resultantRV[0] * 1000000) / 1000000
+				resultantRV[1] = Math.floor(resultantRV[1] * 1000000) / 1000000
 				that.signalVector = resultantRV
 				that.generateSignalPath(biasIdx, function(generatedSignalPath){
 					that.generatedSignalPath = generatedSignalPath

@@ -10,8 +10,6 @@ var mongoUtils = require('./mongoUtils.js')
 var Spheron = require('./spheron.js')
 var generateUUID = require('./generateUUID.js')
 var multivariator = require('./multivariator.js')
-var UdpUtils = require('./udpUtils.js');
-
 
 var spheron_runner = {
 	udpUtils: null,
@@ -33,18 +31,13 @@ var spheron_runner = {
 		that.logger = new Logger(settings.logOptions)
 		that.logger.log(moduleName, 4,'Called Spheron_runner init function')
 
-		that.mutator = require('./mutator.js')
+		that.mutator = require('./0-mutator.js')
 		that.inputMessageQueueProcessor = require('./1-inputMessageQueueProcessor.js')
 		that.activationQueueProcessor = require('./2-activationQueueProcessor.js')
 		that.propagationQueueProcessor = require('./3-propagationQueueProcessor.js')
 		that.backpropQueueProcessor = require('./4-backpropQueueProcessor.js')
 		that.multivariateTestProcessor = require('./5-multivariateTestProcessor.js')
 		that.spheronMaintenanceProcessor = require('./6-spheronMaintenanceProcessor.js')
-
-		//disable UDP if as we are offline...
-		if(settings.loadUDP){
-			that.udpUtils = new UdpUtils()
-		}
 
 		mongoUtils.init(that.logger, function(){
 			if(settings.loadTestData == true){
@@ -116,15 +109,21 @@ var spheron_runner = {
 				* We can make this decision based on the cumulative errors in the exclusion Error map.
 				* If the exclusion map is empty, this might also mean we want to mutate (as there are no experiments)
 		        */
-		        that.logger.log(moduleName, 2,'Phase0: should we mutate?')
-
-		        that.mutator.init(that.spheron, that.logger, function(updatedSpheron){
-		        	that.logger.log(moduleName, 4,'finished Phase 0')
-		        	if(updatedSpheron){
-		        		//we should update the in memory model 
-		        	}
+		        if(settings.disableMutation){
+		        	that.logger.log(moduleName, 2,'Phase0: skipping mutation')
 					that.postPhaseHandler(phaseIdx, callback)
-		        })
+		        } else {
+			        that.logger.log(moduleName, 2,'Phase0: running mutation')
+
+			        that.mutator.init(that.spheron, that.logger, mongoUtils, function(updatedSpheron){
+			        	that.logger.log(moduleName, 4,'finished Phase 0')
+			        	if(updatedSpheron){
+			        		//we should update the in memory model 
+			        	}
+						that.postPhaseHandler(phaseIdx, callback)
+			        })	
+		        }
+		        
 
 				break;
 			case 1: 
