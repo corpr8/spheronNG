@@ -117,24 +117,32 @@ var averagingAnalyticModule = {
 	getGraphDataIterator: function(store, idx, cascadeIdx, resultObject, callback){
 		var that = this
 		resultObject = resultObject ? resultObject : {labels: [], data: []}
-		if(that.cascadePoints[cascadeIdx]){
-			if(idx < that.cascadePoints[cascadeIdx]){
-				if(store.store[cascadeIdx]){
-					if(store.store[cascadeIdx][idx]){
-						resultObject.data.push(store.store[cascadeIdx][idx])
-						resultObject.labels.push(that.cascadeLabels[cascadeIdx][idx])
-						that.getGraphDataIterator(store, idx+1, cascadeIdx	, resultObject, callback)	
+		if(that.cascadePoints){
+			if(that.cascadePoints[cascadeIdx]){
+				if(idx < that.cascadePoints[cascadeIdx]){
+					if(store.store){
+						if(store.store[cascadeIdx]){
+							if(store.store[cascadeIdx][idx]){
+								resultObject.data.push(store.store[cascadeIdx][idx])
+								resultObject.labels.push(that.cascadeLabels[cascadeIdx][idx])
+								that.getGraphDataIterator(store, idx+1, cascadeIdx	, resultObject, callback)	
+							} else {
+								that.getGraphDataIterator(store, 0, cascadeIdx+1, resultObject, callback)	
+							}
+						} else {
+							callback(resultObject)
+						}
 					} else {
-						that.getGraphDataIterator(store, 0, cascadeIdx+1, resultObject, callback)	
+						callback()
 					}
 				} else {
-					callback(resultObject)
+					that.getGraphDataIterator(store, 0, cascadeIdx+1, resultObject, callback)
 				}
 			} else {
-				that.getGraphDataIterator(store, 0, cascadeIdx+1, resultObject, callback)
+				callback(resultObject)
 			}
 		} else {
-			callback(resultObject)
+			callback()
 		}
 	}
 }

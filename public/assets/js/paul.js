@@ -63,13 +63,16 @@ var thisApp = {
 
 	  if(that.theseCharts[lessonId][chartType]){
 	  	for(var v=0;v<graphData.data.length;v++){
-	  			that.theseCharts[lessonId][chartType].data.labels[v] = graphData.labels[v]
+	  		that.theseCharts[lessonId][chartType].data.labels[v] = graphData.labels[v]
+	  		that.theseCharts[lessonId][chartType].data.datasets[0].data[v] = graphData.data[v]
+	  		/*
 	  		if(that.theseCharts[lessonId][chartType].data.datasets[0].data[v]){
-	  			that.theseCharts[lessonId][chartType].data.datasets[0].data[v] = graphData.data[v]
+	  			
 	  		} else {
-				that.theseCharts[lessonId][chartType].data.datasets[0].data.push()	  			
-	  		}
+				that.theseCharts[lessonId][chartType].data.datasets[0].data.unshift(graphData.data[v])
+	  		}*/
 	  	}
+	  	that.theseCharts[lessonId][chartType].update();
 	  } else {
 	  	  console.log('graph object didnt exist. adding it.')
 	  	  if($('#' + lessonId + chartType).length == 0){
@@ -222,8 +225,37 @@ var thisApp = {
 		  toastr.success("Delete lesson result: " + data);
 		});
 	},
-	popUploadForm:function(){
-
+	uploadLesson: function(){
+		var that = this
+		var thisJSON = $('#uploadLessonJSON').val()
+		if(that.isJson(thisJSON) == true){
+			console.log('about to upload:' + JSON.stringify(thisJSON))
+			$.post({
+			    url: '/uploadLesson',
+			    dataType: "JSON",
+			    data: JSON.parse(thisJSON),
+			    success: function (result) {
+			    	if(result.status == 200){
+						toastr.success("lesson uploaded: " + JSON.stringify(result.success)); 	
+			    	} else {
+						toastr.error("lesson upload failed:" + JSON.stringify(result)); 	
+			    	}
+			    },
+			    error: function(err) {
+					toastr.error("lesson upload failed:" + JSON.stringify(err)); 	
+			    }
+			});
+		} else {
+			toastr.error("Not valid JSON - please try again");
+		}
+	},
+	isJson: function(str) {
+	    try {
+	        JSON.parse(str);
+	    } catch (e) {
+	        return false;
+	    }
+	    return true;
 	}
 }
 
@@ -237,8 +269,8 @@ $( document ).ready(function(){
 		thisApp.handleSocketMessage(data.message)
     })
 
-
-
-
+    $('#uploadbtn').on('click', function(){
+    	thisApp.uploadLesson()
+    })
 })
 

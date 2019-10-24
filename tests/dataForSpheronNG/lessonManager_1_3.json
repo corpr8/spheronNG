@@ -3,6 +3,7 @@
 	"lessonId" : "whatIsAnd",
 	"type" : "lesson",
 	"state" : "pending",
+	"activationModule" : "./activationModules/whatIsAnd",
 	"lastProcessed" : 0,
 	"options":{
 		"timeout": 10,

@@ -72,7 +72,7 @@
                             <ul class="collapse" id="spheron" data-parent="#sidebar-menu">
                                 <div class="sub-menu">
                                     <li>
-                                        <a class="sidenav-item-link" href="javascript:thisApp.popUploadForm();">
+                                        <a class="sidenav-item-link" href="#">
                                             <span class="nav-text" data-toggle="modal" data-target="#lessonUploadForm">upload lesson</span>
 
                                                 
@@ -494,14 +494,14 @@
                             <li class="dropdown user-menu">
                                 <button href="#" class="dropdown-toggle nav-link" data-toggle="dropdown">
                                     <img src="assets/img/user/user.png" class="user-image" alt="User Image" />
-                                    <span class="d-none d-lg-inline-block">Abdus Salam</span>
+                                    <span class="d-none d-lg-inline-block">The operator</span>
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-right">
                                     <!-- User image -->
                                     <li class="dropdown-header">
                                         <img src="assets/img/user/user.png" class="img-circle" alt="User Image" />
                                         <div class="d-inline-block">
-                                            Abdus Salam <small class="pt-1">iamabdus@gmail.com</small>
+                                            The Operator <small class="pt-1">a@b.com</small>
                                         </div>
                                     </li>
                                     <li>
@@ -567,15 +567,12 @@
                         <div class="modal-body">
                             <div>
                                 <div class="form-group">
-                                    <label for="exampleInputEmail1">Email address</label>
-                                    <input type="email" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" placeholder="Enter email">
-                                    <small id="emailHelp" class="form-text text-muted">We'll never share your email with anyone else.</small>
+                                    <label for="jsonpayloadTextArea">lesson json</label>
+                                    <textarea id="uploadLessonJSON" class="form-control rounded-0" id="jsonpayloadTextArea" rows="30"></textarea>
+                                    <small id="jsonFormHelp" class="form-text text-muted">paste json above</small>
+
                                 </div>
-                                <div class="form-group">
-                                    <label for="exampleInputPassword1">Password</label>
-                                    <input type="password" class="form-control" id="exampleInputPassword1" placeholder="Password">
-                                </div>
-                                <button type="submit" class="col-xl-12 btn btn-primary">Submit</button>
+                                <button id="uploadbtn" type="submit" class="col-xl-12 btn btn-primary">Submit</button>
                             </div>
                         </div>
                     </div>

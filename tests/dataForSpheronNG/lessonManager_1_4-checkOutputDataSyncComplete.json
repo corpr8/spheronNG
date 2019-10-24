@@ -4,6 +4,7 @@
 	"type" : "lesson",
 	"state" : "pending",
 	"lastProcessed" : 0,
+	"activationModule" : "./activationModules/whatIsAnd",
 	"lastLessonIdxProcessed" : 1,
 	"options":{
 		"timeout": 10,

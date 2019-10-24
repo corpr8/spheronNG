@@ -57,6 +57,7 @@ var whatIsAnd = {
 		/*
 		* TODO
 		*/
+		var that = this
 		that.pushLessonToStackIterator(null, 0, null, function(){
 			callback()	
 		})
@@ -107,7 +108,7 @@ var whatIsAnd = {
 					//assign a statick lessonGUID
 					sigGUID = "TestSigGUID"
 				} else {
-					sigGUID = (sigGUID) ? sigGUID : that.generateUUID.generateUUID()
+					sigGUID = (sigGUID) ? sigGUID : generateUUID()
 				}
 
 				that.pushLessonToStackIterator(lessonIdx, inputIdx, sigGUID, callback)
@@ -117,6 +118,7 @@ var whatIsAnd = {
 			* For each output in the lesson, push a message to the relevant spherons input queue.
 			* Note: assumes each spheron has max 1 input
 			*/
+			that.logger.log(moduleName, 2, 'lessonIdx isx: ' + lessonIdx)
 			if(that.lesson.lesson[lessonIdx].inputs[Object.keys(that.lesson.lesson[lessonIdx].inputs)[inputIdx]]){
 				//work out the destination spheron
 				//build the message

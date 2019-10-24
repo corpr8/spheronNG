@@ -4,8 +4,8 @@ node ./spheron_runner.js > out.txt 2>&1
 Bind mongo locally for a project - (i.e. if in flight mode):
 
 sudo ifconfig lo0 alias 192.168.61.1
-mongod --bind_ip 192.168.61.1
-
+mongod --bind_ip 192.168.61.1 --dbpath ~/data/db
+(note, we have to do the above as mongo is hardcoded to use a root level /data/db rather than a local one)
 
 remove alias:
 sudo ifconfig lo0 -alias 192.168.61.1

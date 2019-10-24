@@ -28,7 +28,12 @@ var Spheron = function (config) {
 	that.activationHistory = (config.activationHistory) ? config.activationHistory : []
 	that.inputMessageQueue = (config.inputMessageQueue) ? config.inputMessageQueue : [] //individual port messages - these require martialling into a coherent signal
 	that.activationQueue = (config.activationQueue) ? config.activationQueue : [] //the martialled, coherant signal - i.e. sigId 1234 on ports 1 and 2
-	that.variants = (config.variants) ? config.variants : [] //the post activation signals
+
+	that.variants = {}
+	that.variants.inputs = (config.variants.inputs) ? config.variants.inputs : [] //the post activation signals
+	that.variants.biases = (config.variants.biases) ? config.variants.biases : [] //the post activation signals
+	that.variants.outputs = (config.variants.outputs) ? config.variants.outputs : [] //the post activation signals
+
 	that.propagationMessageQueue = (config.propagationMessageQueue) ? config.propagationMessageQueue : [] //messages waiting to be passed downstream
 	that.bpQueue = (config.bpQueue) ? config.bpQueue : [] //backpropped messages waiting to be processed and passed upstream 
 	that.nextTick = (config.nextTick) ? config.nextTick : 0 

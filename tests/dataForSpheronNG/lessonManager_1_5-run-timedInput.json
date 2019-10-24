@@ -3,6 +3,8 @@
 	"lessonId" : "whatIsAnd",
 	"type" : "lesson",
 	"state" : "pending",
+	"ranInit" : false,
+	"activationModule" : "./activationModules/whatIsAndTimed",
 	"lastProcessed" : 0,
 	"lastLessonIdxProcessed" : 1,
 	"options":{
@@ -119,7 +121,6 @@
 		{
 			"groupId" : "logicalOutput",
 			"type" : "sync",
-			"activationModule" : "./activationModules/whatIsAndTimed",
 			"activationFunction" : "whatIsAndOutputFunction",
 			"outputs" : [
 				{"spheronId" : "outputSpheron1","port" : "ANDout"},

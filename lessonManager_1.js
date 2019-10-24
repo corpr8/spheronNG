@@ -27,8 +27,10 @@ var lessonManager = {
 	isRunning: false,
 	runTimer: null,
 	thisActivationModule: null,
+	mode: null,
 	init: function(mode, logger, mongoUtils, callback){
 		var that = this
+		that.mode = mode
 			
 		if(!mode.tdd){
 			settings.logPath = settings.lessonMaintenanceLogPath
@@ -99,12 +101,19 @@ var lessonManager = {
 				break;
 			case 1: 
 
+				that.logger.log(moduleName, 2, 'Running running lessonInit if required (first time)')
+				that.runInitIfRequired(function(){
+					that.processorPhaseIterator(phaseIdx +1, callback)
+				})
+			break;
+			case 2: 
+
 				that.logger.log(moduleName, 2, 'Running Phase 1: processing lesson')
 				that.processLesson(function(){
 					that.processorPhaseIterator(phaseIdx +1, callback)
 				})
 			break;
-			case 2: 
+			case 3: 
 
 				that.logger.log(moduleName, 2, 'Running Phase 2: testing if lesson complete.')
 				that.logger.log(moduleName, 2, '****TODO****')
@@ -112,7 +121,7 @@ var lessonManager = {
 				that.processorPhaseIterator(phaseIdx +1, callback)
 				
 			break;
-			case 3: 
+			case 4: 
 
 				that.logger.log(moduleName, 2, 'Running Phase 3: setting lesson state to idle.')
 				that.setLessonToIdle(function(){
@@ -128,16 +137,48 @@ var lessonManager = {
 	},
 	getPendingLesson: function(callback){
 		//callback with a lesson object which is a pending lesson. Update the lesson state to evaluating.
+
+
+
+		/*
+		* Note: Currently, the lesson init function does not seem to fire...
+		*/
+
+
+
+
 		var that = this
 		that.logger.log(moduleName, 2, 'Running Phase get pending lesson')
 		that.mongoUtils.getPendingLesson(function(thisLesson){
-			if(thisLesson){
+			that.logger.log(moduleName, 2, 'pending lesson is: ' + JSON.stringify(thisLesson))
+
+			if(thisLesson.value){
 				that.lesson = thisLesson.value
-				that.logger.log(moduleName, 2, 'Pending lesson: ' + JSON.stringify(that.lesson))
-				callback()
+				asyncRequire(that.lesson.activationModule).then(function(thisActivationModule){
+					that.thisActivationModule = thisActivationModule
+
+					/*
+					*Added in as  test that.mode.tdd on 18.10.19
+					*/
+					if(!that.mode.tdd){
+						that.thisActivationModule.init(null, that.lesson, that.logger, that.mongoUtils, function(){
+							
+							that.logger.log(moduleName, 2, 'Pending lesson: ' + JSON.stringify(that.lesson))
+							callback()
+						})
+					} else {
+						that.thisActivationModule.init('TDD', that.lesson, that.logger, that.mongoUtils, function(){
+							
+							that.logger.log(moduleName, 2, 'Pending lesson: ' + JSON.stringify(that.lesson))
+							callback()
+						})
+					}
+					
+				})
 			} else {
 				callback()	
 			}
+
 		})
 	},
 	processLesson: function(callback){
@@ -153,6 +194,32 @@ var lessonManager = {
 			})
 		} else {
 			that.logger.log(moduleName, 2, 'no lesson to process')
+			callback()
+		}
+	},
+	runInitIfRequired: function(callback){
+		var that = this
+		that.logger.log(moduleName, 2, 'running lessonInit if required')
+		that.logger.log(moduleName, 2, 'that.lesson.ranInit is: ' + that.lesson.ranInit)
+
+		if(that.lesson.ranInit != true){
+			that.lesson.ranInit = true //TODO: Persist this in some way...
+			that.logger.log(moduleName, 2, 'running lessonInit')
+
+
+
+
+
+			//TODO: doesn't seem to work
+			that.thisActivationModule.lessonInit(function(){
+				that.logger.log(moduleName, 2, 'called back from lessonInit')
+				callback()
+			})
+
+
+
+		} else {
+			that.logger.log(moduleName, 2, 'no init to run')
 			callback()
 		}
 	},
@@ -214,11 +281,18 @@ var lessonManager = {
 			that.mongoUtils.getPropagationMessageQueueBySpheronId(that.lesson.outputConfigurations[outputConfigIdx].outputs[outputIdx].spheronId, function(spheronPropagationQueueData){
 
 				var thisPortId = that.lesson.outputConfigurations[outputConfigIdx].outputs[outputIdx].port
-				
-				that.searchPropagationQueueDataForPortAndAddToGatheredData(spheronPropagationQueueData, thisPortId, gatheredData, 0, 0, function(gatheredData){
-					//we have added the relevant data to the gatheredData object
+				if(spheronPropagationQueueData){
+					if(spheronPropagationQueueData.length > 0){
+						that.searchPropagationQueueDataForPortAndAddToGatheredData(spheronPropagationQueueData, thisPortId, gatheredData, 0, 0, function(gatheredData){
+							//we have added the relevant data to the gatheredData object
+							that.getOutputDataBySigIdForOutputConfigIdxIterator(outputConfigIdx, outputIdx+1, gatheredData, callback)
+						})
+					} else {
+						that.getOutputDataBySigIdForOutputConfigIdxIterator(outputConfigIdx, outputIdx+1, gatheredData, callback)
+					}
+				} else {
 					that.getOutputDataBySigIdForOutputConfigIdxIterator(outputConfigIdx, outputIdx+1, gatheredData, callback)
-				})
+				}
 			})
 		} else {
 			// we are done gathering data for this output group
@@ -291,20 +365,20 @@ var lessonManager = {
 				*/
 				that.logger.log(moduleName, 2, 'we found a full sync output group with sigId: ' + thisSigId + '. - lets call the output function')
 
-				asyncRequire(that.lesson.outputConfigurations[outputConfigIdx].activationModule).then(function(thisActivationModule){
-					that.thisActivationModule = thisActivationModule
-					that.logger.log(moduleName, 2, 'activationModule: ' + that.lesson.outputConfigurations[outputConfigIdx].activationModule + ' - loaded.')
+				//asyncRequire(that.lesson.outputConfigurations[outputConfigIdx].activationModule).then(function(thisActivationModule){
+				//	that.thisActivationModule = thisActivationModule
+					//that.logger.log(moduleName, 2, 'activationModule: ' + that.lesson.outputConfigurations[outputConfigIdx].activationModule + ' - loaded.')
 					that.logger.log(moduleName, 2, 'passing the following lesson data: ' + JSON.stringify(that.lesson))
 
-					that.thisActivationModule.init('TDD', that.lesson, that.logger, that.mongoUtils, function(){
+					//that.thisActivationModule.init('TDD', that.lesson, that.logger, that.mongoUtils, function(){
 						that.logger.log(moduleName, 2, 'calling back from activationModule initialisation function')
 						that.thisActivationModule[that.lesson.outputConfigurations[outputConfigIdx].activationFunction](gatheredData[thisSigId], function(){
 							that.deletePropagationDataByOutputConfigIdxAndSigId(outputConfigIdx, thisSigId, function(){
 								that.checkOutputDataSyncCompleteIterator(outputConfigIdx, gatheredData, gatheredDataSigIdIdx+1, 0, 0, callback)	
 							})
 						})
-					})
-				})
+					//})
+				//})
 			}
 		} else {
 			callback()
@@ -345,9 +419,15 @@ var lessonManager = {
 	},
 	setLessonToIdle: function(callback){
 		var that = this
-		that.mongoUtils.setLessonAsIdle(that.lesson.lessonId, function(){
+		if(that.lesson){
+			that.mongoUtils.setLessonAsIdle(that.lesson.lessonId, function(){
+				//including setting ranInit as true... (we must have)
+				callback()
+			})
+		} else {
 			callback()
-		})
+		}
+		
 	}
 }
 

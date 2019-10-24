@@ -32,7 +32,7 @@ var mongoUtils = {
 			if (err) throw err;
 			dbo = db.db("myBrain");
 			mongoNet = dbo.collection("brain")
-			that.logger.log(4,'Connected to Mongo')
+			//that.logger.log(4,'Connected to Mongo')
 			callback()
 		});
 	},
@@ -49,7 +49,7 @@ var mongoUtils = {
 			if(err){ 
 				throw err
 			} else { 
-				that.logger.log(4,'inserted tick')
+				//that.logger.log(4,'inserted tick')
 				callback()
 			}
 		})		
@@ -58,7 +58,7 @@ var mongoUtils = {
 		var that = this
 		try {
 			mongoNet.drop(function(err, doc){
-				that.logger.log(4,'dropped old database')
+				//that.logger.log(4,'dropped old database')
 				callback()
 			})
 		} catch(err){
@@ -72,11 +72,13 @@ var mongoUtils = {
 		});
 	}, 
 	getSpheron: function(id, callback){
+		var that = this
 		mongoNet.findOne({
 			type: "spheron",
 			spheronId: id
 		}, function(err, result) {
 	    	if (err) throw err;
+	    	that.logger.log(moduleName, 2, 'got spheron: ' + JSON.stringify(result))
 	    	callback(result)
 		});
 	},
@@ -331,7 +333,10 @@ var mongoUtils = {
 			type: "lesson",
 			lessonId : lessonId
 		},{
-			$set: {state: "idle"}
+			$set: {
+				state: "idle",
+				ranInit: true
+			}
 		}, 
 		{}, 
 		function(err,doc){
@@ -495,6 +500,12 @@ var mongoUtils = {
 			//that.logger.log(4,JSON.stringify(problemDescription.network[idx]))
 			var thisSpheron = problemDescription.network[idx]
 			thisSpheron.problemId = problemDescription.problemId
+			that.logger.log(moduleName, 2, "creating spheron: " + JSON.stringify(thisSpheron))
+			if(!thisSpheron.activationQueue){ thisSpheron.activationQueue = [] }
+			if(!thisSpheron.propagationMessageQueue){ thisSpheron.propagationMessageQueue = [] }
+			if(!thisSpheron.variants){ thisSpheron.variants = { "inputs" : [], "biases" : [], "outputs" : []} }
+			if(!thisSpheron.bpQueue){ thisSpheron.bpQueue = [] }
+
 			mongoNet.insertOne(thisSpheron, function(err, res) {
 				if (err) throw err;
 				idx += 1
@@ -577,6 +588,7 @@ var mongoUtils = {
 			that.getSpheron(spheronIdAndPort.toId, function(thisSpheron){
 				if(thisSpheron){
 					//TODO: None of this is validated...
+					that.logger.log(moduleName, 2, 'thisSpheron (seen from pushMessageToInputQueueBySpheronIdAndPort) is: ' +  JSON.stringify(thisSpheron))
 					that.logger.log(moduleName, 2, 'Pushing to spherons inputQueue: ' +  thisSpheron.spheronId)
 					that.logger.log(moduleName, 2, 'inputQueue is currently: ' +  JSON.stringify(thisSpheron.inputMessageQueue))
 
@@ -621,6 +633,13 @@ var mongoUtils = {
 		var that = this
 		that.logger.log(moduleName, 2, 'running pushVariants')
 		that.logger.log(moduleName, 2, 'thisSpheron is: ' + JSON.stringify(thisSpheron))
+
+		that.logger.log(moduleName, 2, 'variantIdx: ' + variantIdx)
+		that.logger.log(moduleName, 2, 'variantItemIdx: ' + variantItemIdx)
+		that.logger.log(moduleName, 2, 'thisMessage: ' + JSON.stringify(thisMessage))
+		that.logger.log(moduleName, 2, 'toPort: ' + toPort)
+
+//setTimeout(function(){
 		if(thisSpheron.variants.inputs.length == 0){
 			that.logger.log(moduleName, 2, 'no inputs to variate')
 			callback(thisSpheron)
@@ -670,6 +689,7 @@ var mongoUtils = {
 				callback(thisSpheron)
 			}
 		}
+//},2000)
 	},
 	deleteConnectionFromUpstreamSpheronBySpheronId: function(spheronId, connectionId, callback){
 		var that = this
@@ -806,41 +826,42 @@ var mongoUtils = {
 	getIncrementLessonIdx: function(lessonId, callback){
 		var that = this
 		that.getLessonDataByLessonId(lessonId, function(lessonData){
-			var lessonCount = lessonData.lesson.length
-			var currentIdx = lessonData.lastLessonIdxProcessed
-			var nextIdx = -1
+			if(lessonData){
+				var lessonCount = lessonData.lesson.length
+				var currentIdx = parseInt(lessonData.lastLessonIdxProcessed)
+				var nextIdx = 0
 
+				that.logger.log(moduleName, 2, 'lesson count: ' + lessonCount + ' currentIdx: ' + currentIdx)
 
-
-			/*
-			* TODO: 2/10/19 - test below as i removed lessonCount-1 - lessons should now be recorded as 1-4 rather than 0-3 which is a problem?????
-			*/
-
-
-
-			if(currentIdx < (lessonCount -1)){
-				nextIdx = currentIdx +1
-			}
-
-			mongoNet.updateOne({
-					type: "lesson", 
-					lessonId: lessonId
-				},{
-					$set: {
-						lastLessonIdxProcessed: nextIdx
-					}
-				}, 
-				{}, 
-				function(err,doc){
-					if(err){
-						that.logger.log(moduleName, 2, 'updating lessonIdx error' + err)
-						callback(nextIdx)
-					} else { 
-						that.logger.log(moduleName, 2, 'updated lessonIdx: ')
-						callback(nextIdx)
-					}	
+				/*
+				* TODO: 2/10/19 - test below as i removed lessonCount-1 - lessons should now be recorded as 1-4 rather than 0-3 which is a problem?????
+				*/
+				if(currentIdx <= (lessonCount -2)){
+					nextIdx = currentIdx +1
 				}
-			)
+
+				mongoNet.updateOne({
+						type: "lesson", 
+						lessonId: lessonId
+					},{
+						$set: {
+							lastLessonIdxProcessed: nextIdx
+						}
+					}, 
+					{}, 
+					function(err,doc){
+						if(err){
+							that.logger.log(moduleName, 2, 'updating lessonIdx error' + err)
+							callback(nextIdx)
+						} else { 
+							that.logger.log(moduleName, 2, 'updated lessonIdx: ' + lessonId + ' to: ' + nextIdx)
+							callback(nextIdx)
+						}	
+					}
+				)
+			} else {
+				callback()
+			}
 		})
 	},
 	getPropagationMessageQueueBySpheronId: function(spheronId, callback){

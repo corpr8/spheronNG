@@ -12,7 +12,7 @@ const Logger = require('./logger.js')
 const mongoUtils = require('./mongoUtils.js')
 const averagingAnalyticModule = require('./averagingAnalyticModule.js')
 const port = 3030
-const broadcastIterationDelay = 2500
+const broadcastIterationDelay = 250
 var io = require('socket.io')(server);
 const connections = [];
 //udpUtils.init()
@@ -33,7 +33,13 @@ io.sockets.on('connection',(socket) => {
    });
 });
 
+app.use(bodyParser.json() );
+app.use(bodyParser.urlencoded({ // to support URL-encoded bodies
+	extended: true
+})); 
 
+app.use(express.json());       // to support JSON-encoded bodies
+app.use(express.urlencoded()); // to support URL-encoded bodies``
 
 app.use(express.static('public'))
 
@@ -206,6 +212,25 @@ var wsFunctions = {
 		setTimeout(function(){
 			that.processIterator(phaseIdx+1)
 		},broadcastIterationDelay)	
+	},
+	isJson: function(str) {
+	    try {
+	        JSON.parse(str);
+	    } catch (e) {
+	        return false;
+	    }
+	    return true;
+	},
+	isLesson: function(str){
+		if(str.type && str.lessonId && str.network && str.lesson){
+			if(str.type == 'lesson'){
+				return true
+			} else {
+				return false
+			}
+		} else {
+			return false
+		}
 	}
 }
 
@@ -235,12 +260,27 @@ app.get('/deleteLesson', function(req, res) {
 });
 
 app.post('/uploadLesson', function(req, res) {
-	console.log('running upload lesson')
-	
-	//TODO: Push the new lesson onto the stack
-	//TO Be Decided: We may also need to move a javascript file into the activationModules directory if one is uploaded...
-	//TODO: Call the lesson init function. Should that be done here or should it be done by the lessonManager???
-	//
+	console.log('running upload lesson..')
+	//is this payload JSON?
+	console.log(JSON.stringify(req.body))
+	if(req.body){
+		//if(wsFunctions.isJson(req.data)){
+			if(wsFunctions.isLesson(req.body) == true){
+				mongoUtils.importProblem(req.body, function(){
+					//TO Be Decided: We may also need to move a javascript file into the activationModules directory if one is uploaded...
+					//TODO: set the lesson as pending and a flag of needsInit = this should gthen signal the lessonManager to run the init function when it next cycles.
+					res.end('{"success" : "Updated Successfully", "status" : 200}')	
+
+				})
+			} else {
+				res.end('{"failed" : "data does not appear to be a lesson", "status" : 400}')
+			}
+		//} else {
+		//	res.end('{"failed" : "data does not contain JSON", "status" : 400}')
+		//}
+	} else {
+		res.end('{"failed" : "no data payload in body", "status" : 400}')
+	}
 });
 
 

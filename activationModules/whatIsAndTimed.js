@@ -1,4 +1,4 @@
-var moduleName = 'whatIsAndSuccessFunction'
+var moduleName = 'whatIsAndTimed'
 var path = require('path');
 var appDir = path.dirname(require.main.filename);
 var settings = require(appDir +'/settings.json')
@@ -29,7 +29,7 @@ var whatIsAnd = {
 		that.logger.log(moduleName, 2, 'lesson is: ' + JSON.stringify(that.lesson))
 		that.logger.log(moduleName, 2, 'lesson length is: ' + that.lesson.lesson.length)
 
-		if(!mode){
+		if(mode != 'TDD'){
 			that.mongoUtils = mongoUtils
 			asyncRequire('./commonFunctions').then(function(thisCommonFunctions){
 				that.commonFunctions = thisCommonFunctions
@@ -59,18 +59,18 @@ var whatIsAnd = {
 		* TODO
 		*/
 		var that = this
-		that.logger.log(moduleName, 2, 'running lesson init')
+		that.logger.log(moduleName, 2, 'running lesson init (inside init function)')
 		that.thisTimer = setInterval(function(){
 			if(that.lesson.options.mode == "autoTrain"){
-				that.logger.log(moduleName, 2, 'pushing a lesson onto the stack')
-				console.log('pushing a lesson onto the stack')
+				that.logger.log(moduleName, 2, 'pushing a lesson[idx] onto the stack') 
 				that.pushLessonToStackIterator(null, 0, null, function(){
 					callback()	
 				})
 			} else {
 				that.clearTimeout(that.thisTimer)	
 			}
-		},250)		
+		},2000)
+		callback()
 	},
 	whatIsAndOutputFunction: function(syncSignalIdObject, callback){
 		var that = this
@@ -105,15 +105,13 @@ var whatIsAnd = {
 
 		if(!lessonIdx){
 			that.mongoUtils.getIncrementLessonIdx(that.lesson.lessonId, function(nextIdx){
-
 				lessonIdx = nextIdx
 				if(that.mode == "TDD"){
-					//assign a statick lessonGUID
+					//assign a static lessonGUID
 					sigGUID = "TestSigGUID"
 				} else {
-					sigGUID = (sigGUID) ? sigGUID : that.generateUUID.generateUUID()
+					sigGUID = (sigGUID) ? sigGUID : generateUUID()
 				}
-
 				that.pushLessonToStackIterator(lessonIdx, inputIdx, sigGUID, callback)
 			})
 		} else {
@@ -121,34 +119,48 @@ var whatIsAnd = {
 			* For each output in the lesson, push a message to the relevant spherons input queue.
 			* Note: assumes each spheron has max 1 input
 			*/
-			if(that.lesson.lesson[lessonIdx].inputs[Object.keys(that.lesson.lesson[lessonIdx].inputs)[inputIdx]]){
-				//work out the destination spheron
-				//build the message
-				//push to input queue
-				var targetSpheron = Object.keys(that.lesson.lesson[lessonIdx].inputs)[inputIdx]
-				var targetPort = Object.keys(that.lesson.lesson[lessonIdx].inputs[targetSpheron])[0]
-				var targetValue = that.lesson.lesson[lessonIdx].inputs[targetSpheron][targetPort].val
+			
+			/*
+			that.logger.log(moduleName, 2, 'lessonIdx is: ' + lessonIdx)
+			that.logger.log(moduleName, 2, 'that.lesson.lesson is: ' + JSON.stringify(that.lesson.lesson))
+			that.logger.log(moduleName, 2, 'that.lesson.lesson[lessonIdx] is: ' + JSON.stringify(that.lesson.lesson[lessonIdx]))
+			that.logger.log(moduleName, 2, 'inputIdx is: ' + inputIdx )
+			that.logger.log(moduleName, 2, 'that.lesson.lesson[lessonIdx].inputs is: ' + JSON.stringify(that.lesson.lesson[lessonIdx].inputs))
+			that.logger.log(moduleName, 2, 'Object.keys(that.lesson.lesson[lessonIdx].inputs)[inputIdx] is: ' + JSON.stringify(Object.keys(that.lesson.lesson[lessonIdx].inputs)[inputIdx]))
+			that.logger.log(moduleName, 2, 'that.lesson.lesson[lessonIdx].inputs[Object.keys(that.lesson.lesson[lessonIdx].inputs)[inputIdx]] is: ' + JSON.stringify(that.lesson.lesson[lessonIdx].inputs[Object.keys(that.lesson.lesson[lessonIdx].inputs)[inputIdx]]))
+			*/
 
-				var thisMessage = {
-					"lessonId" : that.lesson.lessonId,
-					"toPort" : targetPort,
-					"path" : targetPort,
-					"lessonIdx" : lessonIdx,
-					"val" : targetValue,
-					"sigId" : sigGUID
-				}
-				
-				/*
-				* push to targetSpheron input queue
-				*/ 
+			//setTimeout(function(){
+				if(that.lesson.lesson[lessonIdx].inputs[Object.keys(that.lesson.lesson[lessonIdx].inputs)[inputIdx]]){
+					//work out the destination spheron
+					//build the message
+					//push to input queue
+					var targetSpheron = Object.keys(that.lesson.lesson[lessonIdx].inputs)[inputIdx]
+					var targetPort = Object.keys(that.lesson.lesson[lessonIdx].inputs[targetSpheron])[0]
+					var targetValue = that.lesson.lesson[lessonIdx].inputs[targetSpheron][targetPort].val
 
-				that.mongoUtils.pushMessageToInputQueueBySpheronIdAndPort({toId: targetSpheron, toPort: targetPort}, thisMessage, function(){
-					//eventually
-					that.pushLessonToStackIterator(lessonIdx, inputIdx+1, sigGUID, callback)
-				})			
-			} else {
-				callback()
-			}
+					var thisMessage = {
+						"lessonId" : that.lesson.lessonId,
+						"toPort" : targetPort,
+						"path" : targetPort,
+						"lessonIdx" : lessonIdx,
+						"val" : targetValue,
+						"sigId" : sigGUID
+					}
+					
+					
+					// push to targetSpheron input queue
+					 
+
+					that.mongoUtils.pushMessageToInputQueueBySpheronIdAndPort({toId: targetSpheron, toPort: targetPort}, thisMessage, function(){
+						//eventually
+						that.pushLessonToStackIterator(lessonIdx, inputIdx+1, sigGUID, callback)
+					})			
+				} else {
+					callback()
+				}	
+			//},2000)
+		
 		}
 	},
 	whatIsAndOutputFunctionIterator: function(syncSignalIdObject, idx, callback){
