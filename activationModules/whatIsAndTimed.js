@@ -63,9 +63,7 @@ var whatIsAnd = {
 		that.thisTimer = setInterval(function(){
 			if(that.lesson.options.mode == "autoTrain"){
 				that.logger.log(moduleName, 2, 'pushing a lesson[idx] onto the stack') 
-				that.pushLessonToStackIterator(null, 0, null, function(){
-					callback()	
-				})
+				that.pushLessonToStackIterator(null, 0, null)
 			} else {
 				that.clearTimeout(that.thisTimer)	
 			}
@@ -93,75 +91,80 @@ var whatIsAnd = {
 			callback()
 		})		
 	},
-	pushLessonToStackIterator: function(lessonIdx, inputIdx, sigGUID, callback){
+	pushLessonToStackIterator: function(lessonIdx, inputIdx, sigGUID){
 		var that = this
-		that.logger.log(moduleName, 2, 'activation function is running in mode: ' + that.mode)
+		try{
+			that.logger.log(moduleName, 2, 'activation function is running in mode: ' + that.mode)
 
-		/*
-		* TODO: if lessonIdx is null 
-		* get the last pushed lessonIdx from the lesson and increment it in the db for next run.
-		* put the value in lessonIdx so it applies to all inputs for this set of iterations...
-		*/
-
-		if(!lessonIdx){
-			that.mongoUtils.getIncrementLessonIdx(that.lesson.lessonId, function(nextIdx){
-				lessonIdx = nextIdx
-				if(that.mode == "TDD"){
-					//assign a static lessonGUID
-					sigGUID = "TestSigGUID"
-				} else {
-					sigGUID = (sigGUID) ? sigGUID : generateUUID()
-				}
-				that.pushLessonToStackIterator(lessonIdx, inputIdx, sigGUID, callback)
-			})
-		} else {
 			/*
-			* For each output in the lesson, push a message to the relevant spherons input queue.
-			* Note: assumes each spheron has max 1 input
-			*/
-			
-			/*
-			that.logger.log(moduleName, 2, 'lessonIdx is: ' + lessonIdx)
-			that.logger.log(moduleName, 2, 'that.lesson.lesson is: ' + JSON.stringify(that.lesson.lesson))
-			that.logger.log(moduleName, 2, 'that.lesson.lesson[lessonIdx] is: ' + JSON.stringify(that.lesson.lesson[lessonIdx]))
-			that.logger.log(moduleName, 2, 'inputIdx is: ' + inputIdx )
-			that.logger.log(moduleName, 2, 'that.lesson.lesson[lessonIdx].inputs is: ' + JSON.stringify(that.lesson.lesson[lessonIdx].inputs))
-			that.logger.log(moduleName, 2, 'Object.keys(that.lesson.lesson[lessonIdx].inputs)[inputIdx] is: ' + JSON.stringify(Object.keys(that.lesson.lesson[lessonIdx].inputs)[inputIdx]))
-			that.logger.log(moduleName, 2, 'that.lesson.lesson[lessonIdx].inputs[Object.keys(that.lesson.lesson[lessonIdx].inputs)[inputIdx]] is: ' + JSON.stringify(that.lesson.lesson[lessonIdx].inputs[Object.keys(that.lesson.lesson[lessonIdx].inputs)[inputIdx]]))
+			* TODO: if lessonIdx is null 
+			* get the last pushed lessonIdx from the lesson and increment it in the db for next run.
+			* put the value in lessonIdx so it applies to all inputs for this set of iterations...
 			*/
 
-			//setTimeout(function(){
-				if(that.lesson.lesson[lessonIdx].inputs[Object.keys(that.lesson.lesson[lessonIdx].inputs)[inputIdx]]){
-					//work out the destination spheron
-					//build the message
-					//push to input queue
-					var targetSpheron = Object.keys(that.lesson.lesson[lessonIdx].inputs)[inputIdx]
-					var targetPort = Object.keys(that.lesson.lesson[lessonIdx].inputs[targetSpheron])[0]
-					var targetValue = that.lesson.lesson[lessonIdx].inputs[targetSpheron][targetPort].val
-
-					var thisMessage = {
-						"lessonId" : that.lesson.lessonId,
-						"toPort" : targetPort,
-						"path" : targetPort,
-						"lessonIdx" : lessonIdx,
-						"val" : targetValue,
-						"sigId" : sigGUID
+			if(!lessonIdx){
+				that.mongoUtils.getIncrementLessonIdx(that.lesson.lessonId, function(nextIdx){
+					lessonIdx = nextIdx
+					if(that.mode == "TDD"){
+						//assign a static lessonGUID
+						sigGUID = "TestSigGUID"
+					} else {
+						sigGUID = (sigGUID) ? sigGUID : generateUUID()
 					}
-					
-					
-					// push to targetSpheron input queue
-					 
+					that.pushLessonToStackIterator(lessonIdx, inputIdx, sigGUID)
+				})
+			} else {
+				/*
+				* For each output in the lesson, push a message to the relevant spherons input queue.
+				* Note: assumes each spheron has max 1 input
+				*/
+				
+				/*
+				that.logger.log(moduleName, 2, 'lessonIdx is: ' + lessonIdx)
+				that.logger.log(moduleName, 2, 'that.lesson.lesson is: ' + JSON.stringify(that.lesson.lesson))
+				that.logger.log(moduleName, 2, 'that.lesson.lesson[lessonIdx] is: ' + JSON.stringify(that.lesson.lesson[lessonIdx]))
+				that.logger.log(moduleName, 2, 'inputIdx is: ' + inputIdx )
+				that.logger.log(moduleName, 2, 'that.lesson.lesson[lessonIdx].inputs is: ' + JSON.stringify(that.lesson.lesson[lessonIdx].inputs))
+				that.logger.log(moduleName, 2, 'Object.keys(that.lesson.lesson[lessonIdx].inputs)[inputIdx] is: ' + JSON.stringify(Object.keys(that.lesson.lesson[lessonIdx].inputs)[inputIdx]))
+				that.logger.log(moduleName, 2, 'that.lesson.lesson[lessonIdx].inputs[Object.keys(that.lesson.lesson[lessonIdx].inputs)[inputIdx]] is: ' + JSON.stringify(that.lesson.lesson[lessonIdx].inputs[Object.keys(that.lesson.lesson[lessonIdx].inputs)[inputIdx]]))
+				*/
 
-					that.mongoUtils.pushMessageToInputQueueBySpheronIdAndPort({toId: targetSpheron, toPort: targetPort}, thisMessage, function(){
-						//eventually
-						that.pushLessonToStackIterator(lessonIdx, inputIdx+1, sigGUID, callback)
-					})			
-				} else {
-					callback()
-				}	
-			//},2000)
-		
-		}
+				//setTimeout(function(){
+					if(that.lesson.lesson[lessonIdx].inputs[Object.keys(that.lesson.lesson[lessonIdx].inputs)[inputIdx]]){
+						//work out the destination spheron
+						//build the message
+						//push to input queue
+						var targetSpheron = Object.keys(that.lesson.lesson[lessonIdx].inputs)[inputIdx]
+						var targetPort = Object.keys(that.lesson.lesson[lessonIdx].inputs[targetSpheron])[0]
+						var targetValue = that.lesson.lesson[lessonIdx].inputs[targetSpheron][targetPort].val
+
+						var thisMessage = {
+							"lessonId" : that.lesson.lessonId,
+							"toPort" : targetPort,
+							"path" : targetPort,
+							"lessonIdx" : lessonIdx,
+							"val" : targetValue,
+							"sigId" : sigGUID
+						}
+						
+						
+						// push to targetSpheron input queue
+						 
+
+						that.mongoUtils.pushMessageToInputQueueBySpheronIdAndPort({toId: targetSpheron, toPort: targetPort}, thisMessage, function(){
+							//eventually
+							that.pushLessonToStackIterator(lessonIdx, inputIdx+1, sigGUID)
+						})			
+					} else {
+						//nothing to do????
+						that.logger.log(moduleName, 2, 'nothing to do? ')
+					}	
+				//},2000)
+			
+			}
+		} catch(err){
+			that.logger.log(moduleName, 2, 'failure in activation function: ' + err.message)
+		}		
 	},
 	whatIsAndOutputFunctionIterator: function(syncSignalIdObject, idx, callback){
 		var that = this

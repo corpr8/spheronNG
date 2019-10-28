@@ -500,6 +500,7 @@ var mongoUtils = {
 			//that.logger.log(4,JSON.stringify(problemDescription.network[idx]))
 			var thisSpheron = problemDescription.network[idx]
 			thisSpheron.problemId = problemDescription.problemId
+			thisSpheron.nextTick = parseInt(thisSpheron.nextTick)
 			that.logger.log(moduleName, 2, "creating spheron: " + JSON.stringify(thisSpheron))
 			if(!thisSpheron.activationQueue){ thisSpheron.activationQueue = [] }
 			if(!thisSpheron.propagationMessageQueue){ thisSpheron.propagationMessageQueue = [] }
@@ -519,9 +520,10 @@ var mongoUtils = {
 		var that = this
 		//The main function loop - pulls back spherons which are awaitng processing.
 		//TODO: Works but needs to return the one with the lowest pendAct + state == pending
-		that.logger.log(moduleName, 4,'getting next spheron for tick: ' + tickStamp)
+		that.logger.log(moduleName, 2,'getting next spheron for tick: ' + tickStamp)
 		//nextTick: { $lt: thisNextTick },
-					//
+		tickStamp = parseInt(tickStamp)
+
 		mongoNet.findOneAndUpdate({
 			nextTick: { $lt: tickStamp },
 			type:"spheron",
@@ -533,13 +535,13 @@ var mongoUtils = {
 			sort: {nextTick: -1}
 		}, function(err,doc){
 			if(err){
-				that.logger.log(4,'no pending spherons: ' + err)
+				that.logger.log(moduleName, 2,'no pending spherons: ' + err)
 				callback({})
 			} else if (doc.value != null){ 
 				that.logger.log(moduleName, 4,'spheron is: ' + JSON.stringify(doc.value))
 				callback(doc.value)
 			} else {
-				that.logger.log(4,'spheron was null: ' + JSON.stringify(doc))
+				that.logger.log(moduleName, 2,'spheron was null: ' + JSON.stringify(doc))
 				callback({})
 			}
 		})
@@ -591,6 +593,9 @@ var mongoUtils = {
 					that.logger.log(moduleName, 2, 'thisSpheron (seen from pushMessageToInputQueueBySpheronIdAndPort) is: ' +  JSON.stringify(thisSpheron))
 					that.logger.log(moduleName, 2, 'Pushing to spherons inputQueue: ' +  thisSpheron.spheronId)
 					that.logger.log(moduleName, 2, 'inputQueue is currently: ' +  JSON.stringify(thisSpheron.inputMessageQueue))
+					if(!thisSpheron.inputMessageQueue){
+						thisSpheron.inputMessageQueue = []
+					}
 
 					thisSpheron.inputMessageQueue.push(thisMessage)
 

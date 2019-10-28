@@ -26,10 +26,18 @@ var spheron_runner = {
 	systemTickTimer: null,
 	systemTick: null,
 	inTick: false,
+	processArguments: [],
 	init: function(callback){
 		var that = this
+
+		process.argv.forEach(function (val, index, array) {
+			that.processArguments.push(val)
+		});
+
 		that.logger = new Logger(settings.logOptions)
 		that.logger.log(moduleName, 4,'Called Spheron_runner init function')
+		//that.logger.log(moduleName, 2,'process arg functions: ' + that.processArguments.join(','))
+
 
 		that.mutator = require('./0-mutator.js')
 		that.inputMessageQueueProcessor = require('./1-inputMessageQueueProcessor.js')
@@ -40,16 +48,22 @@ var spheron_runner = {
 		that.spheronMaintenanceProcessor = require('./6-spheronMaintenanceProcessor.js')
 
 		mongoUtils.init(that.logger, function(){
-			if(settings.loadTestData == true){
-				var testData = require(settings.testData)
-				mongoUtils.setupDemoData(testData, function(){
+			if(that.processArguments.indexOf('NOTDD') == -1){
+				if(settings.loadTestData == true){
+					var testData = require(settings.testData)
+					mongoUtils.setupDemoData(testData, function(){
+						that.startTicking()
+						callback()
+					})	
+				} else {
 					that.startTicking()
 					callback()
-				})	
+				}
 			} else {
 				that.startTicking()
 				callback()
 			}
+			
 		})
 	},
 	startTicking: function(){
@@ -79,6 +93,7 @@ var spheron_runner = {
 				if(that.isSpheron(result) == true){
 					that.logger.log(moduleName, 2,'Processing spheron: ' + result.spheronId)
 					that.spheron = new Spheron(result)
+					that.spheron.nextTick = that.systemTick+1
 					that.spheron.init(that.logger, function(){
 						that.logger.log(moduleName, 4,'Loaded spheron: ' + that.spheron.spheronId + ' - starting runtime functions.')
 						that.processSpheron(0, function(){

@@ -9,3 +9,5 @@ mongod --bind_ip 192.168.61.1 --dbpath ~/data/db
 
 remove alias:
 sudo ifconfig lo0 -alias 192.168.61.1
+
+mongo 192.168.61.1

@@ -60,9 +60,16 @@ var thisApp ={
 	},
 	runMainProg: function(callback){
 		var that = this
-		that.mainProgChild = fork('./spheron_runner.js', [], {
-		  stdio: 'pipe'
-		});
+		if(that.processArguments.indexOf('NOTDD') == -1){
+			that.mainProgChild = fork('./spheron_runner.js', [], {
+			  stdio: 'pipe'
+			});	
+		} else {
+			that.mainProgChild = fork('./spheron_runner.js', ['NOTDD'], {
+			  stdio: 'pipe'
+			});
+		}
+		
 
 		that.mainProgChild.stderr.on('data', (data) => {
 		  console.error(`child stderr:\n${data}`);

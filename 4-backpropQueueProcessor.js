@@ -247,6 +247,9 @@ var backpropQueueProcessor = {
 		//update the existent object
 		//otherwise add a new errormapObject
 		var that = this
+		if(!that.spheron.io[ioIdx].errorMap){
+			that.spheron.io[ioIdx].errorMap = []
+		}
 		if(that.spheron.io[ioIdx].errorMap[errorMapIdx]){
 			if(that.spheron.io[ioIdx].errorMap[errorMapIdx].signalPath == bpErrorMessage.signalPath && that.spheron.io[ioIdx].errorMap[errorMapIdx].bpSignalDepth == bpErrorMessage.bpSignalDepth){
 				that.spheron.io[ioIdx].errorMap[errorMapIdx].errorMap[bpErrorMessage.lessonIdx] = bpErrorMessage.error
